@@ -1,0 +1,81 @@
+<Window x:Class="GetStartedApp.LoginView"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:prism="http://prismlibrary.com/"
+        d:DesignHeight="450"
+        d:DesignWidth="800"
+        mc:Ignorable="d">
+    <Grid Width="740" Background="Transparent">
+        <Border Width="330"
+                Margin="0,6"
+                HorizontalAlignment="Right"
+                Background="#F7F8F9"
+                BorderBrush="#DDD"
+                BorderThickness="2" />
+        <!--  图片  -->
+        <Polygon HorizontalAlignment="Left" Points="0 0,420 0,450 200,420 400,0 400">
+            <Polygon.Fill>
+                <ImageBrush Source="avares://GetStartedApp/Assets/Images/login.jpeg" Stretch="UniformToFill" />
+            </Polygon.Fill>
+        </Polygon>
+        <!--  内容  -->
+        <Grid Margin="0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="1" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Button Grid.Row="0"
+                        Margin="2"
+                        HorizontalAlignment="Right"
+                        IsDefault="False">
+                    <TextBlock FontWeight="Black"
+                               Foreground="Red"
+                               Text="X" />
+                </Button>
+                <!--<RichTextBox Grid.Row="1"
+                             Background="Transparent"
+                             BorderThickness="0">
+                    <FlowDocument>
+                        <Paragraph>
+                            <Run FontSize="15" Text="陕西庆华汽车安全系统有限公司" />
+                            <Run Text="MGG自动化组装生产线" />
+                        </Paragraph>
+                    </FlowDocument>
+                </RichTextBox>-->
+                <TextBox Grid.Row="3" Margin="2" />
+                <TextBox Name="pwd"
+                         Grid.Row="4"
+                         Margin="2" />
+
+                <TextBox Grid.Row="5"
+                         Grid.Column="1"
+                         Grid.ColumnSpan="3"
+                         Margin="5"
+                         IsVisible="True" />
+
+                <Button Grid.Row="7"
+                        Width="260"
+                        Content="确  定"
+                        IsDefault="True" />
+                <TextBlock Grid.Row="8"
+                           Foreground="Red"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

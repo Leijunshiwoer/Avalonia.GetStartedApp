@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GetStartedApp.Views;
 using Prism.Navigation.Regions;
 using System.Collections.ObjectModel;
 
@@ -17,11 +18,12 @@ public partial class MainWindowViewModel : ViewModelBase
     {
 
         _regionManager = regionManager;
+
      
         Title = "Sample Prism.Avalonia MVVM!";
 
         //初始化操作
-       // _regionManager.RegisterViewWithRegion(RegionNames.SidebarRegion, typeof(SideMenuView));
+        _regionManager.RegisterViewWithRegion("ContentRegion", typeof(DashboardView));
     }
 
     // -- Adding new Items --

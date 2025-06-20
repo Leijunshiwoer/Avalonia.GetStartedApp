@@ -1,7 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -11,10 +7,15 @@ using Avalonia.Markup.Xaml;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
 using GetStartedApp.Views;
+using Prism.Dialogs;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Modularity;
 using Prism.Navigation.Regions;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Ursa.Controls;
 
 
@@ -31,9 +32,20 @@ namespace GetStartedApp
 
         protected override void OnInitialized()
         {
-            var regionManager = Container.Resolve<IRegionManager>();
-            regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(DashboardView));
-            regionManager.RegisterViewWithRegion(RegionNames.SidebarRegion, typeof(SideMenuView));
+            var dialog = Container.Resolve<IDialogService>();
+            dialog.ShowDialog("LoginView", callback =>
+            {
+                if (callback.Result != ButtonResult.OK)
+                {
+                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                    return;
+                }
+            });
+
+            base.OnInitialized();
         }
 
         private static Mutex mutex;
@@ -76,7 +88,12 @@ namespace GetStartedApp
 
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
+            ///
 
+            // Dialogs
+            //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
+            //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
+            containerRegistry.RegisterDialog<LoginView, LoginViewModel>();//µ«»Î
 
             // Views - Generic
             containerRegistry.RegisterForNavigation<MainWindow,MainWindowViewModel>();
@@ -84,12 +101,10 @@ namespace GetStartedApp
 
             // Views - Region Navigation
              containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
-
-            // Dialogs
-            //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
-            //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
-
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
+
+          
+
         }
 
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
@@ -97,5 +112,7 @@ namespace GetStartedApp
             // Register modules
             //// moduleCatalog.AddModule<DummyModule.DummyModule1>();
         }
+
+
     }
 }

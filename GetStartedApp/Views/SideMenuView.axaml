@@ -24,9 +24,7 @@
         <StackPanel Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2">
-            <ToggleSwitch Name="collapse"
-                          OffContent="Expand"
-                          OnContent="Collapse" />
+            <ToggleSwitch Name="collapse" Theme="{StaticResource SimpleToggleSwitch}" />
             <!--<TextBlock HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Text="{Binding SelectedMenuItem.Header}" />-->
