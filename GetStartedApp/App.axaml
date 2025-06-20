@@ -1,0 +1,37 @@
+<Application x:Class="GetStartedApp.App"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:GetStartedApp"
+             xmlns:semi="https://irihi.tech/semi"
+             xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
+             RequestedThemeVariant="Default">
+    <!--  "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options.  -->
+
+
+
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Margin" Value="5" />
+        </Style>
+
+
+        <!--  ... other styles ...  -->
+        <!--  We want our CheckBox to be stretched horizontally (the default is left-aligned)  -->
+        <Style Selector="CheckBox">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!--  These styles add some useful feedback for the user  -->
+        <Style Selector="CheckBox:pointerover /template/ Grid#RootGrid">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColorLight3}" />
+        </Style>
+
+        <semi:SemiTheme Locale="zh-CN" />
+        <u-semi:SemiTheme Locale="zh-CN" />
+    </Application.Styles>
+
+
+</Application>

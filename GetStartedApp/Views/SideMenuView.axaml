@@ -1,0 +1,83 @@
+<UserControl x:Class="GetStartedApp.SideMenuView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:GetStartedApp.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:ii="clr-namespace:Xaml.Behaviors.Interactivity;assembly=Xaml.Behaviors.Interactivity"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels;assembly=GetStartedApp"
+             d:DesignHeight="1200"
+             d:DesignWidth="1600"
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             x:DataType="vm:SideMenuViewModel"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <converters:IconNameToPathConverter x:Key="IconConverter" />
+    </UserControl.Resources>
+    <Grid HorizontalAlignment="Left"
+          ColumnDefinitions="Auto"
+          RowDefinitions="Auto, Auto, *">
+        <StackPanel Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2">
+            <ToggleSwitch Name="collapse"
+                          OffContent="Expand"
+                          OnContent="Collapse" />
+            <!--<TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Text="{Binding SelectedMenuItem.Header}" />-->
+        </StackPanel>
+        <Border Grid.Row="2"
+                Grid.Column="0"
+                Padding="0"
+                HorizontalAlignment="Left"
+                Theme="{DynamicResource CardBorder}">
+            <u:NavMenu Name="menu"
+                       CommandBinding="{Binding NavigationCommand}"
+                       ExpandWidth="300"
+                       HeaderBinding="{Binding Header}"
+                       IconBinding="{Binding IconIndex}"
+                       IsHorizontalCollapsed="{Binding #collapse.IsChecked, Mode=OneWay}"
+                       ItemsSource="{Binding MenuItems}"
+                       SelectedItem="{Binding SelectedMenuItem}"
+                       SubMenuBinding="{Binding Children}">
+
+                <u:NavMenu.Styles>
+                    <Style x:DataType="vm:MenuItem" Selector="u|NavMenuItem">
+                        <Setter Property="IsSeparator" Value="{Binding IsSeparator}" />
+                    </Style>
+                </u:NavMenu.Styles>
+
+                <u:NavMenu.IconTemplate>
+                    <DataTemplate>
+                        <i:Icon FontSize="24"
+                                Foreground="DarkBlue"
+                                Value="{Binding Converter={StaticResource IconConverter}}" />
+                    </DataTemplate>
+                </u:NavMenu.IconTemplate>
+
+                <u:NavMenu.Header>
+                    <Grid HorizontalAlignment="Center" ColumnDefinitions="Auto, Auto">
+                        <Panel Margin="4,12"
+                               VerticalAlignment="Center"
+                               u:NavMenu.CanToggle="True"
+                               Background="Transparent"
+                               DockPanel.Dock="Left">
+                            <iri:IrihiLogo Width="32" Fill="{DynamicResource SemiGrey7}" />
+                        </Panel>
+                        <TextBlock Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Classes="H5"
+                                   IsVisible="{Binding !#menu.IsHorizontalCollapsed}"
+                                   Text="Ursa Avalonia"
+                                   Theme="{DynamicResource TitleTextBlock}" />
+                    </Grid>
+                </u:NavMenu.Header>
+            </u:NavMenu>
+        </Border>
+    </Grid>
+</UserControl>
