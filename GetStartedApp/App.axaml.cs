@@ -32,19 +32,6 @@ namespace GetStartedApp
 
         protected override void OnInitialized()
         {
-            var dialog = Container.Resolve<IDialogService>();
-            dialog.ShowDialog("LoginView", callback =>
-            {
-                if (callback.Result != ButtonResult.OK)
-                {
-                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                    {
-                        desktop.Shutdown();
-                    }
-                    return;
-                }
-            });
-
             base.OnInitialized();
         }
 
