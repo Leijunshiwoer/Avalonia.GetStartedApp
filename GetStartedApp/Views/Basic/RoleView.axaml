@@ -1,0 +1,19 @@
+<UserControl x:Class="GetStartedApp.RoleView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <Grid>
+        <DataGrid>
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="80" Header="Id" />
+                <DataGridTextColumn Width="120" Header="角色名称" />
+                <DataGridTextColumn Width="*" Header="描述" />
+
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

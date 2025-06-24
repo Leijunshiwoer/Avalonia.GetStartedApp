@@ -46,10 +46,10 @@ public class SideMenuViewModel : ViewModelBase
         switch (SelectedMenuItem.Header)
         {
             case "首页":
-                _regionManager.RequestNavigate("ContentRegion", "DashboardView");
+                _regionManager.RequestNavigate(RegionNames.ContentRegion, "DashboardView");
                 break;
             case "用户管理":
-                _regionManager.RequestNavigate("ContentRegion", "UserView");
+                _regionManager.RequestNavigate(RegionNames.ContentRegion, "UserView");
                 break;
             case "权限管理":
                 // TODO: Add navigation for 权限管理

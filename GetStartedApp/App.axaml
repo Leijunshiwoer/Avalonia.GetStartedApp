@@ -11,6 +11,7 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
         <Style Selector="TextBlock.h1">
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="FontSize" Value="15" />
@@ -31,6 +32,7 @@
 
         <semi:SemiTheme Locale="zh-CN" />
         <u-semi:SemiTheme Locale="zh-CN" />
+
     </Application.Styles>
 
 

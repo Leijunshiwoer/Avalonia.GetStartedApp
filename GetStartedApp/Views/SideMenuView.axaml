@@ -4,7 +4,6 @@
              xmlns:converters="clr-namespace:GetStartedApp.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
-             xmlns:ii="clr-namespace:Xaml.Behaviors.Interactivity;assembly=Xaml.Behaviors.Interactivity"
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prism="http://prismlibrary.com/"
@@ -21,9 +20,7 @@
     <Grid HorizontalAlignment="Left"
           ColumnDefinitions="Auto"
           RowDefinitions="Auto, Auto, *">
-        <StackPanel Grid.Row="1"
-                    Grid.Column="0"
-                    Grid.ColumnSpan="2">
+        <StackPanel Grid.Row="1">
             <ToggleSwitch Name="collapse" Theme="{StaticResource SimpleToggleSwitch}" />
             <!--<TextBlock HorizontalAlignment="Center"
                        VerticalAlignment="Center"

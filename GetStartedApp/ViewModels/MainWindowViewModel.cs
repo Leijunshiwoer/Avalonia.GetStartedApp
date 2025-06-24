@@ -20,12 +20,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _regionManager = regionManager;
 
-     
+
         Title = "Sample Prism.Avalonia MVVM!";
         IsVisible01 = false;
         IsVisible02 = true;
         //初始化操作
-        _regionManager.RegisterViewWithRegion("ContentRegion", typeof(DashboardView));
+        _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(DashboardView));
     }
 
     // -- Adding new Items --
@@ -45,7 +45,12 @@ public partial class MainWindowViewModel : ViewModelBase
         set { SetProperty(ref _Password, value); }
     }
 
-
+    private string _Tips;
+    public string Tips
+    {
+        get { return _Tips; }
+        set { SetProperty(ref _Tips, value); }
+    }
     private bool _IsVisible01;
     public bool IsVisible01
     {
@@ -64,6 +69,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     void ExecuteSubmitCmd()
     {
+        Tips = "登录成功！";
+
         IsVisible02 = false;
         IsVisible01 = true;
     }

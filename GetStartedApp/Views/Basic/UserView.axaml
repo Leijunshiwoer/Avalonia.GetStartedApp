@@ -1,9 +1,84 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl x:Class="GetStartedApp.UserView"
+             xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:m="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="GetStartedApp.UserView">
-	
-  Welcome to Avalonia!
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels.Basic;assembly=GetStartedApp"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             x:CompileBindings="True"
+             x:DataType="vm:UserViewModel"
+             mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:UserViewModel />
+    </Design.DataContext>
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <u:ToolBar Grid.Row="0">
+            <u:IconButton u:ToolBar.OverflowMode="Never" Content="新增">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+            <u:IconButton i:Attached.Icon="mdi-refresh"
+                          u:ToolBar.OverflowMode="Never"
+                          Command="{Binding RefreshCmd}"
+                          Content="刷新">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-refresh" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+        </u:ToolBar>
+        <DataGrid Grid.Row="1"
+                  Margin="8"
+                  ItemsSource="{Binding Users}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="80"
+                                    Binding="{Binding Id}"
+                                    Header="Id" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding Name}"
+                                    Header="用户名" />
+
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding JobNumber}"
+                                    Header="工号" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding Department}"
+                                    Header="部门" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding Role.Sort}"
+                                    Header="权限等级" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding Role.Name}"
+                                    Header="权限名称" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding Role.Remark}"
+                                    Header="权限说明" />
+
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding CreatedUserName}"
+                                    Header="创建人" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding CreatedTime}"
+                                    Header="创建时间" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding UpdatedUserName}"
+                                    Header="最后修改人" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding UpdatedTime}"
+                                    Header="最后修改时间" />
+
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </UserControl>
