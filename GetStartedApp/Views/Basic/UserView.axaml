@@ -1,12 +1,14 @@
 <UserControl x:Class="GetStartedApp.UserView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cc="using:GetStartedApp.UserControls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:m="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prism="http://prismlibrary.com/"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:uc="clr-namespace:GetStartedApp;assembly=GetStartedApp"
              xmlns:vm="clr-namespace:GetStartedApp.ViewModels.Basic;assembly=GetStartedApp"
              d:DesignHeight="450"
              d:DesignWidth="800"
@@ -80,5 +82,18 @@
 
             </DataGrid.Columns>
         </DataGrid>
+
+        <!--<uc:PaginationView Grid.Row="2"
+                           Margin="8"
+                           DataContext="{Binding Pagination}" />-->
+
+        <cc:Pagination Grid.Row="2"
+                       HorizontalAlignment="Left"
+                       IsBackendPaging="False"
+                       ItemsPerPage="{Binding ItemsPerPage}"
+                       ItemsSource="{Binding AllUsers}"
+                       PageChangedCommand="{Binding PageChangedCommand}" />
     </Grid>
 </UserControl>
+
+
