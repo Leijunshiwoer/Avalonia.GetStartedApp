@@ -3,6 +3,7 @@ using GetStartedApp.Models;
 using GetStartedApp.UserControls;
 
 using Prism.Commands;
+using Prism.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,8 +15,12 @@ namespace GetStartedApp.ViewModels.Basic
 {
     public class UserViewModel : ViewModelBase
     {
-        public UserViewModel()
+        private readonly IDialogService _dialogService;
+
+        public UserViewModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
+
             AllUsers.Add(new UserDto { Name = "Alice", JobNumber = "001", Department = "HR", Role = new RoleDto { Name = "Manager" } });
             AllUsers.Add(new UserDto { Name = "Bob", JobNumber = "002", Department = "Finance", Role = new RoleDto { Name = "Analyst" } });
             AllUsers.Add(new UserDto { Name = "Charlie", JobNumber = "003", Department = "IT", Role = new RoleDto { Name = "Developer" } });
@@ -106,10 +111,20 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteModifyCmd(object parameter)
         {
-
+            DialogParameters keyValuePairs = new DialogParameters();
+            _dialogService.ShowDialog("SetUserDlg", r =>
+            {
+                if (r.Result == ButtonResult.OK)
+                {
+                    //刷新
+                   
+                }
+            });
         }
 
         private DelegateCommand<object> _DeleteCmd;
+      
+
         public DelegateCommand<object> DeleteCmd =>
             _DeleteCmd ?? (_DeleteCmd = new DelegateCommand<object>(ExecuteDeleteCmd));
 
