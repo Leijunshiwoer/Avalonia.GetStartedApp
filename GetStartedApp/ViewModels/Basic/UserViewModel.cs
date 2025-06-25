@@ -99,5 +99,23 @@ namespace GetStartedApp.ViewModels.Basic
         {
             UpdatePagedUsers();
         }
+
+        private DelegateCommand<object> _ModifyCmd;
+        public DelegateCommand<object> ModifyCmd =>
+            _ModifyCmd ?? (_ModifyCmd = new DelegateCommand<object>(ExecuteModifyCmd));
+
+        void ExecuteModifyCmd(object parameter)
+        {
+
+        }
+
+        private DelegateCommand<object> _DeleteCmd;
+        public DelegateCommand<object> DeleteCmd =>
+            _DeleteCmd ?? (_DeleteCmd = new DelegateCommand<object>(ExecuteDeleteCmd));
+
+        void ExecuteDeleteCmd(object parameter)
+        {
+
+        }
     }
 }

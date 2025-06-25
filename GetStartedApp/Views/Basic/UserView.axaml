@@ -10,6 +10,7 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:uc="clr-namespace:GetStartedApp;assembly=GetStartedApp"
              xmlns:vm="clr-namespace:GetStartedApp.ViewModels.Basic;assembly=GetStartedApp"
+             Name="userControl"
              d:DesignHeight="450"
              d:DesignWidth="800"
              prism:ViewModelLocator.AutoWireViewModel="True"
@@ -40,7 +41,8 @@
                 </u:IconButton.Icon>
             </u:IconButton>
         </u:ToolBar>
-        <DataGrid Grid.Row="1"
+        <DataGrid Name="dgWs"
+                  Grid.Row="1"
                   Margin="8"
                   ItemsSource="{Binding Users}">
             <DataGrid.Columns>
@@ -80,6 +82,42 @@
                                     Binding="{Binding UpdatedTime}"
                                     Header="最后修改时间" />
 
+
+                <DataGridTemplateColumn Header="操作">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="8,0,8,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                <u:IconButton Width="80"
+                                              Margin="2"
+                                              Command="{Binding DataContext.ModifyCmd, ElementName=userControl}"
+                                              CommandParameter="{Binding SelectedItem, ElementName=dgWs}"
+                                              Content="编辑">
+                                    <u:IconButton.Icon>
+                                        <i:Icon FontSize="24"
+                                                Foreground="DarkBlue"
+                                                Value="mdi-pencil" />
+                                    </u:IconButton.Icon>
+                                </u:IconButton>
+
+                                <u:IconButton Width="80"
+                                              Margin="2"
+                                              Command="{Binding DataContext.DeleteCmd, ElementName=userControl}"
+                                              CommandParameter="{Binding SelectedItem, ElementName=dgWs}"
+                                              Content="删除">
+
+                                    <u:IconButton.Icon>
+                                        <i:Icon FontSize="24"
+                                                Foreground="DarkBlue"
+                                                Value="mdi-delete" />
+                                    </u:IconButton.Icon>
+                                </u:IconButton>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 
