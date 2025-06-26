@@ -23,7 +23,9 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <u:ToolBar Grid.Row="0">
-            <u:IconButton u:ToolBar.OverflowMode="Never" Content="新增">
+            <u:IconButton u:ToolBar.OverflowMode="Never"
+                          Command="{Binding AddCmd}"
+                          Content="新增">
                 <u:IconButton.Icon>
                     <i:Icon FontSize="24"
                             Foreground="DarkBlue"

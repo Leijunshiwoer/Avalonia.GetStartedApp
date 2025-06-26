@@ -119,7 +119,15 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteAddCmd()
         {
-
+            DialogParameters keyValuePairs = new DialogParameters();
+            _dialogService.ShowDialog("SetUserDlg", r =>
+            {
+                if (r.Result == ButtonResult.OK)
+                {
+                    //刷新
+                    GetAllUsers();
+                }
+            });
         }
 
 
@@ -139,13 +147,18 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteModifyCmd(object parameter)
         {
+            var model = parameter as UserDto;
             DialogParameters keyValuePairs = new DialogParameters();
-            _dialogService.ShowDialog("SetUserDlg", r =>
+            if (model != null)
+            {
+                keyValuePairs.Add("Model", model);
+            }
+            _dialogService.ShowDialog("SetUserDlg",keyValuePairs, r =>
             {
                 if (r.Result == ButtonResult.OK)
                 {
                     //刷新
-                   
+                    GetAllUsers();
                 }
             });
         }

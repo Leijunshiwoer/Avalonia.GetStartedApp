@@ -1,4 +1,5 @@
 ﻿using GetStartedApp.Models;
+using Prism.Commands;
 using Prism.Dialogs;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace GetStartedApp.ViewModels.Basic
 {
     public class SetUserDlgViewModel : ViewModelBase, IDialogAware
     {
+
         public SetUserDlgViewModel()
         {
             Title = "Set User";
@@ -27,13 +29,21 @@ namespace GetStartedApp.ViewModels.Basic
             
         }
 
+        private bool _isAdd = false;
         public void OnDialogOpened(IDialogParameters parameters)
         {
-            
+            var userDto = parameters.GetValue<UserDto>("Model");
+            _isAdd = userDto == null;
+
+            if (!_isAdd)
+            {
+                //修改
+                userDto.Password = "";//去除密码
+                Role = userDto.Role.Name + "(" + userDto.Role.Sort + ")";
+                UserDto = userDto;
+            }
+
         }
-
-
-
         private UserDto _UserDto;
         public UserDto UserDto
         {
@@ -62,5 +72,27 @@ namespace GetStartedApp.ViewModels.Basic
             set { SetProperty(ref _RoleIdx, value); }
         }
 
+
+        private DelegateCommand _SaveCommand;
+        public DelegateCommand SaveCommand =>
+            _SaveCommand ?? (_SaveCommand = new DelegateCommand(ExecuteSaveCommand));
+
+        void ExecuteSaveCommand()
+        {
+            //退出
+            ButtonResult result = ButtonResult.OK;
+            RequestClose.Invoke(new DialogResult(result));
+        }
+
+        private DelegateCommand _CancelCommand;
+        public DelegateCommand CancelCommand =>
+            _CancelCommand ?? (_CancelCommand = new DelegateCommand(ExecuteCancelCommand));
+
+        void ExecuteCancelCommand()
+        {
+            //退出
+            ButtonResult result = ButtonResult.Ignore;
+            RequestClose.Invoke(new DialogResult(result));
+        }
     }
 }
