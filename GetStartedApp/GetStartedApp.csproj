@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="Avalonia" Version="11.3.0" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
@@ -24,6 +25,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
 	  <PackageReference Include="HotAvalonia" Version="3.0.0" PrivateAssets="All" Publish="True" />
 	  <PackageReference Include="Irihi.Ursa" Version="1.11.1" />
 	  <PackageReference Include="Irihi.Ursa.PrismExtension" Version="9.0.1" />
@@ -37,5 +39,10 @@
 
   <ItemGroup>
     <Folder Include="Views\UserControls\" />
+    <Folder Include="AutoMapper\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GetStartedApp.SqlSugar\GetStartedApp.SqlSugar.csproj" />
   </ItemGroup>
 </Project>

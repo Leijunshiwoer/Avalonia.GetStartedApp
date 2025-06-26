@@ -4,19 +4,29 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using DryIoc;
+using DryIoc.Microsoft.DependencyInjection;
+using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
 using GetStartedApp.Views;
+using Microsoft.Extensions.DependencyInjection;
+using Prism.Container.DryIoc;
 using Prism.Dialogs;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Modularity;
 using Prism.Navigation.Regions;
+using SqlSugar;
 using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ursa.Controls;
+using DbType = SqlSugar.DbType;
 
 
 
@@ -92,6 +102,65 @@ namespace GetStartedApp
 
 
 
+        }
+
+
+        protected override IContainerExtension CreateContainerExtension()
+        {
+            var serviceCollection = new ServiceCollection();
+
+            // SqlSugar
+            SqlSugarConfigure(serviceCollection);
+
+            return new DryIocContainerExtension(new Container(CreateContainerRules())
+               .WithDependencyInjectionAdapter(serviceCollection)
+              );
+        }
+
+        private void SqlSugarConfigure(IServiceCollection services)
+        {
+            #region 配置sqlsuagr
+
+            var connectConfigList = new List<ConnectionConfig>();
+            //数据库序号从0开始,默认数据库为0
+            var connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+            //默认数据库
+            connectConfigList.Add(new ConnectionConfig
+            {
+                ConnectionString = connectionString,
+                DbType = DbType.MySql,
+                IsAutoCloseConnection = true
+            });
+            services.AddSqlSugar(connectConfigList.ToArray()
+                , db =>
+                {
+                    //db.Aop.OnLogExecuting = (sql, pars) =>
+                    //{
+                    //    if (sql.StartsWith("SELECT"))
+                    //    {
+                    //        Console.ForegroundColor = ConsoleColor.Green;
+                    //    }
+                    //    if (sql.StartsWith("UPDATE") || sql.StartsWith("INSERT"))
+                    //    {
+                    //        Console.ForegroundColor = ConsoleColor.White;
+                    //    }
+                    //    if (sql.StartsWith("DELETE"))
+                    //    {
+                    //        Console.ForegroundColor = ConsoleColor.Blue;
+                    //    }
+                    //    //App.PrintToMiniProfiler("SqlSugar", "Info", sql + "\r\n" + db.Utilities.SerializeObject(pars.ToDictionary(it => it.ParameterName, it => it.Value)));
+                    //    Console.WriteLine(sql + "\r\n\r\n" + SqlProfiler.ParameterFormat(sql, pars));
+                    //};
+
+
+                    ////执行超时时间
+                    // db.Ado.CommandTimeOut = 30;
+
+                    // 配置加删除全局过滤器
+                    db.GlobalFilter();
+                });
+
+            #endregion
         }
 
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
