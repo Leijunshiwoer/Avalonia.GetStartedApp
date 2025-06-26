@@ -1,5 +1,8 @@
-﻿using DryIoc;
+﻿using AutoMapper;
+using DryIoc;
+using GetStartedApp.AutoMapper;
 using GetStartedApp.Models;
+using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.UserControls;
 
 using Prism.Commands;
@@ -16,29 +19,28 @@ namespace GetStartedApp.ViewModels.Basic
     public class UserViewModel : ViewModelBase
     {
         private readonly IDialogService _dialogService;
+        private readonly ISysUserService _sysUserService;
+        private readonly IAppMapper _mapper;
 
-        public UserViewModel(IDialogService dialogService)
+        public UserViewModel(
+            IDialogService dialogService, 
+            ISysUserService sysUserService,
+             IAppMapper mapper)
         {
             _dialogService = dialogService;
-
-            AllUsers.Add(new UserDto { Name = "Alice", JobNumber = "001", Department = "HR", Role = new RoleDto { Name = "Manager" } });
-            AllUsers.Add(new UserDto { Name = "Bob", JobNumber = "002", Department = "Finance", Role = new RoleDto { Name = "Analyst" } });
-            AllUsers.Add(new UserDto { Name = "Charlie", JobNumber = "003", Department = "IT", Role = new RoleDto { Name = "Developer" } });
-            AllUsers.Add(new UserDto { Name = "David", JobNumber = "004", Department = "Marketing", Role = new RoleDto { Name = "Executive" } });
-            AllUsers.Add(new UserDto { Name = "Eve", JobNumber = "005", Department = "Sales", Role = new RoleDto { Name = "Representative" } });
-            AllUsers.Add(new UserDto { Name = "Frank", JobNumber = "006", Department = "Operations", Role = new RoleDto { Name = "Coordinator" } });
-            AllUsers.Add(new UserDto { Name = "Grace", JobNumber = "007", Department = "Support", Role = new RoleDto { Name = "Specialist" } });
-
-            AllUsers.Add(new UserDto { Name = "Hank", JobNumber = "008", Department = "Legal", Role = new RoleDto { Name = "Counsel" } });
-            AllUsers.Add(new UserDto { Name = "Ivy", JobNumber = "009", Department = "R&D", Role = new RoleDto { Name = "Scientist" } });
-
-
+            _sysUserService = sysUserService;
+            _mapper = mapper;
+            // 初始化数据
+            GetAllUsers();
         }
 
 
+        #region 属性
 
+       
         private ObservableCollection<UserDto> _Users;
         public ObservableCollection<UserDto> Users
+
         {
             get { return _Users ?? (_Users = new ObservableCollection<UserDto>()); }
             set { SetProperty(ref _Users, value); }
@@ -76,13 +78,29 @@ namespace GetStartedApp.ViewModels.Basic
 
         public int TotalItems => AllUsers.Count;
 
+
+        #endregion
+
+        private void GetAllUsers()
+        {
+            var list = _sysUserService.GetUsers();
+            var listDto = _mapper.Map<List<UserDto>>(list);
+            AllUsers = new ObservableCollection<UserDto>(listDto);
+           
+        }
+
         private void UpdatePagedUsers()
         {
+    
             Users = new ObservableCollection<UserDto>(
                 AllUsers.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage)
             );
         }
 
+
+        #region 事件
+
+        
         private DelegateCommand<PageChangedEventArgs> _PageChangedCommand;
         public DelegateCommand<PageChangedEventArgs> PageChangedCommand =>
             _PageChangedCommand ?? (_PageChangedCommand = new DelegateCommand<PageChangedEventArgs>(ExecutePageChangedCommand));
@@ -95,6 +113,16 @@ namespace GetStartedApp.ViewModels.Basic
         }
 
 
+        private DelegateCommand _AddCmd;
+        public DelegateCommand AddCmd =>
+            _AddCmd ?? (_AddCmd = new DelegateCommand(ExecuteAddCmd));
+
+        void ExecuteAddCmd()
+        {
+
+        }
+
+
         private DelegateCommand _RefreshCmd;
 
         public DelegateCommand RefreshCmd =>
@@ -102,7 +130,7 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteRefreshCmd()
         {
-            UpdatePagedUsers();
+            GetAllUsers();
         }
 
         private DelegateCommand<object> _ModifyCmd;
@@ -132,5 +160,7 @@ namespace GetStartedApp.ViewModels.Basic
         {
 
         }
+
+        #endregion
     }
 }

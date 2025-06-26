@@ -14,6 +14,8 @@ namespace GetStartedApp.AutoMapper
         public AdminAutoMapper()
         {
             CreateMap<SysUser, UserDto>().ReverseMap();
+            CreateMap<SysRole, RoleDto>().ReverseMap();
         }
     }
+
 }
