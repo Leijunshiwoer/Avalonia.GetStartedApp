@@ -6,6 +6,8 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
+using Example;
+using GetStartedApp.AutoMapper;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
@@ -86,6 +88,8 @@ namespace GetStartedApp
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///
+
+            containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
 
             // Dialogs
             //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();

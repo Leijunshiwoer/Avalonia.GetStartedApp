@@ -39,7 +39,6 @@
 
   <ItemGroup>
     <Folder Include="Views\UserControls\" />
-    <Folder Include="AutoMapper\" />
   </ItemGroup>
 
   <ItemGroup>
