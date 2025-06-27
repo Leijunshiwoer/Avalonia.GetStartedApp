@@ -7,11 +7,9 @@ using System.Threading.Tasks;
 
 namespace GetStartedApp.SqlSugar.IServices
 {
-    public interface ISysUserService
+    public interface ISysRoleService
     {
-        List<SysUser> GetUsers();
-        bool Login(string userName, string password);
-        int InserOrUpdateUser(SysUser sysUser);
-        SysUser GetUserById(int id);
+        List<SysRole> GetRoleLessSort(int sort);
+        List<SysRole> GetRoleLessSortByUserId(int userId, int sort);
     }
 }

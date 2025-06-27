@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp", "GetStarted
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp.SqlSugar", "GetStartedApp.SqlSugar\GetStartedApp.SqlSugar.csproj", "{40F4FA4E-F55D-4E48-BAF0-B77CB4FFFC29}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp.Core", "GetStartedApp.Core\GetStartedApp.Core.csproj", "{94898623-E910-4893-9E76-B8F015B0EA6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{40F4FA4E-F55D-4E48-BAF0-B77CB4FFFC29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40F4FA4E-F55D-4E48-BAF0-B77CB4FFFC29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40F4FA4E-F55D-4E48-BAF0-B77CB4FFFC29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94898623-E910-4893-9E76-B8F015B0EA6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94898623-E910-4893-9E76-B8F015B0EA6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94898623-E910-4893-9E76-B8F015B0EA6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94898623-E910-4893-9E76-B8F015B0EA6F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

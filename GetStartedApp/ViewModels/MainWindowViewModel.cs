@@ -1,6 +1,8 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GetStartedApp.SqlSugar.IServices;
+using GetStartedApp.SqlSugar.Services;
 using GetStartedApp.Views;
 using Prism.Commands;
 using Prism.Navigation.Regions;
@@ -14,12 +16,13 @@ namespace GetStartedApp.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
+    private readonly ISysUserService _sysUserService;
 
-    public MainWindowViewModel(IRegionManager regionManager)
+    public MainWindowViewModel(IRegionManager regionManager,ISysUserService sysUserService)
     {
 
         _regionManager = regionManager;
-
+        _sysUserService = sysUserService;
 
         Title = "Sample Prism.Avalonia MVVM!";
         IsVisible01 = false;
@@ -69,9 +72,25 @@ public partial class MainWindowViewModel : ViewModelBase
 
     void ExecuteSubmitCmd()
     {
-        Tips = "登录成功！";
 
-        IsVisible02 = false;
-        IsVisible01 = true;
+        if (string.IsNullOrEmpty(User)||string.IsNullOrEmpty(Password))
+        {
+            Tips = "用户或密码不能为空!";
+            return;
+        }
+
+        var b=_sysUserService.Login(User, Password);
+
+        if (b)
+        {
+            Tips = "登录成功！";
+            IsVisible02 = false;
+            IsVisible01 = true;
+        }
+        else
+        {
+            Tips = "用户名或密码错误!";
+            return;
+        }
     }
 }

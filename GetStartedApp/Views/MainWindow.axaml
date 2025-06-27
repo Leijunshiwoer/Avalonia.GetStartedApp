@@ -22,7 +22,7 @@
     <!--  We give a name to the root grid in order to access it later  -->
 
     <Panel>
-        <Grid ColumnDefinitions="auto,*" IsVisible="True">
+        <Grid ColumnDefinitions="auto,*" IsVisible="{Binding IsVisible01}">
 
             <!--  Menu  -->
 
@@ -62,7 +62,7 @@
             </Panel>
         </Grid>
 
-        <!--<Grid Width="800"
+        <Grid Width="800"
               Height="400"
               Background="White"
               IsVisible="{Binding IsVisible02}">
@@ -73,17 +73,13 @@
                     Background="#F7F8F9"
                     BorderBrush="#DDD"
                     BorderThickness="2" />
-        -->
-        <!--  图片  -->
-        <!--
+            <!--  图片  -->
             <Polygon HorizontalAlignment="Stretch" Points="0 0,420 0,450 200,420 400,0 400">
                 <Polygon.Fill>
                     <ImageBrush Source="avares://GetStartedApp/Assets/Images/login.jpeg" Stretch="UniformToFill" />
                 </Polygon.Fill>
             </Polygon>
-        -->
-        <!--  内容  -->
-        <!--
+            <!--  内容  -->
             <Grid Margin="0,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -102,34 +98,7 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-        -->
-        <!--<Button Grid.Row="0"
-                            Margin="2"
-                            HorizontalAlignment="Right"
-                            IsDefault="False">
-        -->
-        <!--
-        -->
-        <!--<TextBlock FontWeight="Black"
-                                   Foreground="Red"
-                                   Text="X" />-->
-        <!--
-        -->
-        <!--
-                    </Button>-->
-        <!--
-        -->
-        <!--<RichTextBox Grid.Row="1"
-                             Background="Transparent"
-                             BorderThickness="0">
-                    <FlowDocument>
-                        <Paragraph>
-                            <Run FontSize="15" Text="陕西庆华汽车安全系统有限公司" />
-                            <Run Text="MGG自动化组装生产线" />
-                        </Paragraph>
-                    </FlowDocument>
-                </RichTextBox>-->
-        <!--
+
 
                     <WrapPanel Grid.Row="3"
                                HorizontalAlignment="Center"
@@ -162,7 +131,7 @@
                                TextWrapping="Wrap" />
                 </Grid>
             </Grid>
-        </Grid>-->
+        </Grid>
 
 
 

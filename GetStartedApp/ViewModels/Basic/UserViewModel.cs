@@ -13,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ursa.Controls;
 
 namespace GetStartedApp.ViewModels.Basic
 {
@@ -149,10 +150,13 @@ namespace GetStartedApp.ViewModels.Basic
         {
             var model = parameter as UserDto;
             DialogParameters keyValuePairs = new DialogParameters();
-            if (model != null)
+            if (model == null)
             {
-                keyValuePairs.Add("Model", model);
+                MessageBox.ShowAsync("请选择一条记录,再编辑!","",MessageBoxIcon.Error,MessageBoxButton.OK);
+                return;
             }
+            keyValuePairs.Add("Model", model);
+
             _dialogService.ShowDialog("SetUserDlg",keyValuePairs, r =>
             {
                 if (r.Result == ButtonResult.OK)
