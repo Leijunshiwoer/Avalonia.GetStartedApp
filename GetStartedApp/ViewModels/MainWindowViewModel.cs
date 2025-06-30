@@ -1,12 +1,16 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.SqlSugar.Services;
 using GetStartedApp.Views;
 using Prism.Commands;
 using Prism.Navigation.Regions;
 using System.Collections.ObjectModel;
+using Ursa.Controls;
 
 namespace GetStartedApp.ViewModels;
 
@@ -17,13 +21,14 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
     private readonly ISysUserService _sysUserService;
+    private readonly IToastService _toastService;
 
-    public MainWindowViewModel(IRegionManager regionManager,ISysUserService sysUserService)
+    public MainWindowViewModel(IRegionManager regionManager,ISysUserService sysUserService,IToastService toastService)
     {
 
         _regionManager = regionManager;
         _sysUserService = sysUserService;
-
+        _toastService = toastService;
         Title = "Sample Prism.Avalonia MVVM!";
         IsVisible01 = false;
         IsVisible02 = true;
@@ -83,14 +88,17 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (b)
         {
-            Tips = "登录成功！";
             IsVisible02 = false;
             IsVisible01 = true;
+            _toastService.Show("登录成功!");
         }
         else
         {
             Tips = "用户名或密码错误!";
+           // ToastManager.Show(new Toast("用户名或密码错误!"));
             return;
         }
     }
+
+
 }

@@ -8,6 +8,7 @@ using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
 using Example;
 using GetStartedApp.AutoMapper;
+using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
@@ -63,6 +64,9 @@ namespace GetStartedApp
                 //检查当前用户是否为管理员
                 //直接启动应用程序
                 sell = Container.Resolve<MainWindow>();
+
+                var toastService = ContainerLocator.Container.Resolve<IToastService>();
+                toastService.Initialize(sell);
             }
             else
             {
@@ -79,12 +83,19 @@ namespace GetStartedApp
             //return Container.Resolve<MainWindow>();
         }
 
+        // App.xaml.cs
+        public override void OnFrameworkInitializationCompleted()
+        {
+
+            base.OnFrameworkInitializationCompleted();
+        }
+
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             // Add Services and ViewModel registrations here
 
             Console.WriteLine("RegisterTypes()");
-
+            containerRegistry.RegisterSingleton<IToastService, ToastService>();
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///
@@ -103,12 +114,8 @@ namespace GetStartedApp
             // Views - Region Navigation
             containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
-
-
-
         }
-
-
+       
         protected override IContainerExtension CreateContainerExtension()
         {
             var serviceCollection = new ServiceCollection();

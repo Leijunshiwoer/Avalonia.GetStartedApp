@@ -2,6 +2,7 @@
 using DryIoc;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Models;
+using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.UserControls;
 
@@ -22,17 +23,21 @@ namespace GetStartedApp.ViewModels.Basic
         private readonly IDialogService _dialogService;
         private readonly ISysUserService _sysUserService;
         private readonly IAppMapper _mapper;
+        private readonly IToastService _toastService;
 
         public UserViewModel(
             IDialogService dialogService, 
             ISysUserService sysUserService,
+            IToastService toastService,
              IAppMapper mapper)
         {
             _dialogService = dialogService;
             _sysUserService = sysUserService;
             _mapper = mapper;
+            _toastService = toastService;
             // 初始化数据
             GetAllUsers();
+            
         }
 
 
@@ -140,6 +145,7 @@ namespace GetStartedApp.ViewModels.Basic
         void ExecuteRefreshCmd()
         {
             GetAllUsers();
+            _toastService.Show("刷新");
         }
 
         private DelegateCommand<object> _ModifyCmd;
