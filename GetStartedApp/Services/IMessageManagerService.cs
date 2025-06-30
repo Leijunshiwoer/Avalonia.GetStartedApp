@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,10 +8,12 @@ using System.Threading.Tasks;
 
 namespace GetStartedApp.Services
 {
-    public interface IToastService
+    public interface IMessageManagerService
     {
         void Show(string message);
 
         void Initialize(Window mainWindow);
+        void Show(string message, NotificationType type);
     }
 }
+

@@ -65,8 +65,8 @@ namespace GetStartedApp
                 //直接启动应用程序
                 sell = Container.Resolve<MainWindow>();
 
-                var toastService = ContainerLocator.Container.Resolve<IToastService>();
-                toastService.Initialize(sell);
+                var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
+                messageManagerService.Initialize(sell);
             }
             else
             {
@@ -95,7 +95,7 @@ namespace GetStartedApp
             // Add Services and ViewModel registrations here
 
             Console.WriteLine("RegisterTypes()");
-            containerRegistry.RegisterSingleton<IToastService, ToastService>();
+            containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///

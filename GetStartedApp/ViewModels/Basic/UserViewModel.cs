@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Avalonia.Controls.Notifications;
 using DryIoc;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Models;
@@ -23,18 +24,18 @@ namespace GetStartedApp.ViewModels.Basic
         private readonly IDialogService _dialogService;
         private readonly ISysUserService _sysUserService;
         private readonly IAppMapper _mapper;
-        private readonly IToastService _toastService;
+        private readonly IMessageManagerService _messageManagerService;
 
         public UserViewModel(
             IDialogService dialogService, 
             ISysUserService sysUserService,
-            IToastService toastService,
+            IMessageManagerService messageManagerService,
              IAppMapper mapper)
         {
             _dialogService = dialogService;
             _sysUserService = sysUserService;
             _mapper = mapper;
-            _toastService = toastService;
+            _messageManagerService = messageManagerService;
             // 初始化数据
             GetAllUsers();
             
@@ -145,7 +146,9 @@ namespace GetStartedApp.ViewModels.Basic
         void ExecuteRefreshCmd()
         {
             GetAllUsers();
-            _toastService.Show("刷新");
+            _messageManagerService.Show("刷新", NotificationType.Information);
+
+
         }
 
         private DelegateCommand<object> _ModifyCmd;

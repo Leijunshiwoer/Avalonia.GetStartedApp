@@ -21,14 +21,14 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
     private readonly ISysUserService _sysUserService;
-    private readonly IToastService _toastService;
+    private readonly IMessageManagerService _messageManagerService;
 
-    public MainWindowViewModel(IRegionManager regionManager,ISysUserService sysUserService,IToastService toastService)
+    public MainWindowViewModel(IRegionManager regionManager, ISysUserService sysUserService, IMessageManagerService messageManagerService)
     {
 
         _regionManager = regionManager;
         _sysUserService = sysUserService;
-        _toastService = toastService;
+        _messageManagerService = messageManagerService;
         Title = "Sample Prism.Avalonia MVVM!";
         IsVisible01 = false;
         IsVisible02 = true;
@@ -90,7 +90,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             IsVisible02 = false;
             IsVisible01 = true;
-            _toastService.Show("登录成功!");
+            _messageManagerService.Show("登录成功!");
         }
         else
         {
