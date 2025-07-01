@@ -62,25 +62,26 @@
             </Panel>
         </Grid>
 
-        <Grid Width="800"
+        <Grid Width="1000"
               Height="400"
               Background="White"
+              ColumnDefinitions="2*,1*"
               IsVisible="{Binding IsVisible02}">
+
+
             <Border BorderBrush="Black" BorderThickness="2" />
-            <Border Width="330"
-                    Margin="6"
-                    HorizontalAlignment="Right"
-                    Background="#F7F8F9"
-                    BorderBrush="#DDD"
-                    BorderThickness="2" />
             <!--  图片  -->
-            <Polygon HorizontalAlignment="Stretch" Points="0 0,420 0,450 200,420 400,0 400">
+            <!--<Polygon HorizontalAlignment="Stretch" Points="0 0,420 0,450 200,420 400,0 400">
                 <Polygon.Fill>
                     <ImageBrush Source="avares://GetStartedApp/Assets/Images/login.jpeg" Stretch="UniformToFill" />
                 </Polygon.Fill>
-            </Polygon>
+            </Polygon>-->
+            <Image Grid.Column="0"
+                   Source="avares://GetStartedApp/Assets/Images/login.jpeg"
+                   Stretch="UniformToFill" />
+
             <!--  内容  -->
-            <Grid Margin="0,6">
+            <Grid Grid.Column="1" Margin="0,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="280" />

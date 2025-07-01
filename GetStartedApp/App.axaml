@@ -17,6 +17,10 @@
             <Setter Property="Margin" Value="5" />
         </Style>
 
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="{DynamicResource MiSans}" />
+        </Style>
+
 
         <!--  ... other styles ...  -->
         <!--  We want our CheckBox to be stretched horizontally (the default is left-aligned)  -->
@@ -33,6 +37,13 @@
         <u-semi:SemiTheme Locale="zh-CN" />
 
     </Application.Styles>
+
+    <Application.Resources>
+        <!--  指定字体文件（#号后是字体名称，必须指定，否则不生效。）  -->
+        <FontFamily x:Key="MiSans">avares://GetStartedApp/Assets/fonts/MiSans-Normal.ttf#MiSans</FontFamily>
+        <!--  指定字体文件夹（#号后是字体名称，必须指定，否则不生效。）  -->
+        <!--<FontFamily x:Key="MiSans">avares://AvaloniaApplication1/fonts#MiSans</FontFamily>-->
+    </Application.Resources>
 
 
 </Application>

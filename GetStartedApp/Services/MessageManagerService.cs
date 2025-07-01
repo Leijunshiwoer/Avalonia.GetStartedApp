@@ -22,7 +22,9 @@ namespace GetStartedApp.Services
         {
             _mainWindow = mainWindow;
             var topLevel=TopLevel.GetTopLevel(mainWindow);
+
             _toastManager = new WindowToastManager(topLevel) { MaxItems = 3 };
+
             _notificationManager = new WindowNotificationManager(topLevel) { MaxItems = 3 };
         }
 
@@ -35,5 +37,6 @@ namespace GetStartedApp.Services
         {
             _notificationManager?.Show(new Notification() { Content=message,Type=type}); 
         }
+
     }
 }
