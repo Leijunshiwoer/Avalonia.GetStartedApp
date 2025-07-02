@@ -24,14 +24,6 @@
         </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="auto,auto,auto,*">
-        <u:Form LabelPosition="Left" LabelWidth="*">
-            <TextBox Width="300"
-                     u:FormItem.IsRequired="True"
-                     u:FormItem.Label="Name" />
-            <TextBox Width="300" u:FormItem.Label="Email" />
-            <TextBox Width="300"
-                     u:FormItem.Label="Message"
-                     Classes="TextArea" />
-        </u:Form>
+        <TextBlock>我是主界面</TextBlock>
     </Grid>
 </UserControl>

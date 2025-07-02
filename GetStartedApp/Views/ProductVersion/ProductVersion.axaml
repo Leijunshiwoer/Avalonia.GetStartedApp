@@ -1,0 +1,41 @@
+<UserControl x:Class="GetStartedApp.ProductVersion"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:type="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels.ProductVersion;assembly=GetStartedApp"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             prism:ViewModelLocator.AutoWireViewModel="True"
+             x:DataType="vm:ProductVersionViewModel"
+             mc:Ignorable="d">
+
+    <Grid ColumnDefinitions="auto,*">
+        <Border Margin="10"
+                Background="White"
+                BorderBrush="Silver"
+                BorderThickness="2"
+                CornerRadius="10">
+            <TreeView BorderThickness="0"
+                      ItemsSource="{Binding VersionTree}"
+                      SelectionMode="Single">
+
+                <TreeView.Styles>
+                    <Style Selector="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="True" />
+                    </Style>
+                </TreeView.Styles>
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate DataType="type:VersionPrimaryDto" ItemsSource="{Binding VersionSeconds}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Code}" />
+                            <TextBlock Text="{Binding Name, StringFormat='({0})'}" />
+                        </StackPanel>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Border>
+    </Grid>
+</UserControl>

@@ -58,7 +58,8 @@ namespace GetStartedApp.SqlSugar.Extensions
 
             services.AddTransient<ISysUserService, SysUserService>();
             services.AddTransient<ISysRoleService, SysRoleService>();
-
+            services.AddTransient<IBase_Version_Primary_Config_Service, Base_Version_Primary_Config_Service>();
+            services.AddTransient<IBase_Version_Second_Config_Service, Base_Version_Second_Config_Service>();
             //services.AddTransient<ISysMenuService, SysMuneService>();
             //services.AddTransient<IBase_Model_Factory_Config_Service, Base_Model_Factory_Config_Service>();
             //services.AddTransient<IBase_Model_Workcenter_Config_Service, Base_Model_Workcenter_Config_Service>();

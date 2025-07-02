@@ -56,6 +56,8 @@ public class SideMenuViewModel : ViewModelBase
                 break;
             case "型号管理":
                 // TODO: Add navigation for 型号管理
+                _regionManager.RequestNavigate(RegionNames.ContentRegion, "ProductVersion");
+
                 break;
             case "型号属性":
                 // TODO: Add navigation for 型号属性
