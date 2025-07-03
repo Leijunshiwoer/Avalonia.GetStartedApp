@@ -26,7 +26,7 @@ namespace GetStartedApp.ViewModels.Basic
 
         public SetUserDlgViewModel(ISysRoleService sysRoleService, ISysUserService sysUserService)
         {
-            Title = "Set User";
+            Title = "用户设置";
             _sysRoleService = sysRoleService;
             _sysUserService = sysUserService;
         }

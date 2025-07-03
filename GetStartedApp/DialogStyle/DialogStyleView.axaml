@@ -1,0 +1,30 @@
+<Window x:Class="GetStartedApp.DialogStyleView"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:u="https://irihi.tech/ursa"
+        d:DesignHeight="450"
+        d:DesignWidth="800"
+        CanResize="False"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="60"
+        ExtendClientAreaToDecorationsHint="True"
+        SizeToContent="WidthAndHeight"
+        SystemDecorations="None"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d">
+    <Window.Background>
+        <LinearGradientBrush StartPoint="5%, 5%" EndPoint="80%, 80%">
+            <GradientStop Offset="0.0" Color="{DynamicResource SemiLightBlue0Color}" />
+            <GradientStop Offset="0.4" Color="{DynamicResource SemiLightBlue2Color}" />
+            <GradientStop Offset="0.9" Color="{DynamicResource SemiLightBlue1Color}" />
+        </LinearGradientBrush>
+    </Window.Background>
+    <Border BorderBrush="Silver" BorderThickness="2">
+        <Grid>
+            <!--  Content  -->
+            <ContentPresenter Grid.Row="1" />
+        </Grid>
+    </Border>
+</Window>

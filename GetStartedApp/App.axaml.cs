@@ -30,6 +30,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ursa.Controls;
+using Ursa.PrismExtension;
 using DbType = SqlSugar.DbType;
 
 
@@ -100,9 +101,10 @@ namespace GetStartedApp
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///
-
+           
             containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
 
+            containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
             // Dialogs
             //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
             //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
@@ -111,8 +113,6 @@ namespace GetStartedApp
             // Views - Generic
             containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
             containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
-
-            // Views - Region Navigation
             containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
             containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();

@@ -27,7 +27,7 @@ namespace GetStartedApp.ViewModels.Basic
         private readonly IMessageManagerService _messageManagerService;
 
         public UserViewModel(
-            IDialogService dialogService, 
+            IDialogService dialogService,
             ISysUserService sysUserService,
             IMessageManagerService messageManagerService,
              IAppMapper mapper)
@@ -38,13 +38,13 @@ namespace GetStartedApp.ViewModels.Basic
             _messageManagerService = messageManagerService;
             // 初始化数据
             GetAllUsers();
-            
+
         }
 
 
         #region 属性
 
-       
+
         private ObservableCollection<UserDto> _Users;
         public ObservableCollection<UserDto> Users
 
@@ -59,7 +59,6 @@ namespace GetStartedApp.ViewModels.Basic
             get => _allUsers ??= new ObservableCollection<UserDto>();
             set => SetProperty(ref _allUsers, value);
         }
-
 
         private int _itemsPerPage = 10;
         public int ItemsPerPage
@@ -88,26 +87,26 @@ namespace GetStartedApp.ViewModels.Basic
 
         #endregion
 
+        #region 方法
         private void GetAllUsers()
         {
             var list = _sysUserService.GetUsers();
             var listDto = _mapper.Map<List<UserDto>>(list);
             AllUsers = new ObservableCollection<UserDto>(listDto);
-           
+
         }
 
         private void UpdatePagedUsers()
         {
-    
+
             Users = new ObservableCollection<UserDto>(
                 AllUsers.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage)
             );
         }
-
-
+        #endregion
         #region 事件
 
-        
+
         private DelegateCommand<PageChangedEventArgs> _PageChangedCommand;
         public DelegateCommand<PageChangedEventArgs> PageChangedCommand =>
             _PageChangedCommand ?? (_PageChangedCommand = new DelegateCommand<PageChangedEventArgs>(ExecutePageChangedCommand));
@@ -127,15 +126,18 @@ namespace GetStartedApp.ViewModels.Basic
         void ExecuteAddCmd()
         {
             DialogParameters keyValuePairs = new DialogParameters();
-            _dialogService.ShowDialog("SetUserDlg", r =>
+            keyValuePairs.Add("nonModal", false);
+            _dialogService.Show("SetUserDlg", keyValuePairs, r =>
             {
                 if (r.Result == ButtonResult.OK)
                 {
                     //刷新
                     GetAllUsers();
                 }
-            });
+
+            }, nameof(DialogStyleView));
         }
+
 
 
         private DelegateCommand _RefreshCmd;
@@ -161,30 +163,32 @@ namespace GetStartedApp.ViewModels.Basic
             DialogParameters keyValuePairs = new DialogParameters();
             if (model == null)
             {
-                MessageBox.ShowAsync("请选择一条记录,再编辑!","",MessageBoxIcon.Error,MessageBoxButton.OK);
+                MessageBox.ShowAsync("请选择一条记录,再编辑!", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                 return;
             }
             keyValuePairs.Add("Model", model);
-
-            _dialogService.ShowDialog("SetUserDlg",keyValuePairs, r =>
+            keyValuePairs.Add("nonModal", false);
+            _dialogService.Show("SetUserDlg", keyValuePairs, r =>
             {
                 if (r.Result == ButtonResult.OK)
                 {
                     //刷新
                     GetAllUsers();
                 }
-            });
+
+            }, nameof(DialogStyleView));
         }
 
         private DelegateCommand<object> _DeleteCmd;
-      
+
 
         public DelegateCommand<object> DeleteCmd =>
             _DeleteCmd ?? (_DeleteCmd = new DelegateCommand<object>(ExecuteDeleteCmd));
 
         void ExecuteDeleteCmd(object parameter)
         {
-
+            var model = parameter as UserDto;
+            
         }
 
         #endregion

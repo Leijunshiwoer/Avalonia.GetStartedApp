@@ -12,8 +12,13 @@
              x:CompileBindings="True"
              x:DataType="vm:SetUserDlgViewModel"
              mc:Ignorable="d">
-    <Grid RowDefinitions="auto,*">
-        <u:Form Grid.Row="0"
+    <Grid RowDefinitions="auto,*,auto">
+        <TextBlock Grid.Row="0"
+                   Margin="8"
+                   FontSize="16"
+                   FontWeight="600"
+                   Text="{Binding Title}" />
+        <u:Form Grid.Row="1"
                 Margin="10,0"
                 LabelPosition="Left"
                 LabelWidth="*">
@@ -42,7 +47,7 @@
                      Text="{Binding UserDto.Remark}" />
 
         </u:Form>
-        <WrapPanel Grid.Row="1" HorizontalAlignment="Center">
+        <WrapPanel Grid.Row="2" HorizontalAlignment="Center">
 
             <u:IconButton Margin="10"
                           Command="{Binding SaveCommand}"
