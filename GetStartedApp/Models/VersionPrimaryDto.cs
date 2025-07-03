@@ -29,11 +29,5 @@ namespace GetStartedApp.Models
             set { SetProperty(ref _VersionSeconds, value); }
         }
 
-        private bool _isExpanded;
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set => SetProperty(ref _isExpanded, value);
-        }
     }
 }

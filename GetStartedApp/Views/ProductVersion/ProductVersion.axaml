@@ -2,10 +2,13 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prism="http://prismlibrary.com/"
              xmlns:type="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="clr-namespace:GetStartedApp.ViewModels.ProductVersion;assembly=GetStartedApp"
+             Name="userControl"
              d:DesignHeight="450"
              d:DesignWidth="800"
              prism:ViewModelLocator.AutoWireViewModel="True"
@@ -13,7 +16,8 @@
              mc:Ignorable="d">
 
     <Grid ColumnDefinitions="auto,*">
-        <Border Margin="10"
+        <Border Grid.Column="0"
+                Margin="10"
                 Background="White"
                 BorderBrush="Silver"
                 BorderThickness="2"
@@ -37,5 +41,167 @@
                 </TreeView.ItemTemplate>
             </TreeView>
         </Border>
+
+        <TabControl Grid.Column="1">
+            <TabItem Width="120" Header="主型号">
+                <Grid RowDefinitions="auto,*,auto">
+                    <u:ToolBar Grid.Row="0">
+                        <u:IconButton Command="{Binding PrimaryAddCmd}" Content="新增">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-plus" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                    </u:ToolBar>
+                    <DataGrid x:Name="dgWS"
+                              Grid.Row="1"
+                              ItemsSource="{Binding VersionPrimarys}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding Id}"
+                                                Header="Id" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Code}"
+                                                Header="主型号代码" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Name}"
+                                                Header="主型号名称" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Remark}"
+                                                Header="主型号描述" />
+                            <!--  附加  -->
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding CreatedUserName}"
+                                                Header="创建人" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding CreatedTime}"
+                                                Header="创建时间" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding UpdatedUserName}"
+                                                Header="最后修改人" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding UpdatedTime}"
+                                                Header="最后修改时间" />
+                            <!--  操作  -->
+                            <DataGridTemplateColumn Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.PrimaryModifyCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgWS}"
+                                                          Content="编辑">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-pencil" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgWS}"
+                                                          Content="删除">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-delete" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Width="120" Header="次型号">
+                <Grid RowDefinitions="auto,*,auto">
+                    <u:ToolBar Grid.Row="0">
+                        <u:IconButton Width="120"
+                                      Margin="2"
+                                      Command="{Binding SecondAddCmd}"
+                                      Content="新增">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-plus" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                    </u:ToolBar>
+                    <DataGrid x:Name="dgSecond"
+                              Grid.Row="1"
+                              ItemsSource="{Binding VersionSeconds}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding Id}"
+                                                Header="Id" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Code}"
+                                                Header="次型号代码" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Name}"
+                                                Header="次型号名称" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Remark}"
+                                                Header="次型号描述" />
+                            <!--  附加  -->
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding CreatedUserName}"
+                                                Header="创建人" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding CreatedTime}"
+                                                Header="创建时间" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding UpdatedUserName}"
+                                                Header="最后修改人" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding UpdatedTime}"
+                                                Header="最后修改时间" />
+                            <!--  操作  -->
+                            <DataGridTemplateColumn Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.SecondModifyCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgSecond}"
+                                                          Content="编辑">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-pencil" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.SecondDeleteCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgSecond}"
+                                                          Content="删除">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-delete" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>
