@@ -85,6 +85,13 @@ namespace GetStartedApp.ViewModels.Basic
         public int TotalItems => AllUsers.Count;
 
 
+
+        private UserDto _SelectedItem;
+        public UserDto SelectedItem
+        {
+            get { return _SelectedItem; }
+            set { SetProperty(ref _SelectedItem, value); }
+        }
         #endregion
 
         #region 方法
@@ -160,6 +167,7 @@ namespace GetStartedApp.ViewModels.Basic
         void ExecuteModifyCmd(object parameter)
         {
             var model = parameter as UserDto;
+            SelectedItem = model;
             DialogParameters keyValuePairs = new DialogParameters();
             if (model == null)
             {

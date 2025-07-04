@@ -46,7 +46,8 @@
         <DataGrid Name="dgWs"
                   Grid.Row="1"
                   Margin="8"
-                  ItemsSource="{Binding Users}">
+                  ItemsSource="{Binding Users}"
+                  SelectedItem="{Binding SelectedItem}">
             <DataGrid.Columns>
                 <DataGridTextColumn Width="80"
                                     Binding="{Binding Id}"
@@ -95,7 +96,7 @@
                                 <u:IconButton Width="80"
                                               Margin="2"
                                               Command="{Binding DataContext.ModifyCmd, ElementName=userControl}"
-                                              CommandParameter="{Binding SelectedItem, ElementName=dgWs}"
+                                              CommandParameter="{Binding}"
                                               Content="编辑">
                                     <u:IconButton.Icon>
                                         <i:Icon FontSize="24"
@@ -107,7 +108,7 @@
                                 <u:IconButton Width="80"
                                               Margin="2"
                                               Command="{Binding DataContext.DeleteCmd, ElementName=userControl}"
-                                              CommandParameter="{Binding SelectedItem, ElementName=dgWs}"
+                                              CommandParameter="{Binding}"
                                               Content="删除">
 
                                     <u:IconButton.Icon>
