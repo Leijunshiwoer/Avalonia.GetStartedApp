@@ -34,6 +34,12 @@ public partial class MainWindowViewModel : ViewModelBase
         IsVisible02 = true;
         //初始化操作
         _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(DashboardView));
+
+#if DEBUG
+        User="developer";
+        Password="123";
+
+#endif
     }
 
     // -- Adding new Items --
@@ -78,13 +84,13 @@ public partial class MainWindowViewModel : ViewModelBase
     void ExecuteSubmitCmd()
     {
 
-        if (string.IsNullOrEmpty(User)||string.IsNullOrEmpty(Password))
+        if (string.IsNullOrEmpty(User) || string.IsNullOrEmpty(Password))
         {
             Tips = "用户或密码不能为空!";
             return;
         }
 
-        var b=_sysUserService.Login(User, Password);
+        var b = _sysUserService.Login(User, Password);
 
         if (b)
         {
@@ -95,7 +101,7 @@ public partial class MainWindowViewModel : ViewModelBase
         else
         {
             Tips = "用户名或密码错误!";
-           // ToastManager.Show(new Toast("用户名或密码错误!"));
+            // ToastManager.Show(new Toast("用户名或密码错误!"));
             return;
         }
     }
