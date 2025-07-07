@@ -116,6 +116,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
             containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
+            containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
         }
        
         protected override IContainerExtension CreateContainerExtension()

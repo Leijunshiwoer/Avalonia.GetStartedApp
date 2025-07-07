@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace GetStartedApp.AutoMapper
 {
-    public class AdminAutoMapper:Profile
+    public class AdminAutoMapper : Profile
     {
         public AdminAutoMapper()
         {
             CreateMap<SysUser, UserDto>().ReverseMap();
             CreateMap<SysRole, RoleDto>().ReverseMap();
-            CreateMap<Base_Version_Primary_Config, VersionPrimaryDto>()
-                .ReverseMap();
-            CreateMap<Base_Version_Second_Config, VersionSecondDto>()
-               .ReverseMap();
+            CreateMap<Base_Version_Primary_Config, VersionPrimaryDto>().ReverseMap();
+            CreateMap<Base_Version_Second_Config, VersionSecondDto>() .ReverseMap();
+            CreateMap<Base_Version_Attribute_Config, AttributeDto>().ReverseMap();
+            CreateMap<Base_Process_Step_Config, ProcessStepDto>().ReverseMap();
         }
     }
 

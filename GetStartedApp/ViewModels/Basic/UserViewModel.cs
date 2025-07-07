@@ -71,6 +71,7 @@ namespace GetStartedApp.ViewModels.Basic
             }
         }
 
+
         private int _currentPage = 1;
         public int CurrentPage
         {
