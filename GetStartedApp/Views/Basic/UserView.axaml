@@ -96,7 +96,7 @@
                                 <u:IconButton Width="80"
                                               Margin="2"
                                               Command="{Binding DataContext.ModifyCmd, ElementName=userControl}"
-                                              CommandParameter="{Binding}"
+                                              CommandParameter="{Binding .}"
                                               Content="编辑">
                                     <u:IconButton.Icon>
                                         <i:Icon FontSize="24"
@@ -108,7 +108,7 @@
                                 <u:IconButton Width="80"
                                               Margin="2"
                                               Command="{Binding DataContext.DeleteCmd, ElementName=userControl}"
-                                              CommandParameter="{Binding}"
+                                              CommandParameter="{Binding .}"
                                               Content="删除">
 
                                     <u:IconButton.Icon>

@@ -1,0 +1,123 @@
+<UserControl x:Class="GetStartedApp.VersionAttribute"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             Name="userControl"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+
+    <!--<Grid ColumnDefinitions="auto,*">
+        <Border Grid.Column="0"
+                Margin="10"
+                Background="White"
+                BorderBrush="White"
+                BorderThickness="5"
+                CornerRadius="10">
+
+            <TreeView BorderThickness="0"
+                      ItemsSource="{Binding VersionTree}"
+                      SelectedItem="{Binding selectedItem}"
+                      SelectionMode="Single">
+
+                <TreeView.Styles>
+                    <Style Selector="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="True" />
+                    </Style>
+                </TreeView.Styles>
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate DataType="type:VersionPrimaryDto" ItemsSource="{Binding VersionSeconds}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Code}" />
+                            <TextBlock Text="{Binding Name, StringFormat='({0})'}" />
+                        </StackPanel>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Border>
+
+        <Grid Grid.Column="1" RowDefinitions="auto,*,auto">
+            <DataGrid x:Name="dg"
+                      Grid.Row="1"
+                      ItemsSource="{Binding Attributes}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="60"
+                                        Binding="{Binding VersionSecond.Name}"
+                                        Header="所属型号" />
+                    <DataGridTextColumn Width="80"
+                                        Binding="{Binding Step.Name}"
+                                        Header="所属工位" />
+                    <DataGridTextColumn Width="120"
+                                        Binding="{Binding Code}"
+                                        Header="属性代码" />
+                    <DataGridTextColumn Width="120"
+                                        Binding="{Binding Name}"
+                                        Header="属性名称" />
+                    <DataGridTextColumn Width="120"
+                                        Binding="{Binding Value}"
+                                        Header="属性值" />
+
+                    <DataGridTextColumn Width="auto"
+                                        Binding="{Binding Remark}"
+                                        Header="描述说明" />
+    -->
+    <!--  附加  -->
+    <!--
+                    <DataGridTextColumn Width="120"
+                                        Binding="{Binding CreatedUserName}"
+                                        Header="创建人" />
+                    <DataGridTextColumn Width="160"
+                                        Binding="{Binding CreatedTime}"
+                                        Header="创建时间" />
+                    <DataGridTextColumn Width="120"
+                                        Binding="{Binding UpdatedUserName}"
+                                        Header="最后修改人" />
+                    <DataGridTextColumn Width="160"
+                                        Binding="{Binding UpdatedTime}"
+                                        Header="最后修改时间" />
+    -->
+    <!--  操作  -->
+    <!--
+                    <DataGridTemplateColumn Header="操作">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="8,0,8,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <u:IconButton Width="80"
+                                                  Margin="2"
+                                                  Command="{Binding DataContext.AttributeModifyCmd, ElementName=userControl}"
+                                                  CommandParameter="{Binding SelectedItem, ElementName=dg}"
+                                                  Content="编辑">
+                                        <u:IconButton.Icon>
+                                            <i:Icon FontSize="24"
+                                                    Foreground="DarkBlue"
+                                                    Value="mdi-pencil" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>
+    -->
+    <!--<u:IconButton Width="80"
+                                                  Margin="2"
+                                                  Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                  CommandParameter="{Binding SelectedItem, ElementName=dgWS}"
+                                                  Content="删除">
+                                        <u:IconButton.Icon>
+                                            <i:Icon FontSize="24"
+                                                    Foreground="DarkBlue"
+                                                    Value="mdi-delete" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>-->
+    <!--
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Grid>-->
+</UserControl>

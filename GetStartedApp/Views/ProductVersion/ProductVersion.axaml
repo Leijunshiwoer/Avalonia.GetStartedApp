@@ -124,10 +124,7 @@
             <TabItem Width="120" Header="次型号">
                 <Grid RowDefinitions="auto,*,auto">
                     <u:ToolBar Grid.Row="0">
-                        <u:IconButton Width="120"
-                                      Margin="2"
-                                      Command="{Binding SecondAddCmd}"
-                                      Content="新增">
+                        <u:IconButton Command="{Binding SecondAddCmd}" Content="新增">
                             <u:IconButton.Icon>
                                 <i:Icon FontSize="24"
                                         Foreground="DarkBlue"

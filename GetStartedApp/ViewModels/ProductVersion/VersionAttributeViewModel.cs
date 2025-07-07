@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GetStartedApp.ViewModels.ProductVersion
+{
+    public class VersionAttributeViewModel:ViewModelBase
+    {
+        public VersionAttributeViewModel()
+        {
+                
+        }
+    }
+}
