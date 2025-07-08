@@ -2,6 +2,7 @@
 using GetStartedApp.Core.Helpers;
 using GetStartedApp.Models;
 using GetStartedApp.SqlSugar.IServices;
+using GetStartedApp.UserControls;
 using Prism.Commands;
 using Prism.Navigation.Regions;
 using System;
@@ -34,9 +35,6 @@ namespace GetStartedApp.ViewModels.ProductVersion
             InitVersionTree();
            
         }
-
-
-
         #region 属性
 
 
@@ -72,6 +70,43 @@ namespace GetStartedApp.ViewModels.ProductVersion
                 }
             }
         }
+
+
+        private ObservableCollection<AttributeDto> _AllAttributes;
+        public ObservableCollection<AttributeDto> AllAttributes
+        {
+            get { return _AllAttributes; }
+            set { SetProperty(ref _AllAttributes, value); }
+        }
+
+
+        private int _itemsPerPage = 10;
+        public int ItemsPerPage
+        {
+            get => _itemsPerPage;
+            set
+            {
+                if (SetProperty(ref _itemsPerPage, value))
+                    UpdatePaged();
+            }
+        }
+
+
+        private int _currentPage = 1;
+        public int CurrentPage
+        {
+            get => _currentPage;
+            set
+            {
+                if (SetProperty(ref _currentPage, value))
+                    UpdatePaged();
+            }
+        }
+
+      
+        public int TotalItems => AllAttributes.Count;
+
+
         #endregion
 
         #region 方法
@@ -87,14 +122,31 @@ namespace GetStartedApp.ViewModels.ProductVersion
             //PageIndex = 1;
             //获取当前次类型所有的属性
             var total = 0;
-            Attributes = _appMapper.Map<List<AttributeDto>>(_version_Attribute_Config_Service.GetPageAttributeBySecondIds(secondIds, ref total, 1)).ToObservableConllection();
+            AllAttributes = _appMapper.Map<List<AttributeDto>>(_version_Attribute_Config_Service.GetPageAttributeBySecondIds(secondIds, ref total, 1)).ToObservableConllection();
         }
 
+        private void UpdatePaged()
+        {
+            Attributes = new ObservableCollection<AttributeDto>(
+                AllAttributes.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage)
+            );
+        }
 
         #endregion
 
         #region 事件
 
+
+        private DelegateCommand<PageChangedEventArgs> _PageChangedCommand;
+        public DelegateCommand<PageChangedEventArgs> PageChangedCommand =>
+            _PageChangedCommand ?? (_PageChangedCommand = new DelegateCommand<PageChangedEventArgs>(ExecutePageChangedCommand));
+
+        void ExecutePageChangedCommand(PageChangedEventArgs parameter)
+        {
+            CurrentPage = parameter.CurrentPage;
+            ItemsPerPage = parameter.ItemsPerPage;
+            UpdatePaged();
+        }
 
         private DelegateCommand<object> _AttributeModifyCmd;
         public DelegateCommand<object> AttributeModifyCmd =>

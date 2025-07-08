@@ -17,9 +17,7 @@
              x:CompileBindings="True"
              x:DataType="vm:UserViewModel"
              mc:Ignorable="d">
-    <Design.DataContext>
-        <vm:UserViewModel />
-    </Design.DataContext>
+
     <Grid RowDefinitions="Auto,*,Auto">
 
         <u:ToolBar Grid.Row="0">

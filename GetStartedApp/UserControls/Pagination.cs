@@ -223,9 +223,10 @@ namespace GetStartedApp.UserControls
         private void UpdatePaginationInfo()
         {
             if (TotalItems < 0) return;
-            _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {TotalItems} 页";
+            int totalPages = CalculateTotalPages();
+            _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {totalPages} 页（共 {TotalItems} 条）";
             _prevPageButton.IsEnabled = _currentPage > 1;
-            _nextPageButton.IsEnabled = _currentPage < TotalItems;
+            _nextPageButton.IsEnabled = _currentPage < totalPages;
         }
         // 更新分页并触发Change
         private void UpdatePagination()
@@ -233,7 +234,8 @@ namespace GetStartedApp.UserControls
             if (ItemsSource == null) return;
             if (!IsBackendPaging && ItemsSource.Cast<object>().Count() == 0) return;
             int totalPages = CalculateTotalPages();
-            _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {totalPages} 页";
+            int totalItems = TotalItems == -1 ? ItemsSource.Cast<object>().Count() : TotalItems;
+            _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {totalPages} 页（共 {totalItems} 条）";
             _prevPageButton.IsEnabled = _currentPage > 1;
             _nextPageButton.IsEnabled = _currentPage < totalPages;
 

@@ -9,9 +9,11 @@ using GetStartedApp.UserControls;
 
 using Prism.Commands;
 using Prism.Dialogs;
+using Prism.Navigation.Regions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,11 +38,15 @@ namespace GetStartedApp.ViewModels.Basic
             _sysUserService = sysUserService;
             _mapper = mapper;
             _messageManagerService = messageManagerService;
+         
+
+        }
+        public override void OnNavigatedTo(NavigationContext navigationContext)
+        {
             // 初始化数据
             GetAllUsers();
 
         }
-
 
         #region 属性
 

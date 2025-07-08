@@ -101,7 +101,7 @@ namespace GetStartedApp
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///
-           
+
             containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
 
             containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
@@ -118,7 +118,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
             containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
         }
-       
+
         protected override IContainerExtension CreateContainerExtension()
         {
             var serviceCollection = new ServiceCollection();
@@ -136,8 +136,18 @@ namespace GetStartedApp
             #region 配置sqlsuagr
 
             var connectConfigList = new List<ConnectionConfig>();
+            var connectionString = string.Empty;
             //数据库序号从0开始,默认数据库为0
-            var connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+            //如果是设计模式下，则使用默认的连接字符串
+            if (Design.IsDesignMode)
+            {
+                connectionString = "Data Source=localhost;Initial Catalog=F2210001;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
+            }
+            else
+            {
+                connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+            }
+
             //默认数据库
             connectConfigList.Add(new ConnectionConfig
             {

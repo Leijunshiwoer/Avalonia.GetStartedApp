@@ -1,6 +1,7 @@
 <UserControl x:Class="GetStartedApp.VersionAttribute"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cc="using:GetStartedApp.UserControls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -61,7 +62,7 @@
                     <DataGridTextColumn Width="120"
                                         Binding="{Binding Name}"
                                         Header="属性名称" />
-                    <DataGridTextColumn Width="120"
+                    <DataGridTextColumn Width="140"
                                         Binding="{Binding Value}"
                                         Header="属性值" />
 
@@ -117,6 +118,15 @@
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
+
+            <cc:Pagination Grid.Row="2"
+                           HorizontalAlignment="Left"
+                           IsBackendPaging="False"
+                           ItemsPerPage="{Binding ItemsPerPage}"
+                           ItemsSource="{Binding AllAttributes}"
+                           PageChangedCommand="{Binding PageChangedCommand}" />
         </Grid>
+
+
     </Grid>
 </UserControl>
