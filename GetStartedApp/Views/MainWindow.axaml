@@ -62,79 +62,86 @@
             </Panel>
         </Grid>
 
-        <Grid Width="1000"
-              Height="400"
-              Background="White"
-              ColumnDefinitions="2*,1*"
-              IsVisible="{Binding IsVisible02}">
+        <Border Width="1000"
+                Height="450"
+                BorderBrush="White"
+                BorderThickness="2"
+                BoxShadow="0 0 10 4 #ccc"
+                IsVisible="{Binding IsVisible02}">
 
-
-            <Border BorderBrush="Black" BorderThickness="2" />
-            <!--  图片  -->
-            <!--<Polygon HorizontalAlignment="Stretch" Points="0 0,420 0,450 200,420 400,0 400">
+            <Grid Background="White" ColumnDefinitions="2*,1*">
+                <!--  图片  -->
+                <!--<Polygon HorizontalAlignment="Stretch" Points="0 0,420 0,450 200,420 400,0 400">
                 <Polygon.Fill>
                     <ImageBrush Source="avares://GetStartedApp/Assets/Images/login.jpeg" Stretch="UniformToFill" />
                 </Polygon.Fill>
             </Polygon>-->
-            <Image Grid.Column="0"
-                   Source="avares://GetStartedApp/Assets/Images/login.jpeg"
-                   Stretch="UniformToFill" />
+                <Image Grid.Column="0"
+                       Source="avares://GetStartedApp/Assets/Images/login.jpeg"
+                       Stretch="UniformToFill" />
 
-            <!--  内容  -->
-            <Grid Grid.Column="1" Margin="0,6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="280" />
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="1" Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="30" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                <!--  内容  -->
+                <Grid Grid.Column="1" Margin="0,6">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="280" />
+                    </Grid.ColumnDefinitions>
 
 
-                    <WrapPanel Grid.Row="3"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center">
-                        <TextBlock Text="用户名 :" />
-                        <TextBox Name="user"
-                                 Width="200"
-                                 Margin="2"
-                                 Text="{Binding User}" />
-                    </WrapPanel>
+                    <Grid Grid.Column="1" Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                    <WrapPanel Grid.Row="4"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center">
-                        <TextBlock Text="密码   :" />
-                        <TextBox Name="pwd"
-                                 Width="200"
-                                 Margin="2"
-                                 PasswordChar="*"
-                                 Text="{Binding Password}" />
-                    </WrapPanel>
-                    <Button Grid.Row="7"
-                            Width="260"
-                            Command="{Binding SubmitCmd}"
-                            Content="确  定"
-                            IsDefault="True" />
-                    <TextBlock Grid.Row="8"
-                               Foreground="Red"
-                               Text="{Binding Tips}"
-                               TextWrapping="Wrap" />
+
+                        <WrapPanel Grid.Row="3"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <TextBlock Text="用户名 :" />
+                            <TextBox Name="user"
+                                     Width="200"
+                                     Margin="2"
+                                     Text="{Binding User}" />
+                        </WrapPanel>
+
+                        <WrapPanel Grid.Row="4"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <TextBlock Text="密码   :" />
+                            <TextBox Name="pwd"
+                                     Width="200"
+                                     Margin="2"
+                                     PasswordChar="*"
+                                     Text="{Binding Password}" />
+                        </WrapPanel>
+                        <Button Grid.Row="7"
+                                Width="260"
+                                Command="{Binding SubmitCmd}"
+                                Content="确  定"
+                                IsDefault="True" />
+                        <TextBlock Grid.Row="8"
+                                   Foreground="Red"
+                                   Text="{Binding Tips}"
+                                   TextWrapping="Wrap" />
+
+                    </Grid>
+
                 </Grid>
+
+
             </Grid>
-        </Grid>
 
 
-
+        </Border>
     </Panel>
 </Window>

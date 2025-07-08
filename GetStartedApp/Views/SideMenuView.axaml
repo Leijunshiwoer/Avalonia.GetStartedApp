@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:iri="https://irihi.tech/shared"
+             xmlns:m="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prism="http://prismlibrary.com/"
              xmlns:u="https://irihi.tech/ursa"
@@ -42,7 +43,7 @@
                        SubMenuBinding="{Binding Children}">
 
                 <u:NavMenu.Styles>
-                    <Style x:DataType="vm:MenuItem" Selector="u|NavMenuItem">
+                    <Style x:DataType="m:MenuItem" Selector="u|NavMenuItem">
                         <Setter Property="IsSeparator" Value="{Binding IsSeparator}" />
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="Transitions">
@@ -58,7 +59,7 @@
 
                 <u:NavMenu.IconTemplate>
                     <DataTemplate>
-                        <i:Icon FontSize="24"
+                        <i:Icon FontSize="22"
                                 Foreground="DarkBlue"
                                 Value="{Binding Converter={StaticResource IconConverter}}" />
                     </DataTemplate>

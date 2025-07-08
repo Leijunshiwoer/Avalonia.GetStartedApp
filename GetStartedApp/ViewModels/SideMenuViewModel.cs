@@ -1,26 +1,30 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using GetStartedApp.Models;
+using GetStartedApp.SqlSugar.IServices;
+using GetStartedApp.SqlSugar.Services;
+using GetStartedApp.SqlSugar.Tables;
 using Prism.Mvvm;
 using Prism.Navigation.Regions;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Ursa.Controls;
+
 
 namespace GetStartedApp.ViewModels;
 
 public class SideMenuViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
+    private readonly ISysMenuService _menuService;
+
     public IRelayCommand NavigationCommand { get; }
-    public SideMenuViewModel(IRegionManager regionManager)
+    public SideMenuViewModel(IRegionManager regionManager, ISysMenuService menuService)
     {
         _regionManager = regionManager;
+        _menuService = menuService;
         NavigationCommand = new RelayCommand(OnNavigate);
-        CreateMenu();
+        // CreateMenu();
+        _ = LoadMenuAsync();
     }
 
     private MenuItem? _SelectedMenuItem;
@@ -42,144 +46,27 @@ public class SideMenuViewModel : ViewModelBase
     {
         if (SelectedMenuItem == null || string.IsNullOrEmpty(SelectedMenuItem.Header))
             return;
-
-        switch (SelectedMenuItem.Header)
-        {
-            case "首页":
-                _regionManager.RequestNavigate(RegionNames.ContentRegion, "DashboardView");
-                break;
-            case "用户管理":
-                _regionManager.RequestNavigate(RegionNames.ContentRegion, "UserView");
-                break;
-            case "权限管理":
-                // TODO: Add navigation for 权限管理
-                break;
-            case "型号管理":
-                // TODO: Add navigation for 型号管理
-                _regionManager.RequestNavigate(RegionNames.ContentRegion, "ProductVersion");
-                break;
-            case "型号属性":
-                // TODO: Add navigation for 型号属性
-                _regionManager.RequestNavigate(RegionNames.ContentRegion, "VersionAttribute");
-                break;
-            case "工艺路线":
-                // TODO: Add navigation for 工艺路线
-                break;
-            case "工单任务":
-                // TODO: Add navigation for 工单任务
-                break;
-            case "标签监控":
-                // TODO: Add navigation for 标签监控
-                break;
-            case "产品配方":
-                // TODO: Add navigation for 产品配方
-                break;
-            case "设备监控":
-                // TODO: Add navigation for 设备监控
-                break;
-            case "实时报警":
-                // TODO: Add navigation for 实时报警
-                break;
-            case "PLC管理":
-                // TODO: Add navigation for PLC管理
-                break;
-            case "PLC事件":
-                // TODO: Add navigation for PLC事件
-                break;
-            case "数据(历史)":
-                // TODO: Add navigation for 数据(历史)
-                break;
-            case "数据(实时)":
-                // TODO: Add navigation for 数据(实时)
-                break;
-            default:
-                // TODO: Handle unknown menu
-                break;
-        }
+        _regionManager.RequestNavigate(RegionNames.ContentRegion, SelectedMenuItem.Navigate);
     }
 
-    private void CreateMenu()
+    private async Task LoadMenuAsync()
     {
-        MenuItems.Add(new MenuItem { Header = "首页", IconIndex = "mdi-home", NavigationCommand = NavigationCommand });
-        MenuItems.Add(new MenuItem
-        {
-            Header = "基础数据",
-            IconIndex = "mdi-file",
-            Children = {
-                new MenuItem{ Header="用户管理",IconIndex="mdi-account", NavigationCommand = NavigationCommand},
-                new MenuItem { Header= "权限管理",IconIndex="mdi-shield-account", NavigationCommand = NavigationCommand },
-                new MenuItem{Header="型号管理",IconIndex="mdi-car-electric", NavigationCommand = NavigationCommand},
-                new MenuItem{ Header="型号属性",IconIndex="mdi-cog-outline", NavigationCommand = NavigationCommand },
-                new MenuItem{Header="工艺路线",IconIndex="mdi-router", NavigationCommand = NavigationCommand}
-            }
-        });
-
-        MenuItems.Add(new MenuItem
-        {
-            Header = "产品管理",
-            IconIndex = "mdi-package-variant-closed-check",
-            Children = {
-            new MenuItem { Header = "工单任务", IconIndex = "mdi-format-list-numbered-rtl", NavigationCommand = NavigationCommand },
-            new MenuItem { Header = "标签监控", IconIndex = "mdi-barcode", NavigationCommand = NavigationCommand },
-            new MenuItem { Header = "产品配方", IconIndex = "mdi-format-list-checkbox", NavigationCommand = NavigationCommand }
-        }
-        });
-
-        MenuItems.Add(new MenuItem
-        {
-            Header = "设备管理",
-            IconIndex = "mdi-steam",
-            Children = {
-            new MenuItem { Header = "设备监控", IconIndex = "mdi-monitor-eye", NavigationCommand = NavigationCommand },
-            new MenuItem { Header = "实时报警", IconIndex = "mdi-bell-alert", NavigationCommand = NavigationCommand }
-        }
-        });
-
-        MenuItems.Add(new MenuItem
-        {
-            Header = "外设管理",
-            IconIndex = "mdi-devices",
-            Children = {
-            new MenuItem { Header = "PLC管理", IconIndex = "mdi-microsoft-visual-studio", NavigationCommand = NavigationCommand },
-            new MenuItem { Header = "PLC事件", IconIndex = "mdi-microsoft-visual-studio", NavigationCommand = NavigationCommand }
-        }
-        });
-
-        MenuItems.Add(new MenuItem
-        {
-            Header = "数据管理",
-            IconIndex = "mdi-database",
-            Children = {
-            new MenuItem { Header = "数据(历史)", IconIndex = "mdi-database-search-outline", NavigationCommand = NavigationCommand },
-            new MenuItem { Header = "数据(实时)", IconIndex = "mdi-database-eye-outline", NavigationCommand = NavigationCommand }
-        }
-        });
+        var sysMenus = await _menuService.GetMenuTreeAsync();
+        MenuItems = new ObservableCollection<MenuItem>(sysMenus.Select(ToMenuItem));
     }
+
+    private MenuItem ToMenuItem(SysMenu sysMenu)
+    {
+        return new MenuItem
+        {
+            Header = sysMenu.Name,
+            IconIndex = sysMenu.Icon,
+            Navigate= sysMenu.Navigate,
+            NavigationCommand = NavigationCommand,
+            Children = new ObservableCollection<MenuItem>(sysMenu.Menus?.Select(ToMenuItem) ?? Enumerable.Empty<MenuItem>())
+        };
+    }
+
 }
 
-public class MenuItem
-{
-    public string? Header { get; set; }
-    public string IconIndex { get; set; }
-    public bool IsSeparator { get; set; }
-    public ICommand NavigationCommand { get; set; }
-    public ObservableCollection<MenuItem> Children { get; set; } = new ObservableCollection<MenuItem>();
 
-    public IEnumerable<MenuItem> GetLeaves()
-    {
-        if (this.Children.Count == 0)
-        {
-            yield return this;
-            yield break;
-        }
-
-        foreach (var child in Children)
-        {
-            var items = child.GetLeaves();
-            foreach (var item in items)
-            {
-                yield return item;
-            }
-        }
-    }
-}

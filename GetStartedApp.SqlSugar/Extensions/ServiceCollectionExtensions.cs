@@ -58,34 +58,12 @@ namespace GetStartedApp.SqlSugar.Extensions
 
             services.AddTransient<ISysUserService, SysUserService>();
             services.AddTransient<ISysRoleService, SysRoleService>();
+            services.AddTransient<ISysMenuService, SysMenuService>();
+
             services.AddTransient<IBase_Version_Primary_Config_Service, Base_Version_Primary_Config_Service>();
             services.AddTransient<IBase_Version_Second_Config_Service, Base_Version_Second_Config_Service>();
             services.AddTransient<IBase_Version_Attribute_Config_Service, Base_Version_Attribute_Config_Service>();
-            //services.AddTransient<ISysMenuService, SysMuneService>();
-            //services.AddTransient<IBase_Model_Factory_Config_Service, Base_Model_Factory_Config_Service>();
-            //services.AddTransient<IBase_Model_Workcenter_Config_Service, Base_Model_Workcenter_Config_Service>();
-            //services.AddTransient<IBase_Model_Line_Config_Service, Base_Model_Line_Config_Service>();
-            //services.AddTransient<IBase_Model_Unit_Config_Service, Base_Model_Unit_Config_Service>();
-            //services.AddTransient<IBase_Version_Primary_Config_Service, Base_Version_Primary_Config_Service>();
-            //services.AddTransient<IBase_Version_Second_Config_Service, Base_Version_Second_Config_Service>();
-            //services.AddTransient<IBase_Route_Config_Service, Base_Route_Config_Service>();
-            //services.AddTransient<IBase_Process_Config_Service, Base_Process_Config_Service>();
-            //services.AddTransient<IBase_Process_Step_Config_Service, Base_Process_Step_Config_Service>();
-            //services.AddTransient<IBase_Route_ProcessStep_Config_Service, Base_Route_ProcessStep_Config_Service>();
-            //services.AddTransient<IProduct_Task_Config_Service, Product_Task_Config_Service>();
-            //services.AddTransient<IProduct_Task_Route_Config_Service, Product_Task_Route_Config_Service>();
-            //services.AddTransient<IBase_Version_Attribute_Config_Service, Base_Version_Attribute_Config_Service>();
-            //services.AddTransient<IData_Quality_Service, Data_Quality_Service>();
-            //services.AddTransient<IDevice_Carrire_Config_Service, Device_Carrire_Config_Service>();
-            //services.AddTransient<ISysUserService, SysUserService>();
-            //services.AddTransient<IProduct_Recipe_Service, Product_Recipe_Service>();                                           //配方
-            //services.AddTransient<IProduct_Task_Label_Service, Product_Task_Label_Service>();
-            //services.AddTransient<IMachine_Service, Machine_Service>();
-            //services.AddTransient<IMachine_QuickWearPart_Service, Machine_QuickWearPart_Service>();
-            //services.AddTransient<IProductSerial_Service, ProductSerial_Service>();
-            //services.AddTransient<IBeckhoff_Event_log_Service, Beckhoff_Event_log_Service>();
-            //services.AddTransient<IProduct_Task_Material_Service, Product_Task_Material_Service>();
-            //services.AddTransient<ILog_Event_Service, Log_Event_Service>();
+         
             ////单例服务
             //services.AddSingleton<IProduct_Task_Time_Service, Product_Task_Time_Service>();
 

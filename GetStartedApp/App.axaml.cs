@@ -147,7 +147,6 @@ namespace GetStartedApp
             {
                 connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
             }
-
             //Ä¬ÈÏÊý¾Ý¿â
             connectConfigList.Add(new ConnectionConfig
             {
