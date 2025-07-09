@@ -1,0 +1,51 @@
+<UserControl x:Class="GetStartedApp.ProgramPackView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:GetStartedApp.Utils;assembly=GetStartedApp"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels.ProgramPack;assembly=GetStartedApp"
+             d:DesignHeight="200"
+             d:DesignWidth="400"
+             x:DataType="vm:ProgramPackViewModel"
+             mc:Ignorable="d">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="15" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Margin="10" Text="{Binding TextStatus}" />
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <Button Name="BtnCheckUpdate"
+                        Command="{Binding CheckUpdateCmd}"
+                        Content="Check for Updates"
+                        IsEnabled="{Binding IsEnabled01}" />
+                <Button Name="BtnDownloadUpdate"
+                        Margin="10,0"
+                        Command="{Binding DownloadUpdateCmd}"
+                        Content="Download"
+                        IsEnabled="{Binding IsEnabled02}" />
+                <Button Name="BtnRestartApply"
+                        Command="{Binding RestartApplyCmd}"
+                        Content="Restart &amp; Apply"
+                        IsEnabled="{Binding IsEnabled03}" />
+            </StackPanel>
+        </StackPanel>
+        <ScrollViewer Name="ScrollLog"
+                      Grid.Row="2"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      local:ScrollViewerExtensions.AutoScrollToEnd="{Binding IsScrollToEnd}">
+            <TextBox AcceptsReturn="True"
+                     Foreground="Black"
+                     IsEnabled="True"
+                     IsReadOnly="True"
+                     Text="{Binding TextLog}"
+                     TextWrapping="Wrap" />
+        </ScrollViewer>
+    </Grid>
+</UserControl>

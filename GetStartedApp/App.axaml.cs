@@ -13,6 +13,7 @@ using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
 using GetStartedApp.ViewModels.ProductVersion;
+using GetStartedApp.ViewModels.ProgramPack;
 using GetStartedApp.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Prism.Container.DryIoc;
@@ -117,6 +118,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
             containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
             containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
+            containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
         }
 
         protected override IContainerExtension CreateContainerExtension()

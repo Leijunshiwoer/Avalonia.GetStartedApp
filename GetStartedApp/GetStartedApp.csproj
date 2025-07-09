@@ -54,4 +54,10 @@
   <ItemGroup>
     <ProjectReference Include="..\GetStartedApp.SqlSugar\GetStartedApp.SqlSugar.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\ProgramPack\ProgramPackView.axaml.cs">
+      <DependentUpon>ProgramPackView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>
