@@ -8,6 +8,9 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets\avalonia-logo.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup Label="Avalonia">
+    <AvaloniaXamlReportImportance>High</AvaloniaXamlReportImportance>
+  </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
@@ -26,13 +29,13 @@
 
   <ItemGroup>
     <None Remove="App.config" />
+    <None Remove="Assets\avalonia-logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\avalonia-logo.ico" />
   </ItemGroup>
 
   <ItemGroup>

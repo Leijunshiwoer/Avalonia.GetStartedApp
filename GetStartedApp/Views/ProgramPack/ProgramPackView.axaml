@@ -18,7 +18,18 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel>
+
+
             <TextBlock Margin="10" Text="{Binding TextStatus}" />
+            <ProgressBar Width="100"
+                         Margin="1"
+                         HorizontalAlignment="Left"
+                         VerticalAlignment="Center"
+                         Classes="Success"
+                         Maximum="100"
+                         Minimum="0"
+                         ShowProgressText="True"
+                         Value="{Binding progressBar}" />
             <StackPanel Margin="10" Orientation="Horizontal">
                 <Button Name="BtnCheckUpdate"
                         Command="{Binding CheckUpdateCmd}"
