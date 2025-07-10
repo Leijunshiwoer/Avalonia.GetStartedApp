@@ -6,10 +6,22 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets\avalonia-logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Remove="publish\**" />
+    <AvaloniaXaml Remove="releases\**" />
+    <Compile Remove="publish\**" />
+    <Compile Remove="releases\**" />
+    <EmbeddedResource Remove="publish\**" />
+    <EmbeddedResource Remove="releases\**" />
+    <None Remove="publish\**" />
+    <None Remove="releases\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +32,7 @@
     <Content Include="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\avalonia-logo.ico" />
   </ItemGroup>
 
   <ItemGroup>

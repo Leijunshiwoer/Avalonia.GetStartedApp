@@ -22,16 +22,16 @@
             <StackPanel Margin="10" Orientation="Horizontal">
                 <Button Name="BtnCheckUpdate"
                         Command="{Binding CheckUpdateCmd}"
-                        Content="Check for Updates"
+                        Content="检查更新"
                         IsEnabled="{Binding IsEnabled01}" />
                 <Button Name="BtnDownloadUpdate"
                         Margin="10,0"
                         Command="{Binding DownloadUpdateCmd}"
-                        Content="Download"
+                        Content="下载"
                         IsEnabled="{Binding IsEnabled02}" />
                 <Button Name="BtnRestartApply"
                         Command="{Binding RestartApplyCmd}"
-                        Content="Restart &amp; Apply"
+                        Content="重启并应用"
                         IsEnabled="{Binding IsEnabled03}" />
             </StackPanel>
         </StackPanel>

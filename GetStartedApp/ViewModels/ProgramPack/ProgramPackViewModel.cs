@@ -20,13 +20,13 @@ namespace GetStartedApp.ViewModels.ProgramPack
         public ProgramPackViewModel()
         {
 
-            var updateUrl = Path.Combine( AppDomain.CurrentDomain.BaseDirectory,"win-x64");
-            if (!Directory.Exists(updateUrl))
-            {
-                Directory.CreateDirectory(updateUrl);
-            }
+            //var updateUrl = Path.Combine( AppDomain.CurrentDomain.BaseDirectory,"win-x64");
+            //if (!Directory.Exists(updateUrl))
+            //{
+            //    Directory.CreateDirectory(updateUrl);
+            //}
             // replace with your update path/url
-            _um = new UpdateManager(updateUrl);
+            _um = new UpdateManager("http://192.168.115.132:5678");
 
             TextLog = Program.Log.ToString();
 
