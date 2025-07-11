@@ -4,6 +4,7 @@ using GetStartedApp.Models;
 using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.SqlSugar.Services;
 using Prism.Commands;
+using Prism.Dialogs;
 using Prism.Navigation.Regions;
 using System;
 using System.Collections.Generic;
@@ -20,14 +21,17 @@ namespace GetStartedApp.ViewModels.ProductVersion
         private readonly IAppMapper _appMapper;
         private readonly IBase_Version_Primary_Config_Service _version_Primary_Config_Service;
         private readonly IBase_Version_Second_Config_Service _version_Second_Config_Service;
+        private readonly IDialogService _dialogService;
 
         public ProductVersionViewModel(IAppMapper appMapper,
             IBase_Version_Primary_Config_Service version_Primary_Config_Service,
-            IBase_Version_Second_Config_Service version_Second_Config_Service)
+            IBase_Version_Second_Config_Service version_Second_Config_Service,
+            IDialogService dialogService)
         {
             _appMapper = appMapper;
             _version_Primary_Config_Service = version_Primary_Config_Service;
             _version_Second_Config_Service = version_Second_Config_Service;
+            _dialogService = dialogService;
         }
 
 
@@ -96,7 +100,18 @@ namespace GetStartedApp.ViewModels.ProductVersion
 
         void ExecutePrimaryAddCmd()
         {
+            DialogParameters keyValuePairs = new DialogParameters();
+            keyValuePairs.Add("nonModal", false);
+            _dialogService.Show(nameof(SetVersionPrimaryDlg), keyValuePairs, r =>
+            {
+                if (r.Result == ButtonResult.OK)
+                {
+                    //刷新
+                    InitVersionTree();
+                    InitVersionPrimay();
+                }
 
+            }, nameof(DialogStyleView));
         }
 
         private DelegateCommand<object> _PrimaryModifyCmd;
@@ -133,7 +148,18 @@ namespace GetStartedApp.ViewModels.ProductVersion
 
         void ExecuteSecondAddCmd()
         {
+            DialogParameters keyValuePairs = new DialogParameters();
+            keyValuePairs.Add("nonModal", false);
+            _dialogService.Show(nameof(SetVersionSecondDlg), keyValuePairs, r =>
+            {
+                if (r.Result == ButtonResult.OK)
+                {
+                    //刷新
+                    InitVersionTree();
+                    InitVersionSecond();
+                }
 
+            }, nameof(DialogStyleView));
         }
 
         private DelegateCommand<object> _SecondModifyCmd;

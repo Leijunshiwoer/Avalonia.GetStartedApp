@@ -21,7 +21,9 @@
             <GradientStop Offset="0.9" Color="{DynamicResource SemiLightBlue1Color}" />
         </LinearGradientBrush>
     </Window.Background>
-    <Border BorderBrush="Silver" BorderThickness="2">
+    <Border Margin="1"
+            BorderBrush="Silver"
+            BorderThickness="2">
         <Grid>
             <!--  Content  -->
             <ContentPresenter Grid.Row="1" />

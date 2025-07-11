@@ -78,13 +78,6 @@ namespace GetStartedApp.ViewModels.ProgramPack
             get => _isScrollToEnd;
             set => SetProperty(ref _isScrollToEnd, value);
         }
-
-        private int _progressBar;
-        public int progressBar
-        {
-            get { return _progressBar; }
-            set { SetProperty(ref _progressBar, value); }
-        }
         #endregion
         #region  事件
         private DelegateCommand _CheckUpdateCmd;
@@ -158,8 +151,7 @@ namespace GetStartedApp.ViewModels.ProgramPack
             Dispatcher.UIThread.InvokeAsync(
                 () =>
                 {
-                    //TextStatus = $"正在下载 ({percent}%)...";
-                    progressBar = percent;
+                    TextStatus = $"正在下载 ({percent}%)...";
                 });
         }
 

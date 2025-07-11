@@ -110,6 +110,8 @@ namespace GetStartedApp
             //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
             //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
             containerRegistry.RegisterDialog<SetUserDlg, SetUserDlgViewModel>();
+            containerRegistry.RegisterDialog<SetVersionPrimaryDlg, SetVersionPrimaryDlgViewModel>();
+            containerRegistry.RegisterDialog<SetVersionSecondDlg, SetVersionSecondDlgViewModel>();
 
             // Views - Generic
             containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
