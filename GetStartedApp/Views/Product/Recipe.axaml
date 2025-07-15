@@ -40,28 +40,28 @@
             </TreeView>
         </Border>
         <Grid Grid.Column="1" RowDefinitions="auto,*,auto">
-            <StackPanel Grid.Row="0" Orientation="Horizontal">
-                <TextBlock Margin="200,0,10,0"
+            <Grid Grid.Row="0" ColumnDefinitions="2*,*,*">
+                <TextBlock Grid.Column="0"
                            HorizontalAlignment="Center"
                            FontSize="30"
                            FontWeight="Bold"
                            Text="OP10" />
-                <TextBlock Margin="440,0,10,0"
+                <TextBlock Grid.Column="1"
                            FontSize="30"
                            FontWeight="Bold"
                            Text="OP20" />
-                <TextBlock Margin="420,0,10,0"
+                <TextBlock Grid.Column="2"
                            FontSize="30"
                            FontWeight="Bold"
                            Text="OP30" />
-            </StackPanel>
+            </Grid>
             <Grid Grid.Row="1" ColumnDefinitions="*,*,*">
                 <Border Grid.Column="0"
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="300"
-                                  Padding="30"
+                    <ScrollViewer Width="350"
+                                  Padding="10"
                                   HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP10Datas}">
                             <ItemsControl.ItemsPanel>
@@ -127,8 +127,8 @@
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="300"
-                                  Padding="30"
+                    <ScrollViewer Width="350"
+                                  Padding="10"
                                   HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP20Datas}">
                             <ItemsControl.ItemsPanel>
@@ -194,8 +194,8 @@
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="300"
-                                  Padding="30"
+                    <ScrollViewer Width="350"
+                                  Padding="10"
                                   HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP30Datas}">
                             <ItemsControl.ItemsPanel>
