@@ -15,6 +15,6 @@ namespace GetStartedApp.SqlSugar.Tables
         public int? RecipeConfigId { get; set; }
 
         [Navigate(NavigateType.OneToMany, nameof(Product_Recipe_ST_Parameter_Config.RecipeSTId))]
-        public List<Product_Recipe_ST_Parameter_Config> Parametes { get; set; }
+        public List<Product_Recipe_ST_Parameter_Config> Parameters { get; set; }
     }
 }

@@ -72,6 +72,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Assets\avalonia-logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Views\ProgramPack\ProgramPackView.axaml.cs">
       <DependentUpon>ProgramPackView.axaml</DependentUpon>
     </Compile>

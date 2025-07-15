@@ -12,6 +12,7 @@ using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
+using GetStartedApp.ViewModels.Product;
 using GetStartedApp.ViewModels.ProductVersion;
 using GetStartedApp.ViewModels.ProgramPack;
 using GetStartedApp.Views;
@@ -121,6 +122,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
             containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
             containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
+            containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
         }
 
         protected override IContainerExtension CreateContainerExtension()

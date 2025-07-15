@@ -19,6 +19,11 @@ namespace GetStartedApp.AutoMapper
             CreateMap<Base_Version_Second_Config, VersionSecondDto>() .ReverseMap();
             CreateMap<Base_Version_Attribute_Config, AttributeDto>().ReverseMap();
             CreateMap<Base_Process_Step_Config, ProcessStepDto>().ReverseMap();
+
+            CreateMap<Product_Recipe_Config, RecipeDto>().ReverseMap();
+            CreateMap<Product_Recipe_Material_Config, RecipeMaterialDto>().ReverseMap();
+            CreateMap<Product_Recipe_ST_Config, RecipeSTDto>().ReverseMap();
+            CreateMap<Product_Recipe_ST_Parameter_Config, RecipeSTParameterDto>().ReverseMap();
         }
     }
 
