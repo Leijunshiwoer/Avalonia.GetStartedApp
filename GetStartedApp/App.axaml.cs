@@ -12,6 +12,7 @@ using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.ViewModels;
 using GetStartedApp.ViewModels.Basic;
+using GetStartedApp.ViewModels.PLC;
 using GetStartedApp.ViewModels.Product;
 using GetStartedApp.ViewModels.ProductVersion;
 using GetStartedApp.ViewModels.ProgramPack;
@@ -123,7 +124,9 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
             containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
             containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
+            containerRegistry.RegisterForNavigation <ConnSiemens, ConnSiemensViewModel>();
         }
+
 
         protected override IContainerExtension CreateContainerExtension()
         {
