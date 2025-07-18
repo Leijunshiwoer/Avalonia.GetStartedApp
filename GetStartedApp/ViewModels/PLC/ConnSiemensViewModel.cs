@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Media.TextFormatting;
 using GetStartedApp.Utils.Node;
 using Prism.Commands;
 using System;
@@ -31,7 +32,7 @@ namespace GetStartedApp.ViewModels.PLC
             // 示例数据
             List<RegularItemNode> regulars = new List<RegularItemNode>
             {
-                new RegularItemNode(){Name="温度",Index=1,NodeType=200,RegularCode=3,TypeLength=1 },
+                new RegularItemNode(){Name="温度",Index=100,NodeType=200,RegularCode=3,TypeLength=1 },
 
             };
             string selectedRegular = "温度"; // 示例选中变量
@@ -145,9 +146,11 @@ namespace GetStartedApp.ViewModels.PLC
                         12,
                         Brushes.Black
                         );
+
                         renderContext.DrawText(numText,
-                            new Point(paint_x + j * every_byte_occupy - every_byte_occupy+23, paint_y + 17)
+                            new Point(paint_x + j * every_byte_occupy, paint_y + 17)
                         );
+
 
                         count++;
                         if (count >= max_byte) break;
@@ -184,6 +187,7 @@ namespace GetStartedApp.ViewModels.PLC
 
                     // 绘制数据块
                     int tmp = start;
+
                     for (int j = 0; j < length; j++)
                     {
                         int posX = paint_x + (start + j) % every_line_count * every_byte_occupy;
@@ -203,7 +207,7 @@ namespace GetStartedApp.ViewModels.PLC
                         );
                         renderContext.DrawText(
                               numText,
-                            new Point(posX + 4, posY)
+                            new Point(posX, posY)
 
                         );
                     }
@@ -303,7 +307,7 @@ namespace GetStartedApp.ViewModels.PLC
                             12,
                             Brushes.Black
                         );
-                        ctx.DrawText(text, new Point(point1.X +2, point1.Y - 14));
+                        ctx.DrawText(text, new Point(point1.X + 2, point1.Y - 14));
                     }
                 }
             }

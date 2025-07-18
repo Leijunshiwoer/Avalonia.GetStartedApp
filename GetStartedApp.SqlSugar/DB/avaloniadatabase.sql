@@ -11,7 +11,7 @@
  Target Server Version : 50719 (5.7.19-log)
  File Encoding         : 65001
 
- Date: 08/07/2025 15:54:00
+ Date: 18/07/2025 14:49:58
 */
 
 SET NAMES utf8mb4;
@@ -2177,7 +2177,7 @@ INSERT INTO `sysmenu` VALUES (106, '工艺路线', 'ProcessRoute', 'mdi-router',
 INSERT INTO `sysmenu` VALUES (200, '产品管理', '', 'mdi-package-variant-closed-check', 0, 0, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (201, '工单任务', 'ProductTask', 'mdi-format-list-numbered-rtl', 200, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (202, '标签监控', 'LabelView', 'mdi-barcode', 200, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
-INSERT INTO `sysmenu` VALUES (203, '产品配方', 'RecipeView', 'mdi-format-list-checkbox', 200, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
+INSERT INTO `sysmenu` VALUES (203, '产品配方', 'Recipe', 'mdi-format-list-checkbox', 200, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (400, '设备管理', '', 'mdi-steam', 0, 0, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (401, '设备监控', 'MachineView', 'mdi-monitor-eye', 400, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (402, '实时报警', 'RTWarningView', 'mdi-bell-alert', 400, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
@@ -2188,7 +2188,7 @@ INSERT INTO `sysmenu` VALUES (600, '数据管理', '', 'mdi-database', 0, 0, NUL
 INSERT INTO `sysmenu` VALUES (601, '数据(历史)', 'DataQualityAll', 'mdi-database-search-outline', 600, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (603, '数据(实时)', 'DataQualityAllTmp', 'mdi-database-eye-outline', 600, 6, NULL, '2023-02-03 14:12:18', NULL, 'developer', NULL, NULL);
 INSERT INTO `sysmenu` VALUES (700, '版本管理', NULL, 'mdi-database', 0, 6, NULL, '2025-07-08 15:27:35', NULL, 'developer', NULL, NULL);
-INSERT INTO `sysmenu` VALUES (701, '程序打包', 'ProgramPack', 'mdi-zip-box', 700, 6, NULL, '2025-07-08 15:28:23', NULL, 'developer', NULL, NULL);
+INSERT INTO `sysmenu` VALUES (701, '程序打包', 'ProgramPackView', 'mdi-zip-box', 700, 6, NULL, '2025-07-08 15:28:23', NULL, 'developer', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for sysrole
