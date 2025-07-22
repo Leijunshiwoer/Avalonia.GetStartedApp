@@ -5,6 +5,8 @@ using GetStartedApp.SqlSugar.Services;
 using GetStartedApp.SqlSugar.Tables;
 using Prism.Mvvm;
 using Prism.Navigation.Regions;
+using Serilog;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,14 +18,12 @@ public class SideMenuViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
     private readonly ISysMenuService _menuService;
-
     public IRelayCommand NavigationCommand { get; }
     public SideMenuViewModel(IRegionManager regionManager, ISysMenuService menuService)
     {
         _regionManager = regionManager;
         _menuService = menuService;
         NavigationCommand = new RelayCommand(OnNavigate);
-        // CreateMenu();
         _ = LoadMenuAsync();
     }
 

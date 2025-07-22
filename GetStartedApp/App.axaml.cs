@@ -25,11 +25,14 @@ using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Modularity;
 using Prism.Navigation.Regions;
+using Serilog;
+using Serilog.Events;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,6 +46,10 @@ namespace GetStartedApp
 {
     public partial class App : PrismApplication
     {
+        static App()
+        {
+            InitializeLogging();
+        }
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -93,7 +100,17 @@ namespace GetStartedApp
         public override void OnFrameworkInitializationCompleted()
         {
             // 注册全局异常处理事件
-             RegisterGlobalExceptionHandlers();
+            RegisterGlobalExceptionHandlers();
+
+            // 监听应用程序退出事件（确保日志刷新）
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.Exit += (sender, e) =>
+                {
+                    Log.CloseAndFlush(); // 程序退出时刷新日志到文件
+                };
+            }
+
             base.OnFrameworkInitializationCompleted();
         }
 
@@ -106,6 +123,8 @@ namespace GetStartedApp
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///
+            // 注册 Serilog.ILogger 到容器（单例模式）
+            containerRegistry.RegisterSingleton<Serilog.ILogger>(() => Log.Logger);
 
             containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
 
@@ -259,15 +278,17 @@ namespace GetStartedApp
         /// </summary>
         private void HandleException(Exception ex, string exceptionType)
         {
-            // 1. 记录异常信息到日志
-            var errorMessage = $"{exceptionType}：{ex.Message}\n堆栈跟踪：{ex.StackTrace}";
-            Console.WriteLine(errorMessage);
+            // 使用Serilog记录异常
+            Log.Error(ex, $"{exceptionType}：{ex.Message}");
 
-            // 这里可以添加日志框架的代码，如Serilog、NLog等
-            // Logger.Error(ex, exceptionType);
-
-            // 2. 向用户显示友好的错误信息
-           // ShowErrorMessage(ex, exceptionType);
+            // 可选：向用户显示友好信息
+            //Dispatcher.UIThread.Post(async () =>
+            //{
+            //    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            //    {
+            //        await MessageBox.ShowAsync("应用程序发生错误，请查看日志获取详细信息。", "错误", MessageBoxIcon.Error, MessageBoxButton.OK);
+            //    }
+            //});
         }
 
         /// <summary>
@@ -296,6 +317,37 @@ namespace GetStartedApp
         //        }
         //    });
         //}
+
+
+        private static void InitializeLogging()
+        {
+            // 日志文件夹路径：当前程序目录下的"log"文件夹
+            var logDirectory = Path.Combine(AppContext.BaseDirectory, "log");
+            // 确保文件夹存在
+            if (!Directory.Exists(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+
+            // 按天生成日志文件（格式：log\20240722.txt）
+            var logFilePath = Path.Combine(logDirectory, "log.txt");
+
+            // 配置Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug() // 最小日志级别
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // 忽略Microsoft库的低级别日志
+                .Enrich.FromLogContext() // 从上下文 enrichment
+                .WriteTo.Console() // 同时输出到控制台（可选）
+                .WriteTo.File(
+                    path: logFilePath,
+                    rollingInterval: RollingInterval.Day, // 按天滚动
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}", // 日志格式
+                    retainedFileCountLimit: 30, // 保留30天的日志文件
+                    encoding: System.Text.Encoding.UTF8 // 编码
+                )
+                .CreateLogger();
+        }
+
 
     }
 }
