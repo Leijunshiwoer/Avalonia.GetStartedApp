@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
 using Example;
@@ -91,7 +92,8 @@ namespace GetStartedApp
         // App.xaml.cs
         public override void OnFrameworkInitializationCompleted()
         {
-
+            // 注册全局异常处理事件
+             RegisterGlobalExceptionHandlers();
             base.OnFrameworkInitializationCompleted();
         }
 
@@ -201,6 +203,99 @@ namespace GetStartedApp
             //// moduleCatalog.AddModule<DummyModule.DummyModule1>();
         }
 
+
+        /// <summary>
+        /// 注册全局异常处理程序
+        /// </summary>
+        private void RegisterGlobalExceptionHandlers()
+        {
+            // 处理UI线程未捕获的异常
+            Dispatcher.UIThread.UnhandledException += Dispatcher_UnhandledException;
+
+            // 处理非UI线程未捕获的异常
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
+            // 如果使用了Task，还可以处理Task的未观察异常
+            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+        }
+
+        /// <summary>
+        /// 处理UI线程未捕获的异常
+        /// </summary>
+        private void Dispatcher_UnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            HandleException(e.Exception, "UI线程未处理异常");
+
+            // 设置e.Handled = true表示异常已处理，应用程序可以继续运行
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// 处理非UI线程未捕获的异常
+        /// </summary>
+        private void CurrentDomain_UnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                HandleException(ex, "非UI线程未处理异常");
+            }
+
+            // 对于严重异常，e.IsTerminating可能为true，表示应用程序即将终止
+        }
+
+        /// <summary>
+        /// 处理Task未观察到的异常
+        /// </summary>
+        private void TaskScheduler_UnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
+        {
+            HandleException(e.Exception, "Task未观察到的异常");
+
+            // 标记异常为已观察
+            e.SetObserved();
+        }
+
+        /// <summary>
+        /// 统一的异常处理逻辑
+        /// </summary>
+        private void HandleException(Exception ex, string exceptionType)
+        {
+            // 1. 记录异常信息到日志
+            var errorMessage = $"{exceptionType}：{ex.Message}\n堆栈跟踪：{ex.StackTrace}";
+            Console.WriteLine(errorMessage);
+
+            // 这里可以添加日志框架的代码，如Serilog、NLog等
+            // Logger.Error(ex, exceptionType);
+
+            // 2. 向用户显示友好的错误信息
+           // ShowErrorMessage(ex, exceptionType);
+        }
+
+        /// <summary>
+        /// 显示错误信息给用户
+        /// </summary>
+        //private void ShowErrorMessage(Exception ex, string exceptionType)
+        //{
+        //    // 确保在UI线程上显示消息框
+        //    Dispatcher.UIThread.Post(async () =>
+        //    {
+        //        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        //        {
+        //            var messageBox = new MessageBox.Avalonia.MessageBoxManager();
+        //            var result = await messageBox.ShowMessageBox(
+        //                desktop.MainWindow,
+        //                "应用程序错误",
+        //                $"{exceptionType}\n\n错误信息：{ex.Message}\n\n是否关闭应用程序？",
+        //                MessageBox.Avalonia.Enums.ButtonEnum.YesNo,
+        //                MessageBox.Avalonia.Enums.Icon.Error
+        //            );
+
+        //            if (result == MessageBox.Avalonia.Enums.ButtonResult.Yes)
+        //            {
+        //                desktop.Shutdown(1);
+        //            }
+        //        }
+        //    });
+        //}
 
     }
 }
