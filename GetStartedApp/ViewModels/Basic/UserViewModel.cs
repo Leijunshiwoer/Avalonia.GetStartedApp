@@ -3,10 +3,9 @@ using Avalonia.Controls.Notifications;
 using DryIoc;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Models;
-using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.IServices;
-using GetStartedApp.UserControls;
-
+using GetStartedApp.Utils.Services;
+using GetStartedApp.Utils.UserControls;
 using Prism.Commands;
 using Prism.Dialogs;
 using Prism.Navigation.Regions;

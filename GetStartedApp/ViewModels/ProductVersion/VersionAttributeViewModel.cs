@@ -2,7 +2,7 @@
 using GetStartedApp.Core.Helpers;
 using GetStartedApp.Models;
 using GetStartedApp.SqlSugar.IServices;
-using GetStartedApp.UserControls;
+using GetStartedApp.Utils.UserControls;
 using Prism.Commands;
 using Prism.Navigation.Regions;
 using System;

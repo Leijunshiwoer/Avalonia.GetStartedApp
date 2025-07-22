@@ -60,9 +60,7 @@
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="350"
-                                  Padding="10"
-                                  HorizontalAlignment="Center">
+                    <ScrollViewer Padding="10" HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP10Datas}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -91,8 +89,8 @@
                                                     <local:ConditionTemplateSelector>
                                                         <local:ConditionTemplateSelector.ComboBoxTemplate>
                                                             <DataTemplate DataType="type:RecipeSTParameterDto">
-                                                                <WrapPanel>
-                                                                    <Label Margin="5,0,0,0" Content="{Binding Name}" />
+                                                                <WrapPanel HorizontalAlignment="Center">
+                                                                    <Label Margin="5" Content="{Binding Name}" />
                                                                     <ComboBox Width="180"
                                                                               Margin="5"
                                                                               ItemsSource="{Binding Items}"
@@ -103,14 +101,13 @@
 
                                                         <local:ConditionTemplateSelector.TextBoxTemplate>
                                                             <DataTemplate DataType="type:RecipeSTParameterDto">
-                                                                <WrapPanel>
-                                                                    <Label Margin="5,0,0,0" Content="{Binding Name}" />
+                                                                <WrapPanel HorizontalAlignment="Center">
+                                                                    <Label Margin="5" Content="{Binding Name}" />
                                                                     <u:NumericDecimalUpDown Width="180"
                                                                                             Margin="5"
                                                                                             Step="0.1"
                                                                                             Value="{Binding Value}" />
                                                                 </WrapPanel>
-
                                                             </DataTemplate>
                                                         </local:ConditionTemplateSelector.TextBoxTemplate>
                                                     </local:ConditionTemplateSelector>
@@ -127,9 +124,7 @@
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="350"
-                                  Padding="10"
-                                  HorizontalAlignment="Center">
+                    <ScrollViewer Padding="10" HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP20Datas}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -194,9 +189,7 @@
                         Margin="10"
                         Background="WhiteSmoke"
                         CornerRadius="25">
-                    <ScrollViewer Width="350"
-                                  Padding="10"
-                                  HorizontalAlignment="Center">
+                    <ScrollViewer Padding="10" HorizontalAlignment="Center">
                         <ItemsControl ItemsSource="{Binding OP30Datas}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -257,6 +250,13 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Border>
+            </Grid>
+            <Grid Grid.Row="2">
+                <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button Content="保存配方" />
+                    <TextBlock Text="         " />
+                    <Button Content="保存配方并下发到PLC" />
+                </WrapPanel>
             </Grid>
         </Grid>
     </Grid>

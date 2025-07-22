@@ -1,4 +1,4 @@
-namespace GetStartedApp.UserControls
+namespace GetStartedApp.Utils.UserControls
 {
     public class PageChangedEventArgs
     {

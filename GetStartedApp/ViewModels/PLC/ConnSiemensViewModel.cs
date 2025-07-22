@@ -14,6 +14,10 @@ namespace GetStartedApp.ViewModels.PLC
 {
     public class ConnSiemensViewModel : ViewModelBase
     {
+        // 字体缩放相关配置
+        private const int BaseFontSize = 12; // 基础字体大小
+        private const int MaxLengthForBaseFont = 20; // 基础字体对应的最大长度
+        private const int MinFontSize = 8; // 最小字体大小（避免过小无法阅读）
 
         public ConnSiemensViewModel()
         {
@@ -23,30 +27,24 @@ namespace GetStartedApp.ViewModels.PLC
         private void UpdateImage()
         {
             Test();
-            //  ImageFromBinding = GetRenderInfo();
         }
-
 
         private void Test()
         {
-            // 示例数据
             List<RegularItemNode> regulars = new List<RegularItemNode>
             {
-                new RegularItemNode(){Name="温度",Index=100,NodeType=200,RegularCode=3,TypeLength=1 },
-
+                new RegularItemNode(){Name="温度",Index=100,NodeType=200,RegularCode=3,TypeLength=120 },
             };
-            string selectedRegular = "温度"; // 示例选中变量
+            string selectedRegular = "温度";
 
             if (PanelWidth < 20) return;
             ImageFromBinding?.Dispose();
             ImageFromBinding = GetRenderInfo(regulars, selectedRegular);
         }
 
-
         #region 属性
-
         private const int EveryByteWidth = 16;
-        private bool isShowText = true; // 示例值，根据实际需求调整
+        private bool isShowText = true;
 
         private Size _panelSize;
         public Size PanelSize
@@ -75,12 +73,9 @@ namespace GetStartedApp.ViewModels.PLC
             get => _imageFromBinding;
             set => SetProperty(ref _imageFromBinding, value);
         }
-
         #endregion
 
-
         #region 绘图
-
         private RenderTargetBitmap GetRenderInfo(List<RegularItemNode> regulars, string selectedRegular)
         {
             regulars.Sort();
@@ -109,12 +104,8 @@ namespace GetStartedApp.ViewModels.PLC
                 int count = 0;
 
                 // 绘制左侧竖线
-                renderContext.DrawLine(
-                    penGray,
-                    new Point(paint_x - 5, 0),
-                    new Point(paint_x - 5, pixelSize.Height)
-                );
-
+                renderContext.DrawLine(penGray, new Point(paint_x - 5, 0), new Point(paint_x - 5, pixelSize.Height));
+                double byteNumFontSize = GetDynamicFontSize(every_line_count);
                 // 绘制行号和字节格子
                 for (int i = 0; i < line_count; i++)
                 {
@@ -122,7 +113,7 @@ namespace GetStartedApp.ViewModels.PLC
                         $"[{count:D3} - {(count + Math.Min(max_byte - count - 1, every_line_count - 1)):D3}]",
                         CultureInfo.InvariantCulture,
                         FlowDirection.LeftToRight,
-                         typeface,
+                        typeface,
                         12,
                         Brushes.Black
                     );
@@ -141,16 +132,12 @@ namespace GetStartedApp.ViewModels.PLC
                         var numText = new FormattedText(
                             count.ToString(),
                             CultureInfo.InvariantCulture,
-                        FlowDirection.LeftToRight,
-                         typeface,
-                        12,
-                        Brushes.Black
+                            FlowDirection.LeftToRight,
+                            typeface,
+                            byteNumFontSize,
+                            Brushes.Black
                         );
-
-                        renderContext.DrawText(numText,
-                            new Point(paint_x + j * every_byte_occupy, paint_y + 17)
-                        );
-
+                        DrawCenteredText(renderContext, numText, rect);
 
                         count++;
                         if (count >= max_byte) break;
@@ -161,23 +148,22 @@ namespace GetStartedApp.ViewModels.PLC
                 paint_y = 2;
 
                 // 绘制变量区域
-                for (int i = 0; i < regulars.Count; i++)
+                foreach (var regular in regulars)
                 {
-                    var regular = regulars[i];
                     bool isSelected = !string.IsNullOrEmpty(selectedRegular) && selectedRegular == regular.Name;
                     int start = regular.GetStartedByteIndex();
-                    int length = regular.GetLengthByte() - start;
+                    int byteLength = regular.GetLengthByte() - start; // 变量总长度（字节数）
                     int rowStart = GetNumberByUplimit(start, every_line_count);
-                    int rowEnd = GetNumberByUplimit(start + length, every_line_count);
+                    int rowEnd = GetNumberByUplimit(start + byteLength, every_line_count);
 
-                    // 绘制辅助线
+                    // 绘制辅助线（包含动态字体）
                     PaintLineAuxiliary(
                         renderContext,
                         paint_x,
                         paint_y,
                         every_line_count,
                         start,
-                        length,
+                        byteLength,
                         true,
                         isSelected,
                         regular.Name,
@@ -186,9 +172,7 @@ namespace GetStartedApp.ViewModels.PLC
                     );
 
                     // 绘制数据块
-                    int tmp = start;
-
-                    for (int j = 0; j < length; j++)
+                    for (int j = 0; j < byteLength; j++)
                     {
                         int posX = paint_x + (start + j) % every_line_count * every_byte_occupy;
                         int posY = paint_y + 17 + (start + j) / every_line_count * 50;
@@ -200,16 +184,12 @@ namespace GetStartedApp.ViewModels.PLC
                         var numText = new FormattedText(
                             (start + j).ToString(),
                             CultureInfo.InvariantCulture,
-                           FlowDirection.LeftToRight,
+                            FlowDirection.LeftToRight,
                             typeface,
-                            12,
+                            GetDynamicFontSize(byteLength),
                             Brushes.Black
                         );
-                        renderContext.DrawText(
-                              numText,
-                            new Point(posX, posY)
-
-                        );
+                        DrawCenteredText(renderContext, numText, rect);
                     }
                 }
             }
@@ -217,6 +197,23 @@ namespace GetStartedApp.ViewModels.PLC
             return renderBitmap;
         }
 
+        // 居中绘制文本
+        private void DrawCenteredText(DrawingContext context, FormattedText text, Rect rect)
+        {
+            double x = rect.X + (rect.Width - text.Width) / 2;
+            double y = rect.Y + (rect.Height - text.Height) / 2;
+            context.DrawText(text, new Point(x, y));
+        }
+
+        // 计算动态字体大小（根据长度自动缩小）
+        private double GetDynamicFontSize(int byteLength)
+        {
+            if (byteLength <= MaxLengthForBaseFont)
+                return BaseFontSize; // 长度较小时用基础字体
+            // 长度超过阈值时，按比例缩小（最小不小于MinFontSize）
+            double scale = (double)MaxLengthForBaseFont / byteLength;
+            return Math.Max(MinFontSize, BaseFontSize * scale);
+        }
         private int GetNumberByUplimit(int value, int count)
         {
             if (value == 0) return 1;
@@ -237,7 +234,7 @@ namespace GetStartedApp.ViewModels.PLC
             int paint_y,
             int every_line_count,
             int index,
-            int byteLength,
+            int byteLength, // 变量总长度（字节数）
             bool isDown,
             bool isSelect,
             string info,
@@ -253,21 +250,45 @@ namespace GetStartedApp.ViewModels.PLC
             var penChocolate = new Pen(Brushes.Chocolate, 1);
             var brushLightPink = new SolidColorBrush(Colors.LightPink);
 
+            // ********** 解决：跨行选中背景不完整 **********
+            if (isSelect)
+            {
+                // 计算变量占据的所有行（起始行到结束行）
+                int startIndex = index;
+                int endIndex = index + byteLength - 1;
+                int startRow = startIndex / every_line_count; // 起始行号
+                int endRow = endIndex / every_line_count;     // 结束行号
+
+                // 遍历所有行，填充粉色背景
+                for (int row = startRow; row <= endRow; row++)
+                {
+                    // 计算当前行的起始和结束索引
+                    int rowStartIndex = row * every_line_count;
+                    int rowEndIndex = (row + 1) * every_line_count - 1;
+
+                    // 当前行在变量范围内的实际起始和结束索引
+                    int currentStart = Math.Max(startIndex, rowStartIndex);
+                    int currentEnd = Math.Min(endIndex, rowEndIndex);
+
+                    // 计算当前行背景的X坐标和宽度
+                    double x = paint_x + (currentStart % every_line_count) * 20 + 8 - 9; // 左偏移（与原逻辑保持一致）
+                    double width = (currentEnd - currentStart + 1) * 20 + 10; // 宽度=字节数*每个字节宽度+边距
+                    double y = paint_y + 17 + row * 50 - 25; // Y坐标（与原逻辑保持一致）
+
+                    // 填充当前行的粉色背景
+                    ctx.FillRectangle(brushLightPink, new Rect(x, y, width, 52));
+                }
+            }
+
+            // ********** 解决：字体随长度变长自动缩小 **********
+            // 计算动态字体大小
+            double fontSize =12;
+
             if (point1.Y == point2.Y)
             {
-                // 同一行的情况
+                // 同一行
                 if (isDown)
                 {
-                    // 选中效果
-                    if (isSelect)
-                    {
-                        ctx.FillRectangle(
-                            brushLightPink,
-                            new Rect(point1.X - 9, point1.Y - 25, point2.X - point1.X + 18, 52)
-                        );
-                    }
-
-                    // 绘制线段
                     point1 = point1.WithY(point1.Y + 12);
                     point2 = point2.WithY(point2.Y + 12);
 
@@ -275,20 +296,20 @@ namespace GetStartedApp.ViewModels.PLC
                     ctx.DrawLine(penDimGray, point2, point2.WithY(point2.Y - 3));
                     ctx.DrawLine(penDimGray, point1, point2);
 
-                    // 绘制文本
+                    // 绘制变量文本（动态字体）
                     var text = new FormattedText(
                         regularNode.TypeLength == 1 ? info : $"{info} * {regularNode.TypeLength}",
-                       CultureInfo.InvariantCulture,
-                       FlowDirection.LeftToRight,
+                        CultureInfo.InvariantCulture,
+                        FlowDirection.LeftToRight,
                         typeface,
-                        12,
+                        fontSize, // 使用动态字体大小
                         Brushes.Black
                     );
-                    ctx.DrawText(text, new Point(point1.X, point1.Y));
+                    double centerX = (point1.X + point2.X) / 2 - text.Width / 2;
+                    ctx.DrawText(text, new Point(centerX, point1.Y));
                 }
                 else
                 {
-                    // 绘制线段
                     point1 = point1.WithY(point1.Y - 11);
                     point2 = point2.WithY(point2.Y - 11);
 
@@ -296,40 +317,26 @@ namespace GetStartedApp.ViewModels.PLC
                     ctx.DrawLine(penChocolate, point2, point2.WithY(point2.Y + 3));
                     ctx.DrawLine(penChocolate, point1, point2);
 
-                    // 绘制文本
                     if (isShowText)
                     {
                         var text = new FormattedText(
                             info,
-                           CultureInfo.InvariantCulture,
+                            CultureInfo.InvariantCulture,
                             FlowDirection.LeftToRight,
                             typeface,
-                            12,
+                            fontSize, // 动态字体
                             Brushes.Black
                         );
-                        ctx.DrawText(text, new Point(point1.X + 2, point1.Y - 14));
+                        double centerX = (point1.X + point2.X) / 2 - text.Width / 2;
+                        ctx.DrawText(text, new Point(centerX, point1.Y - 14));
                     }
                 }
             }
             else
             {
-                // 跨行情况
+                // 跨行
                 if (isDown)
                 {
-                    // 选中效果
-                    if (isSelect)
-                    {
-                        ctx.FillRectangle(
-                            brushLightPink,
-                            new Rect(point1.X - 9, point1.Y - 25, point1_right.X, 52)
-                        );
-                        ctx.FillRectangle(
-                            brushLightPink,
-                            new Rect(point2_left.X - 10, point2.Y - 25, point2.X - point2_left.X + 19, 52)
-                        );
-                    }
-
-                    // 绘制线段
                     point1 = point1.WithY(point1.Y + 12);
                     point2 = point2.WithY(point2.Y + 12);
                     point1_right = point1_right.WithY(point1.Y).WithX(point1_right.X + 10);
@@ -340,14 +347,14 @@ namespace GetStartedApp.ViewModels.PLC
                     ctx.DrawLine(penDimGray, point2, point2.WithY(point2.Y - 3));
                     ctx.DrawLine(penDimGray, point2, point2_left);
 
-                    // 绘制文本
+                    // 绘制变量文本（动态字体）
                     var textStr = regularNode.TypeLength == 1 ? info : $"{info} * {regularNode.TypeLength}";
                     var text = new FormattedText(
                         textStr,
-                       CultureInfo.InvariantCulture,
+                        CultureInfo.InvariantCulture,
                         FlowDirection.LeftToRight,
                         typeface,
-                        12,
+                        fontSize, // 动态字体
                         Brushes.Black
                     );
 
@@ -362,7 +369,6 @@ namespace GetStartedApp.ViewModels.PLC
                 }
                 else
                 {
-                    // 绘制线段
                     point1 = point1.WithY(point1.Y - 11);
                     point2 = point2.WithY(point2.Y - 11);
                     point1_right = point1_right.WithY(point1.Y).WithX(point1_right.X + 10);
@@ -373,15 +379,14 @@ namespace GetStartedApp.ViewModels.PLC
                     ctx.DrawLine(penChocolate, point2, point2.WithY(point2.Y + 3));
                     ctx.DrawLine(penChocolate, point2, point2_left);
 
-                    // 绘制文本
                     if (isShowText)
                     {
                         var text = new FormattedText(
                             info,
-                          CultureInfo.InvariantCulture,
+                            CultureInfo.InvariantCulture,
                             FlowDirection.LeftToRight,
                             typeface,
-                            12,
+                            fontSize, // 动态字体
                             Brushes.Black
                         );
 
@@ -397,12 +402,9 @@ namespace GetStartedApp.ViewModels.PLC
                 }
             }
         }
-
         #endregion
 
-
         #region 事件
-
         private DelegateCommand _RefreshCmd;
         public DelegateCommand RefreshCmd =>
             _RefreshCmd ?? (_RefreshCmd = new DelegateCommand(ExecuteRefreshCmd));

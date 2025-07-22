@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GetStartedApp.Converters
+namespace GetStartedApp.Utils.Converters
 {
     public class IconNameToPathConverter : IValueConverter
     {

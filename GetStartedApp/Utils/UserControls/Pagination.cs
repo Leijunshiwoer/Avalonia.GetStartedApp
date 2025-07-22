@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace GetStartedApp.UserControls
+namespace GetStartedApp.Utils.UserControls
 {
     public class Pagination : ContentControl
     {
@@ -117,9 +117,9 @@ namespace GetStartedApp.UserControls
 
             goToPageButton.Click += (s, e) =>
             {
-                if (int.TryParse(_pageNumberTextBox.Text, out int pageNumber))
+                if (int.TryParse(_pageNumberTextBox.Text, out var pageNumber))
                 {
-                    int totalPages = CalculateTotalPages();
+                    var totalPages = CalculateTotalPages();
                     if (pageNumber < 1 || pageNumber > totalPages)
                     {
                         _pageNumberTextBox.Text = string.Empty; // 清空输入框
@@ -217,13 +217,13 @@ namespace GetStartedApp.UserControls
             paginationPanel.Children.Add(_nextPageButton);
 
             // 将分页控件设置为 Content
-            this.Content = paginationPanel;
+            Content = paginationPanel;
         }
         //后台分页，由于只提供数据总数，所以只触发更新,不触发事件
         private void UpdatePaginationInfo()
         {
             if (TotalItems < 0) return;
-            int totalPages = CalculateTotalPages();
+            var totalPages = CalculateTotalPages();
             _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {totalPages} 页（共 {TotalItems} 条）";
             _prevPageButton.IsEnabled = _currentPage > 1;
             _nextPageButton.IsEnabled = _currentPage < totalPages;
@@ -233,8 +233,8 @@ namespace GetStartedApp.UserControls
         {
             if (ItemsSource == null) return;
             if (!IsBackendPaging && ItemsSource.Cast<object>().Count() == 0) return;
-            int totalPages = CalculateTotalPages();
-            int totalItems = TotalItems == -1 ? ItemsSource.Cast<object>().Count() : TotalItems;
+            var totalPages = CalculateTotalPages();
+            var totalItems = TotalItems == -1 ? ItemsSource.Cast<object>().Count() : TotalItems;
             _pageInfoTextBlock.Text = $"第 {_currentPage} 页 / 共 {totalPages} 页（共 {totalItems} 条）";
             _prevPageButton.IsEnabled = _currentPage > 1;
             _nextPageButton.IsEnabled = _currentPage < totalPages;
@@ -254,7 +254,7 @@ namespace GetStartedApp.UserControls
             }
 
             // 触发MVVM命令
-            this.PageChangedCommand?.Execute(new PageChangedEventArgs
+            PageChangedCommand?.Execute(new PageChangedEventArgs
             {
                 CurrentPage = _currentPage,
                 ItemsPerPage = ItemsPerPage
@@ -264,7 +264,7 @@ namespace GetStartedApp.UserControls
         // 计算总页数
         private int CalculateTotalPages()
         {
-            int totalItems = TotalItems == -1 ? ItemsSource.Cast<object>().Count() : TotalItems;
+            var totalItems = TotalItems == -1 ? ItemsSource.Cast<object>().Count() : TotalItems;
             return (int)Math.Ceiling((double)totalItems / ItemsPerPage);
         }
 

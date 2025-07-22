@@ -9,7 +9,7 @@ using Ursa.Controls;
 using Notification = Ursa.Controls.Notification;
 using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
-namespace GetStartedApp.Services
+namespace GetStartedApp.Utils.Services
 {
     public class MessageManagerService : IMessageManagerService
     {
