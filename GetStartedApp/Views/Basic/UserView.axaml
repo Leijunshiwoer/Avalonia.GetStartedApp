@@ -30,8 +30,7 @@
                             Value="mdi-plus" />
                 </u:IconButton.Icon>
             </u:IconButton>
-            <u:IconButton i:Attached.Icon="mdi-refresh"
-                          u:ToolBar.OverflowMode="Never"
+            <u:IconButton u:ToolBar.OverflowMode="Never"
                           Command="{Binding RefreshCmd}"
                           Content="刷新">
                 <u:IconButton.Icon>

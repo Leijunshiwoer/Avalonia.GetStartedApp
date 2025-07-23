@@ -64,6 +64,7 @@ namespace GetStartedApp.SqlSugar.Extensions
             services.AddTransient<IBase_Version_Second_Config_Service, Base_Version_Second_Config_Service>();
             services.AddTransient<IBase_Version_Attribute_Config_Service, Base_Version_Attribute_Config_Service>();
             services.AddTransient<IProduct_Recipe_Service, Product_Recipe_Service>();
+            services.AddTransient<IBase_Route_Config_Service, Base_Route_Config_Service>();
             ////单例服务
             //services.AddSingleton<IProduct_Task_Time_Service, Product_Task_Time_Service>();
 

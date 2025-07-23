@@ -1,8 +1,126 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl x:Class="GetStartedApp.ProcessRouteView"
+             xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cc="using:GetStartedApp.Utils.UserControls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="GetStartedApp.ProcessRouteView">
-  Welcome to Avalonia!
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:type="clr-namespace:GetStartedApp.Models;assembly=GetStartedApp"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels.Route;assembly=GetStartedApp"
+             Name="userControl"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             x:DataType="vm:ProcessRouteViewModel"
+             mc:Ignorable="d">
+
+    <Grid>
+        <TabControl TabStripPlacement="Top">
+            <TabItem Width="120" Header="工艺路线">
+                <Grid RowDefinitions="auto,*,auto">
+                    <u:ToolBar Grid.Row="0">
+                        <u:IconButton Content="新增">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-plus" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                        <u:IconButton u:ToolBar.OverflowMode="Never" Content="刷新">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-refresh" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                    </u:ToolBar>
+                    <DataGrid Name="dgRoute"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Routes}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding Id}"
+                                                Header="Id" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Code}"
+                                                Header="工艺路线编码" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Name}"
+                                                Header="工艺路线名称" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding Remark}"
+                                                Header="备注说明" />
+                            <!--  附加  -->
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding CreatedUserName}"
+                                                Header="创建人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding CreatedTime}"
+                                                Header="创建时间" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding UpdatedUserName}"
+                                                Header="修改人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding UpdatedTime}"
+                                                Header="修改时间" />
+                            <!--  操作  -->
+                            <DataGridTemplateColumn Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.AttributeModifyCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgRoute}"
+                                                          Content="编辑">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-pencil" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                            <!--<u:IconButton Width="80"
+                                                  Margin="2"
+                                                  Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                  CommandParameter="{Binding SelectedItem, ElementName=dgRoute}"
+                                                  Content="删除">
+                                        <u:IconButton.Icon>
+                                            <i:Icon FontSize="24"
+                                                    Foreground="DarkBlue"
+                                                    Value="mdi-delete" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>-->
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <cc:Pagination Grid.Row="2"
+                                   HorizontalAlignment="Left"
+                                   IsBackendPaging="False"
+                                   ItemsPerPage="{Binding ItemsPerPage}"
+                                   ItemsSource="{Binding AllRoutes}"
+                                   PageChangedCommand="{Binding PageChangedCommand}" />
+
+                </Grid>
+            </TabItem>
+
+            <TabItem Width="120" Header="工序管理">
+                <Grid>
+                    <TextBlock Text="工序管理内容" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Width="120" Header="工位管理">
+                <Grid>
+                    <TextBlock Text="工位管理内容" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>

@@ -17,6 +17,7 @@ using GetStartedApp.ViewModels.PLC;
 using GetStartedApp.ViewModels.Product;
 using GetStartedApp.ViewModels.ProductVersion;
 using GetStartedApp.ViewModels.ProgramPack;
+using GetStartedApp.ViewModels.Route;
 using GetStartedApp.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Prism.Container.DryIoc;
@@ -146,6 +147,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
             containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
             containerRegistry.RegisterForNavigation <ConnSiemens, ConnSiemensViewModel>();
+            containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>();
         }
 
 
@@ -291,34 +293,6 @@ namespace GetStartedApp
             //});
         }
 
-        /// <summary>
-        /// 显示错误信息给用户
-        /// </summary>
-        //private void ShowErrorMessage(Exception ex, string exceptionType)
-        //{
-        //    // 确保在UI线程上显示消息框
-        //    Dispatcher.UIThread.Post(async () =>
-        //    {
-        //        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        //        {
-        //            var messageBox = new MessageBox.Avalonia.MessageBoxManager();
-        //            var result = await messageBox.ShowMessageBox(
-        //                desktop.MainWindow,
-        //                "应用程序错误",
-        //                $"{exceptionType}\n\n错误信息：{ex.Message}\n\n是否关闭应用程序？",
-        //                MessageBox.Avalonia.Enums.ButtonEnum.YesNo,
-        //                MessageBox.Avalonia.Enums.Icon.Error
-        //            );
-
-        //            if (result == MessageBox.Avalonia.Enums.ButtonResult.Yes)
-        //            {
-        //                desktop.Shutdown(1);
-        //            }
-        //        }
-        //    });
-        //}
-
-
         private static void InitializeLogging()
         {
             // 日志文件夹路径：当前程序目录下的"log"文件夹
@@ -347,7 +321,6 @@ namespace GetStartedApp
                 )
                 .CreateLogger();
         }
-
 
     }
 }

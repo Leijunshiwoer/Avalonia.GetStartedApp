@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings XmlVersion="1.8.0.0" XmlDate="2025-07-02 11:04:45">
+  <GroupNode Name="Devices" Description="所有的设备的集合对象，用于实际的数据采集">
+    <DeviceNode Name="OP10" Description="此设备安装在角落，编号0001" DeviceType="SiemensS7" CreateTime="2025-03-20 14:25:13" InstallationDate="2025-03-20 14:25:13" IpAddress="127.0.0.1" Port="102" ConnectTimeOut="2000" ReceiveTimeOut="2000" DTU="" PlcType="S1500" Rack="0" Slot="0" ConnectionType="1" LocalTSAP="258" DestTSAP="19799">
+      <RequestNode Name="SourceReadRequest" Description="一次完整的数据请求" RequestInterval="1000" Address="DB1000.0" RequestType="SourceRead" Length="100">
+        <RegularStructNode Name="测试" StructName="数据上报" StructIndex="0" ArrayLength="-1" StructParseType="Unflod" />
+        <RegularStructNode Name="测试02" StructName="数据上报" StructIndex="0" ArrayLength="-1" StructParseType="Struct" />
+      </RequestNode>
+      <RequestNode Name="定时写入请求" Description="一次完整的数据请求" RequestInterval="1000" RequestCount="1" Address="H1" RequestType="WriteInterval" FormatValue="2.3432" IsAbsoluteAddress="false" DataTypeCode="float" IsArray="false" />
+    </DeviceNode>
+  </GroupNode>
+  <GroupNode Name="Regular" Description="所有的解析规则的信息，用于对原始数据进行分析">
+    <RegularStructItemNode Name="数据上报" StructLength="50">
+      <RegularScalarNode Name="SectionID" Index="0" DataTypeCode="ushort" />
+      <RegularScalarNode Name="MachineID" Index="2" DataTypeCode="ushort" />
+      <RegularScalarNode Name="T1" Index="4" DataTypeCode="float" />
+      <RegularScalarNode Name="H1" Index="8" DataTypeCode="float" />
+      <RegularScalarNode Name="PartOK" Index="12" DataTypeCode="short" />
+      <RegularScalarNode Name="Alarm" Index="112" DataTypeCode="bool" Length="8" />
+    </RegularStructItemNode>
+  </GroupNode>
+  <GroupNode Name="Alarm" Description="所有报警信息的规则，用于分析设备的报警" />
+  <GroupNode Name="OEE" Description="所有设备状态信息的规则，统计设备不同状态的时间" />
+  <GroupNode Name="Template" Description="所有的模板设备信息，从网关设备创建的设备标准模板" />
+  <GroupNode Name="Database" Description="所有的数据库连接信息，用来进行数据存储的" />
+</Settings>
