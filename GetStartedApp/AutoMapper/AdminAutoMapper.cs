@@ -24,6 +24,7 @@ namespace GetStartedApp.AutoMapper
             CreateMap<Product_Recipe_Material_Config, RecipeMaterialDto>().ReverseMap();
             CreateMap<Product_Recipe_ST_Config, RecipeSTDto>().ReverseMap();
             CreateMap<Product_Recipe_ST_Parameter_Config, RecipeSTParameterDto>().ReverseMap();
+            CreateMap<Base_Route_Config, RouteDto>().ReverseMap();
         }
     }
 
