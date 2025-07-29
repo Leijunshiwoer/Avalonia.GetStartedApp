@@ -105,22 +105,210 @@
                                    IsBackendPaging="False"
                                    ItemsPerPage="{Binding ItemsPerPage}"
                                    ItemsSource="{Binding AllRoutes}"
-                                   PageChangedCommand="{Binding PageChangedCommand}" />
+                                   PageChangedCommand="{Binding ProcessPageChangedCommand}" />
 
                 </Grid>
             </TabItem>
 
             <TabItem Width="120" Header="工序管理">
-                <Grid>
-                    <TextBlock Text="工序管理内容" />
-                </Grid>
-            </TabItem>
+                <Grid RowDefinitions="auto,*,auto">
+                    <u:ToolBar Grid.Row="0">
+                        <u:IconButton Content="新增">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-plus" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                        <u:IconButton u:ToolBar.OverflowMode="Never" Content="刷新">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-refresh" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                    </u:ToolBar>
+                    <DataGrid Name="dgWSPro"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Processs}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding Id}"
+                                                Header="Id" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Code}"
+                                                Header="工序编码" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Name}"
+                                                Header="工序名称" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Index}"
+                                                Header="工序排序" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding Remark}"
+                                                Header="备注说明" />
+                            <!--  附加  -->
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding CreatedUserName}"
+                                                Header="创建人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding CreatedTime}"
+                                                Header="创建时间" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding UpdatedUserName}"
+                                                Header="修改人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding UpdatedTime}"
+                                                Header="修改时间" />
+                            <!--  操作  -->
+                            <DataGridTemplateColumn Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.ProModifyCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgWSPro}"
+                                                          Content="编辑">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-pencil" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+                                            <!--<u:IconButton Width="80"
+                                                  Margin="2"
+                                                  Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                  CommandParameter="{Binding SelectedItem, ElementName=dgWSPro}"
+                                                  Content="删除">
+                                        <u:IconButton.Icon>
+                                            <i:Icon FontSize="24"
+                                                    Foreground="DarkBlue"
+                                                    Value="mdi-delete" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>-->
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <cc:Pagination Grid.Row="2"
+                                   HorizontalAlignment="Left"
+                                   IsBackendPaging="False"
+                                   ItemsPerPage="{Binding ProcessItemsPerPage}"
+                                   ItemsSource="{Binding AllProcesss}"
+                                   PageChangedCommand="{Binding ProcessPageChangedCommand}" />
 
-            <TabItem Width="120" Header="工位管理">
-                <Grid>
-                    <TextBlock Text="工位管理内容" />
                 </Grid>
             </TabItem>
+            <!--<TabItem Width="120" Header="工位管理">
+                <Grid RowDefinitions="auto,*,auto">
+                    <u:ToolBar Grid.Row="0">
+                        <u:IconButton Content="新增">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-plus" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                        <u:IconButton u:ToolBar.OverflowMode="Never" Content="刷新">
+                            <u:IconButton.Icon>
+                                <i:Icon FontSize="24"
+                                        Foreground="DarkBlue"
+                                        Value="mdi-refresh" />
+                            </u:IconButton.Icon>
+                        </u:IconButton>
+                    </u:ToolBar>
+                    <DataGrid Name="dgStp"
+                              Grid.Row="1"
+                              ItemsSource="{Binding ProcessSteps}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding Id}"
+                                                Header="Id" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Code}"
+                                                Header="工位编码" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Name}"
+                                                Header="工位名称" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding Index}"
+                                                Header="工位排序" />
+            -->
+            <!--<DataGridTextColumn Width="120" Header="工位类型" Binding="{Binding StepType, Converter={StaticResource EnumDisplayConverter}}"/>-->
+            <!--
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding Remark}"
+                                                Header="备注说明" />
+            -->
+            <!--  附加  -->
+            <!--
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding CreatedUserName}"
+                                                Header="创建人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding CreatedTime}"
+                                                Header="创建时间" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding UpdatedUserName}"
+                                                Header="修改人员" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding UpdatedTime}"
+                                                Header="修改时间" />
+            -->
+            <!--  操作  -->
+            <!--
+                            <DataGridTemplateColumn Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="8,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.ProcessStepModifyCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgStp}"
+                                                          Content="编辑">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-pencil" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>
+            -->
+            <!--<u:IconButton Width="80"
+                                                  Margin="2"
+                                                  Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                  CommandParameter="{Binding SelectedItem, ElementName=dgRoute}"
+                                                  Content="删除">
+                                        <u:IconButton.Icon>
+                                            <i:Icon FontSize="24"
+                                                    Foreground="DarkBlue"
+                                                    Value="mdi-delete" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>-->
+            <!--
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <cc:Pagination Grid.Row="2"
+                                   HorizontalAlignment="Left"
+                                   IsBackendPaging="False"
+                                   ItemsPerPage="{Binding StepsItemsPerPage}"
+                                   ItemsSource="{Binding AllProcessSteps}"
+                                   PageChangedCommand="{Binding StepsPageChangedCommand}" />
+
+                </Grid>
+            </TabItem>-->
         </TabControl>
     </Grid>
 </UserControl>

@@ -147,7 +147,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
             containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
             containerRegistry.RegisterForNavigation <ConnSiemens, ConnSiemensViewModel>();
-            containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>();
+            containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>("ProcessRoute");
         }
 
 
