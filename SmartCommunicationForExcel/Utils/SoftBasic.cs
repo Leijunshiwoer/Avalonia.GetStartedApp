@@ -728,35 +728,35 @@ namespace SmartCommunicationForExcel.Utils
 
         #region Deep Clone
 
-        /// <summary>
-        /// 使用序列化反序列化深度克隆一个对象，该对象需要支持序列化特性 ->
-        /// Cloning an object with serialization deserialization depth that requires support for serialization attributes
-        /// </summary>
-        /// <param name="oringinal">源对象，支持序列化</param>
-        /// <returns>新的一个实例化的对象</returns>
-        /// <exception cref="NullReferenceException"></exception>
-        /// <exception cref="NonSerializedAttribute"></exception>
-        /// <remarks>
-        /// <note type="warning">
-        /// <paramref name="oringinal"/> 参数必须实现序列化的特性
-        /// </note>
-        /// </remarks>
-        /// <example>
-        /// <code lang="cs" source="HslCommunication_Net45.Test\Documentation\Samples\BasicFramework\SoftBasicExample.cs" region="DeepClone" title="DeepClone示例" />
-        /// </example>
-        public static object DeepClone( object oringinal )
-        {
-            using (System.IO.MemoryStream stream = new System.IO.MemoryStream( ))
-            {
-                BinaryFormatter formatter = new BinaryFormatter( )
-                {
-                    Context = new System.Runtime.Serialization.StreamingContext( System.Runtime.Serialization.StreamingContextStates.Clone )
-                };
-                formatter.Serialize( stream, oringinal );
-                stream.Position = 0;
-                return formatter.Deserialize( stream );
-            }
-        }
+        ///// <summary>
+        ///// 使用序列化反序列化深度克隆一个对象，该对象需要支持序列化特性 ->
+        ///// Cloning an object with serialization deserialization depth that requires support for serialization attributes
+        ///// </summary>
+        ///// <param name="oringinal">源对象，支持序列化</param>
+        ///// <returns>新的一个实例化的对象</returns>
+        ///// <exception cref="NullReferenceException"></exception>
+        ///// <exception cref="NonSerializedAttribute"></exception>
+        ///// <remarks>
+        ///// <note type="warning">
+        ///// <paramref name="oringinal"/> 参数必须实现序列化的特性
+        ///// </note>
+        ///// </remarks>
+        ///// <example>
+        ///// <code lang="cs" source="HslCommunication_Net45.Test\Documentation\Samples\BasicFramework\SoftBasicExample.cs" region="DeepClone" title="DeepClone示例" />
+        ///// </example>
+        //public static object DeepClone( object oringinal )
+        //{
+        //    using (System.IO.MemoryStream stream = new System.IO.MemoryStream( ))
+        //    {
+        //        BinaryFormatter formatter = new BinaryFormatter( )
+        //        {
+        //            Context = new System.Runtime.Serialization.StreamingContext( System.Runtime.Serialization.StreamingContextStates.Clone )
+        //        };
+        //        formatter.Serialize( stream, oringinal );
+        //        stream.Position = 0;
+        //        return formatter.Deserialize( stream );
+        //    }
+        //}
 
 
         #endregion

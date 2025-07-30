@@ -1,0 +1,397 @@
+<Window x:Class="SmartCommunicationForExcel.SmartConfigForExcel.SmartMitsubishiConfigForExcelForm"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:SmartCommunicationForExcel.SmartConfigForExcel"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        Title="SmartMisubishiConfigForExcelForm"
+        Width="1200"
+        Height="800"
+        mc:Ignorable="d">
+    <Grid>
+        <TabControl>
+            <!--  CPU Info 标签页  -->
+            <TabItem Header="CpuInfo">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="60" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="20">
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="CpuType" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="PlcType" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="Mark" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="Name" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="EapConfigBeginAddress" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="EapConfigBeginOffset" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="EapEventBeginAddress" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="EapEventBeginOffset" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="PlcConfigBeginAddress" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="PlcConfigBeginOffset" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="PlcEventBeginAddress" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="PlcEventBeginOffset" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="IP" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="Port1" />
+                        <TextBlock Margin="0,0,0,10"
+                                   Foreground="Blue"
+                                   Text="Port2" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="20">
+                        <TextBlock Name="lbCpuType"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="CpuType" />
+                        <TextBlock Name="lbPlcType"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="PlcType" />
+                        <TextBlock Name="lbMark"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="Mark" />
+                        <TextBlock Name="lbName"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="Name" />
+                        <TextBlock Name="lbEapConfigBeginAddress"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="EapConfigBeginAddress" />
+                        <TextBlock Name="lbEapConfigBeginOffset"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="EapConfigBeginOffset" />
+                        <TextBlock Name="lbEapEventBeginAddress"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="EapEventBeginAddress" />
+                        <TextBlock Name="lbEapEventBeginOffset"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="EapEventBeginOffset" />
+                        <TextBlock Name="lbPlcConfigBeginAddress"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="PlcConfigBeginAddress" />
+                        <TextBlock Name="lbPlcConfigBeginOffset"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="PlcConfigBeginOffset" />
+                        <TextBlock Name="lbPlcEventBeginAddress"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="PlcEventBeginAddress" />
+                        <TextBlock Name="lbPlcEventBeginOffset"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="PlcEventBeginOffset" />
+                        <TextBlock Name="lbIP"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="IP" />
+                        <TextBlock Name="lbPort1"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="Port1" />
+                        <TextBlock Name="lbPort2"
+                                   Margin="0,0,0,10"
+                                   Foreground="Black"
+                                   Text="Port2" />
+                    </StackPanel>
+                    <Button Grid.Column="3"
+                            Width="60"
+                            Background="Orange"
+                            Click="Button_Click"
+                            Content="刷新" />
+                </Grid>
+            </TabItem>
+
+            <!--  EapConfig 标签页 - 使用 DataGrid 替代 ListView  -->
+            <TabItem Header="EapConfig">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid x:Name="lvEapConfig"
+                              x:DataType="local:MyConfig"
+                              AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding No}"
+                                                Header="No" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding DateValue}"
+                                                Header="DateValue" />
+                            <DataGridTextColumn Width="60"
+                                                Binding="{Binding Length}"
+                                                Header="Length" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MBAdr}"
+                                                Header="MBAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MEAdr}"
+                                                Header="MEAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DTType}"
+                                                Header="DTType" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding Mark}"
+                                                Header="Mark" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding TagName}"
+                                                Header="TagName" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginAddress}"
+                                                Header="GlobalBeginAddress" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginOffset}"
+                                                Header="GlobalBeginOffset" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMBAddressTag}"
+                                                Header="GetMBAddressTag" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMEAddressTag}"
+                                                Header="GetMEAddressTag" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DataFormat}"
+                                                Header="DataFormat" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Button Grid.Column="1"
+                            Width="60"
+                            Background="Orange"
+                            Click="Button_Click"
+                            Content="刷新" />
+                </Grid>
+            </TabItem>
+
+            <!--  PlcConfig 标签页 - 使用 DataGrid 替代 ListView  -->
+            <TabItem Header="PlcConfig">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid x:Name="lvPlcConfig"
+                              x:DataType="local:MyConfig"
+                              AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding No}"
+                                                Header="No" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding DateValue}"
+                                                Header="DateValue" />
+                            <DataGridTextColumn Width="60"
+                                                Binding="{Binding Length}"
+                                                Header="Length" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MBAdr}"
+                                                Header="MBAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MEAdr}"
+                                                Header="MEAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DTType}"
+                                                Header="DTType" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding Mark}"
+                                                Header="Mark" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding TagName}"
+                                                Header="TagName" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginAddress}"
+                                                Header="GlobalBeginAddress" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginOffset}"
+                                                Header="GlobalBeginOffset" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMBAddressTag}"
+                                                Header="GetMBAddressTag" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMEAddressTag}"
+                                                Header="GetMEAddressTag" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DataFormat}"
+                                                Header="DataFormat" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Button Grid.Column="1"
+                            Width="60"
+                            Background="Orange"
+                            Click="Button_Click"
+                            Content="刷新" />
+                </Grid>
+            </TabItem>
+
+            <!--  EventConfig 标签页 - 使用 DataGrid 替代 ListView  -->
+            <TabItem Header="EventConfig">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="Blue"
+                                   Text="事件头信息进行筛选" />
+                        <ComboBox Name="comboBox1"
+                                  Width="600"
+                                  Margin="10,0,0,0" />
+                        <Button Width="60"
+                                Margin="8,0,0,0"
+                                Background="Orange"
+                                Click="Button_Click"
+                                Content="刷新" />
+                    </StackPanel>
+
+                    <!--  PC 事件列表  -->
+                    <DataGrid x:Name="lvEventConfigPC"
+                              Grid.Row="1"
+                              x:DataType="local:MyConfig"
+                              AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding No}"
+                                                Header="No" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding DateValue}"
+                                                Header="DateValue" />
+                            <DataGridTextColumn Width="60"
+                                                Binding="{Binding Length}"
+                                                Header="Length" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MBAdr}"
+                                                Header="MBAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MEAdr}"
+                                                Header="MEAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DTType}"
+                                                Header="DTType" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding Mark}"
+                                                Header="Mark" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding TagName}"
+                                                Header="TagName" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginAddress}"
+                                                Header="GlobalBeginAddress" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginOffset}"
+                                                Header="GlobalBeginOffset" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMBAddressTag}"
+                                                Header="GetMBAddressTag" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMEAddressTag}"
+                                                Header="GetMEAddressTag" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DataFormat}"
+                                                Header="DataFormat" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!--  PLC 事件列表  -->
+                    <DataGrid x:Name="lvEventConfigPLC"
+                              Grid.Row="2"
+                              x:DataType="local:MyConfig"
+                              AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding No}"
+                                                Header="No" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding DateValue}"
+                                                Header="DateValue" />
+                            <DataGridTextColumn Width="60"
+                                                Binding="{Binding Length}"
+                                                Header="Length" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MBAdr}"
+                                                Header="MBAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding MEAdr}"
+                                                Header="MEAdr" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DTType}"
+                                                Header="DTType" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding Mark}"
+                                                Header="Mark" />
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding TagName}"
+                                                Header="TagName" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginAddress}"
+                                                Header="GlobalBeginAddress" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GlobalBeginOffset}"
+                                                Header="GlobalBeginOffset" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMBAddressTag}"
+                                                Header="GetMBAddressTag" />
+                            <DataGridTextColumn Width="100"
+                                                Binding="{Binding GetMEAddressTag}"
+                                                Header="GetMEAddressTag" />
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DataFormat}"
+                                                Header="DataFormat" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Label Grid.Row="1"
+                           Grid.Column="1"
+                           VerticalContentAlignment="Center"
+                           Background="Green"
+                           Content="PC" />
+                    <Label Grid.Row="2"
+                           Grid.Column="1"
+                           VerticalContentAlignment="Center"
+                           Background="Blue"
+                           Content="PLC" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

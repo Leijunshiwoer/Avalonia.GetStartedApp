@@ -23,9 +23,7 @@
 
             <Grid x:Name="MainGrid"
                   Grid.Row="1"
-                  VerticalAlignment="Top"
-                  utils:SizeObserver.IsObserving="True"
-                  utils:SizeObserver.ObservedSize="{Binding PanelSize, Mode=OneWayToSource}">
+                  VerticalAlignment="Top">
                 <Image Source="{Binding ImageFromBinding}" />
             </Grid>
 
