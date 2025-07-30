@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <OutputType>Library</OutputType>
+    <Version>13.0.2</Version>
+    <Authors>shunfa.han</Authors>
+    <Company>kstopa.bu6</Company>
+    <Description>去除样式</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>SmartCommunicationForExcelCore</PackageId>
+    <PackageReleaseNotes>修改EPPlus授权问题</PackageReleaseNotes>
+    <Title>优化界面</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EPPlus" Version="7.1.1" />
+    <PackageReference Include="HslCommunication" Version="12.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SmartThreadPool.dll" Version="2.3.0" />
+    <PackageReference Include="Unity" Version="5.11.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="SmartConfigForExcel\SmartMitsubishiConfigForExcelForm.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="SmartConfigForExcel\SmartOmronConfigForExcelForm.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="SmartConfigForExcel\SmartSiemensConfigForExcelForm.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -40,6 +40,7 @@ namespace GetStartedApp.ViewModels.Route
         {
             InitRoutes();
             InitProcesses();
+            InitProcessSteps();
         }
 
         #region 工艺路线
@@ -221,19 +222,95 @@ namespace GetStartedApp.ViewModels.Route
         #endregion
         #endregion
 
-
         #region  工位
+
         #region 属性
+        private ObservableCollection<ProcessStepDto> _ProcessSteps;
+        public ObservableCollection<ProcessStepDto> ProcessSteps
+        {
+            get { return _ProcessSteps??(_ProcessSteps=new ObservableCollection<ProcessStepDto>()); }
+            set { SetProperty(ref _ProcessSteps, value); }
+        }
+
+        private ObservableCollection<ProcessStepDto> _AllProcessSteps;
+        public ObservableCollection<ProcessStepDto> AllProcessSteps
+        {
+            get { return _AllProcessSteps ?? (_AllProcessSteps = new ObservableCollection<ProcessStepDto>()); }
+            set { SetProperty(ref _AllProcessSteps, value); }
+        }
+
+
+        private int _StepsitemsPerPage = 20;
+        public int StepItemsPerPage
+        {
+            get => _StepsitemsPerPage;
+            set
+            {
+                if (SetProperty(ref _StepsitemsPerPage, value))
+                    UpdateStepsPaged();
+            }
+        }
+
+      
+
+        private int _stepscurrentPage = 1;
+        public int StepCurrentPage
+        {
+            get => _stepscurrentPage;
+            set
+            {
+                if (SetProperty(ref _stepscurrentPage, value))
+                    UpdateStepsPaged();
+            }
+        }
+
+
+        public int SetpsTotalItems => AllProcessSteps.Count;
+
 
         #endregion
 
         #region 方法
+        private void InitProcessSteps()
+        {
+            //获取所有的ProcessStep
+            long total = 0;
+            AllProcessSteps = appMapper.Map<List<ProcessStepDto>>(base_Process_Step_Config_Service.GetProcessStepPage(ref total, 1)).ToObservableConllection();
+            UpdateStepsPaged();
+        }
 
+        private void UpdateStepsPaged()
+        {
+            ProcessSteps = new ObservableCollection<ProcessStepDto>(
+                 AllProcessSteps.Skip((StepCurrentPage - 1) * StepItemsPerPage).Take(StepItemsPerPage)
+             );
+        }
         #endregion
 
         #region 事件
+        private DelegateCommand<object> _ProcessStepModifyCmd;
+        public DelegateCommand<object> ProcessStepModifyCmd =>
+            _ProcessStepModifyCmd ?? (_ProcessStepModifyCmd = new DelegateCommand<object>(ExecuteProcessStepModifyCmd));
 
+        void ExecuteProcessStepModifyCmd(object parameter)
+        {
+
+        }
+
+
+        private DelegateCommand<PageChangedEventArgs> _StepsPageChangedCommand;
+        public DelegateCommand<PageChangedEventArgs> StepsPageChangedCommand =>
+            _StepsPageChangedCommand ?? (_StepsPageChangedCommand = new DelegateCommand<PageChangedEventArgs>(ExecuteStepsPageChangedCommand));
+
+        void ExecuteStepsPageChangedCommand(PageChangedEventArgs parameter)
+        {
+            StepCurrentPage = parameter.CurrentPage;
+            StepItemsPerPage = parameter.ItemsPerPage;
+            UpdateProcessPaged();
+        }
         #endregion
+
+
         #endregion
     }
 }

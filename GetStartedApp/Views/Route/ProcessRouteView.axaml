@@ -2,6 +2,7 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:cc="using:GetStartedApp.Utils.UserControls"
+             xmlns:converters="clr-namespace:GetStartedApp.Utils.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -14,7 +15,9 @@
              d:DesignWidth="800"
              x:DataType="vm:ProcessRouteViewModel"
              mc:Ignorable="d">
-
+    <UserControl.Resources>
+        <converters:EnumDisplayConverter x:Key="EnumDisplayConverter" />
+    </UserControl.Resources>
     <Grid>
         <TabControl TabStripPlacement="Top">
             <TabItem Width="120" Header="工艺路线">
@@ -205,7 +208,7 @@
 
                 </Grid>
             </TabItem>
-            <!--<TabItem Width="120" Header="工位管理">
+            <TabItem Width="120" Header="工位管理">
                 <Grid RowDefinitions="auto,*,auto">
                     <u:ToolBar Grid.Row="0">
                         <u:IconButton Content="新增">
@@ -239,15 +242,17 @@
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding Index}"
                                                 Header="工位排序" />
-            -->
-            <!--<DataGridTextColumn Width="120" Header="工位类型" Binding="{Binding StepType, Converter={StaticResource EnumDisplayConverter}}"/>-->
-            <!--
+
+                            <DataGridTextColumn Width="120"
+                                                Binding="{Binding StepType, Converter={StaticResource EnumDisplayConverter}}"
+                                                Header="工位类型" />
+
                             <DataGridTextColumn Width="200"
                                                 Binding="{Binding Remark}"
                                                 Header="备注说明" />
-            -->
-            <!--  附加  -->
-            <!--
+
+                            <!--  附加  -->
+
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding CreatedUserName}"
                                                 Header="创建人员" />
@@ -260,9 +265,9 @@
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding UpdatedTime}"
                                                 Header="修改时间" />
-            -->
-            <!--  操作  -->
-            <!--
+
+                            <!--  操作  -->
+
                             <DataGridTemplateColumn Header="操作">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -281,19 +286,19 @@
                                                             Value="mdi-pencil" />
                                                 </u:IconButton.Icon>
                                             </u:IconButton>
-            -->
-            <!--<u:IconButton Width="80"
-                                                  Margin="2"
-                                                  Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
-                                                  CommandParameter="{Binding SelectedItem, ElementName=dgRoute}"
-                                                  Content="删除">
-                                        <u:IconButton.Icon>
-                                            <i:Icon FontSize="24"
-                                                    Foreground="DarkBlue"
-                                                    Value="mdi-delete" />
-                                        </u:IconButton.Icon>
-                                    </u:IconButton>-->
-            <!--
+
+                                            <!--<u:IconButton Width="80"
+                                                          Margin="2"
+                                                          Command="{Binding DataContext.PrimaryDeleteCmd, ElementName=userControl}"
+                                                          CommandParameter="{Binding SelectedItem, ElementName=dgRoute}"
+                                                          Content="删除">
+                                                <u:IconButton.Icon>
+                                                    <i:Icon FontSize="24"
+                                                            Foreground="DarkBlue"
+                                                            Value="mdi-delete" />
+                                                </u:IconButton.Icon>
+                                            </u:IconButton>-->
+
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -303,12 +308,12 @@
                     <cc:Pagination Grid.Row="2"
                                    HorizontalAlignment="Left"
                                    IsBackendPaging="False"
-                                   ItemsPerPage="{Binding StepsItemsPerPage}"
+                                   ItemsPerPage="{Binding StepItemsPerPage}"
                                    ItemsSource="{Binding AllProcessSteps}"
                                    PageChangedCommand="{Binding StepsPageChangedCommand}" />
 
                 </Grid>
-            </TabItem>-->
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

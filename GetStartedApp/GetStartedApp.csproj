@@ -77,6 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GetStartedApp.SqlSugar\GetStartedApp.SqlSugar.csproj" />
+    <ProjectReference Include="..\SmartCommunicationForExcel\SmartCommunicationForExcel.csproj" />
   </ItemGroup>
 
   <ItemGroup>
