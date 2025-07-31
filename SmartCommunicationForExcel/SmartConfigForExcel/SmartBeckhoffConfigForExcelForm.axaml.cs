@@ -176,7 +176,7 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
                     _globalBeckhoffConfig.EapConfig[i].Mark,
                     _globalBeckhoffConfig.EapConfig[i].TagName,
                     _globalBeckhoffConfig.EapConfig[i].GlobalBeginAddress.ToString(),
-                    _globalBeckhoffConfig.PlcConfig[i].GlobalBeginOffset.ToString(),
+                    _globalBeckhoffConfig.EapConfig[i].GlobalBeginOffset.ToString(),
                     _globalBeckhoffConfig.EapConfig[i].GetMBAddressTag,
                     _globalBeckhoffConfig.EapConfig[i].GetMEAddressTag,
                     _globalBeckhoffConfig.EapConfig[i].DataFormat.ToString()

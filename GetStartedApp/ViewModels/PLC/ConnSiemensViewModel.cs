@@ -3,62 +3,39 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.TextFormatting;
+using GetStartedApp.Models;
 using GetStartedApp.Utils.Node;
+using NetTaste;
+using OfficeOpenXml;
 using Prism.Commands;
+using SmartCommunicationForExcel.EventHandle.Siemens;
+using SmartCommunicationForExcel.Executer;
+using SmartCommunicationForExcel.Implementation.Siemens;
+using SmartCommunicationForExcel.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using Ursa.Controls;
 
 namespace GetStartedApp.ViewModels.PLC
 {
-    public class ConnSiemensViewModel : ViewModelBase
+    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter
     {
-        // 字体缩放相关配置
-        private const int BaseFontSize = 12; // 基础字体大小
-        private const int MaxLengthForBaseFont = 20; // 基础字体对应的最大长度
-        private const int MinFontSize = 8; // 最小字体大小（避免过小无法阅读）
 
         public ConnSiemensViewModel()
-        {
-            UpdateImage();
-        }
 
-        private void UpdateImage()
         {
-            Test();
-        }
-
-        private void Test()
-        {
-            List<RegularItemNode> regulars = new List<RegularItemNode>
-            {
-                new RegularItemNode(){Name="温度",Index=100,NodeType=200,RegularCode=3,TypeLength=120 },
-            };
-            string selectedRegular = "温度";
-
-            if (PanelWidth < 20) return;
-            ImageFromBinding?.Dispose();
-            ImageFromBinding = GetRenderInfo(regulars, selectedRegular);
+            InitPLCs();
         }
 
         #region 属性
         private const int EveryByteWidth = 16;
         private bool isShowText = true;
-
-        private Size _panelSize;
-        public Size PanelSize
-        {
-            get => _panelSize;
-            set
-            {
-                if (SetProperty(ref _panelSize, value))
-                {
-                    PanelWidth = (int)value.Width;
-                    UpdateImage();
-                }
-            }
-        }
+        private const string Path = @"/Assets/PLCs/";
 
         private int _panelWidth = 800;
         public int PanelWidth
@@ -73,9 +50,325 @@ namespace GetStartedApp.ViewModels.PLC
             get => _imageFromBinding;
             set => SetProperty(ref _imageFromBinding, value);
         }
+
+        private string _PLCConnStatus;
+        public string PLCConnStatus
+        {
+            get { return _PLCConnStatus; }
+            set { SetProperty(ref _PLCConnStatus, value); }
+        }
+
+        private ObservableCollection<PLCModel> _ObPLC;
+
+        public ObservableCollection<PLCModel> ObPLC
+        {
+            get { return _ObPLC ?? (_ObPLC = new ObservableCollection<PLCModel>()); }
+            set { SetProperty(ref _ObPLC, value); }
+        }
         #endregion
 
+        private PLCModel _SelectedPLC;
+        public PLCModel SelectedPLC
+        {
+            get { return _SelectedPLC; }
+            set { SetProperty(ref _SelectedPLC, value); }
+        }
+
+        #region 事件
+        private DelegateCommand _ConnAllPlcCmd;
+        public DelegateCommand ConnAllPlcCmd =>
+            _ConnAllPlcCmd ?? (_ConnAllPlcCmd = new DelegateCommand(ExecuteConnAllPlcCmd));
+
+        void ExecuteConnAllPlcCmd()
+        {
+
+        }
+
+        private DelegateCommand _PLCConfigCmd;
+        public DelegateCommand PLCConfigCmd =>
+            _PLCConfigCmd ?? (_PLCConfigCmd = new DelegateCommand(ExecutePLCConfigCmd));
+
+        void ExecutePLCConfigCmd()
+        {
+
+        }
+
+        private DelegateCommand<object> _ConnCmd;
+        public DelegateCommand<object> ConnCmd =>
+            _ConnCmd ?? (_ConnCmd = new DelegateCommand<object>(ExecuteConnCmd));
+
+        void ExecuteConnCmd(object parameter)
+        {
+            var model = parameter as PLCModel;
+            SelectedPLC = model;
+            if (model != null)
+            {
+                if (model.FIsConn != "已连接")
+                {
+                    PLCModel pLCModel = ObPLC.Where(it => it.FFileName == model.FFileName).FirstOrDefault();
+
+                    ResultState resultState = _sc.StartSiemensWorkInstance(model.FAddr, Path + model.FFileName);
+                    pLCModel.FIsConn = resultState.IsSuccess ? "已连接" : "连接失败";
+                    if (!resultState.IsSuccess) MessageBox.ShowAsync(resultState.Message);
+                }
+                else
+                {
+
+                }
+
+            }
+
+        }
+
+
+        private DelegateCommand<object> _UnCnnCmd;
+        public DelegateCommand<object> UnCnnCmd =>
+            _UnCnnCmd ?? (_UnCnnCmd = new DelegateCommand<object>(ExecuteUnCnnCmd));
+
+        void ExecuteUnCnnCmd(object parameter)
+        {
+            var model = parameter as PLCModel;
+            SelectedPLC = model;
+            if (model != null)
+            {
+                if (model.FIsConn == "已连接" || model.FIsConn == "后台连接中")
+                {
+                    PLCModel pLCModel = ObPLC.Where(it => it.FFileName == model.FFileName).FirstOrDefault();
+                    _sc.StopSiemensWorkInstance(model.FAddr);
+                    pLCModel.FIsConn = "未连接";
+                }
+                else
+                {
+
+                }
+
+            }
+        }
+
+        private DelegateCommand<object> _MonitoringCmd;
+        public DelegateCommand<object> MonitoringCmd =>
+            _MonitoringCmd ?? (_MonitoringCmd = new DelegateCommand<object>(ExecuteMonitoringCmd));
+
+        void ExecuteMonitoringCmd(object parameter)
+        {
+            var model = parameter as PLCModel;
+            SelectedPLC = model;
+            if (model != null)
+            {
+                if (model.FIsConn == "已连接" || model.FIsConn == "后台连接中")
+                {
+                    ResultState resultState = _sc.ShowSimensConfig(model.FAddr);
+                    if (!resultState.IsSuccess)
+                    {
+
+                    }
+                }
+                else
+                {
+
+                }
+            }
+        }
+
+        #endregion
+
+
+        #region 方法
+        public object HandleEvent(object sei)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<SiemensEventIO> listInput, List<SiemensEventIO> listOutput, string strError = "")
+        {
+
+        }
+
+        public void Err(string strInstanceName, byte[] data, string strError = "")
+        {
+
+        }
+
+
+        private void InitPLCs()
+        {
+            var pLCModels = GetPLCConfigInfoByFolder(Directory.GetCurrentDirectory() + Path);
+            if (pLCModels != null)
+            {
+                if (pLCModels.Length > 0)
+                {
+                    ObPLC = new ObservableCollection<PLCModel>(pLCModels);
+                }
+            }
+
+            _sc = new SmartContainer();
+            //注册
+            _sc.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
+            //开现程连接plc
+            if (m_isAutoConnPLC)
+            {
+                for (int i = 0; i < ObPLC.Count; i++)
+                {
+                    int n = i;
+                    new Thread(() =>
+                    {
+                        do
+                        {
+                            if (ObPLC[n].FIsConn != "已连接")
+                                ObPLC[n].FIsConn = _sc.StartSiemensWorkInstance(ObPLC[n].FAddr, Path + ObPLC[n].FFileName).IsSuccess ? "已连接" : "连接失败";
+                        } while (ObPLC[n].FIsConn != "已连接" && !m_mre.WaitOne(m_interval));
+                    })
+                    { IsBackground = true }.Start();
+                    Thread.Sleep(100);
+                }
+            }
+        }
+
+
+        private ManualResetEvent m_mre = new ManualResetEvent(false);
+        private bool m_isAutoConnPLC = false;
+        private int m_interval = 2000;//s
+
+        private SmartContainer _sc = null;
+
+        private string[] _sheetNames = new string[] { "CpuInfo", "EapConfig", "PlcConfig", "EventConfig" };
+
+        private string GetExcelCellToStr(object obj)
+        {
+            if (obj == null)
+                return "";
+            else
+                return obj.ToString();
+        }
+
+        private short GetExcelCellToShort(object obj)
+        {
+            if (obj == null)
+                return 0;
+            else
+                return Convert.ToInt16(obj);
+        }
+
+        private char GetExcelCellToChar(object obj)
+        {
+            if (obj == null)
+                return ' ';
+            else
+                return Convert.ToChar(obj);
+        }
+
+        private int _cpuInfoMaxRow = 1;
+        private int _cpuInfoStartRow = 3;
+        private int _cpuInfoStartCol = 1;
+
+        //读取指定PLC配置文件夹下所有配置文件信息
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="path">文件夹路径</param>
+        /// <returns></returns>
+        private PLCModel[] GetPLCConfigInfoByFolder(string path)
+        {
+            List<PLCModel> listPLCModel = new List<PLCModel>();
+            if (!Directory.Exists(path))//判断文件夹是否存在
+            {
+                throw new Exception("文件不存在");
+            }
+            else
+            {
+                //查看文件夹下面满足条件的文件
+                DirectoryInfo root = new DirectoryInfo(path);
+                FileInfo[] files = root.GetFiles();
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    if (files[i].Name.ToLower().Contains("_siemens.xlsx"))//表示是plc配置文件
+                    {
+                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                        try
+                        {
+                            using (ExcelPackage package = new ExcelPackage(new FileInfo(files[i].FullName)))
+                            {
+                                //查看sheet也名称是否正确
+                                for (int j = 0; j < package.Workbook.Worksheets.Count; j++)
+                                {
+                                    string err = string.Empty;
+                                    if (package.Workbook.Worksheets[j].Name != _sheetNames[j])
+                                    {
+                                        err += (_sheetNames[j] + ",");
+                                    }
+                                    if (!string.IsNullOrEmpty(err))
+                                    {
+                                        throw new Exception($"Excel文件{err}Sheet匹配失败");
+                                    }
+                                }
+                                int col = 0;
+                                ExcelWorksheet sheet = package.Workbook.Worksheets[0];
+
+                                string cpuType = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                string plcType = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                string mark = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                string name = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short eapConfigBeginAddress = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short eapConfigBeginOffset = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short eapEventBeginAddress = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short eapEventBeginOffset = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short plcConfigBeginAddress = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short plcConfigBeginOffset = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short plcEventBeginAddress = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short plcEventBeginOffset = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                string ip = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                short port = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                int rack = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                int slot = GetExcelCellToShort(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+
+                                PLCModel model = new PLCModel()
+                                {
+                                    FFileName = files[i].Name,
+                                    FCpuType = cpuType,
+                                    FPLCType = plcType,
+                                    FName = name,
+                                    FIsConn = "未连接",
+                                    FColor = "Black",
+                                    FAddr = ip,
+                                    FMark = mark
+                                };
+                                listPLCModel.Add(model);
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+            }
+            return listPLCModel.ToArray();
+        }
+        #endregion
+
+
         #region 绘图
+
+        // 字体缩放相关配置
+        private const int BaseFontSize = 12; // 基础字体大小
+        private const int MaxLengthForBaseFont = 20; // 基础字体对应的最大长度
+        private const int MinFontSize = 8; // 最小字体大小（避免过小无法阅读）
+
         private RenderTargetBitmap GetRenderInfo(List<RegularItemNode> regulars, string selectedRegular)
         {
             regulars.Sort();
@@ -282,7 +575,7 @@ namespace GetStartedApp.ViewModels.PLC
 
             // ********** 解决：字体随长度变长自动缩小 **********
             // 计算动态字体大小
-            double fontSize =12;
+            double fontSize = 12;
 
             if (point1.Y == point2.Y)
             {
@@ -401,17 +694,6 @@ namespace GetStartedApp.ViewModels.PLC
                     }
                 }
             }
-        }
-        #endregion
-
-        #region 事件
-        private DelegateCommand _RefreshCmd;
-        public DelegateCommand RefreshCmd =>
-            _RefreshCmd ?? (_RefreshCmd = new DelegateCommand(ExecuteRefreshCmd));
-
-        void ExecuteRefreshCmd()
-        {
-            Test();
         }
         #endregion
     }

@@ -2,20 +2,21 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:utils="clr-namespace:GetStartedApp.Utils;assembly=GetStartedApp"
              xmlns:vm="clr-namespace:GetStartedApp.ViewModels.PLC;assembly=GetStartedApp"
+             Name="userControl"
              d:DesignHeight="450"
              d:DesignWidth="800"
              x:DataType="vm:ConnSiemensViewModel"
              mc:Ignorable="d">
-    <Grid ColumnDefinitions="auto,*">
-        <Grid Grid.Column="0">
+    <Grid RowDefinitions="auto,*">
+        <!--<Grid Grid.Column="0">
             <TreeView Width="100" />
-
-
-        </Grid>
-        <Grid Grid.Column="1" RowDefinitions="auto,*">
+        </Grid>-->
+        <!--<Grid Grid.Column="1" RowDefinitions="auto,*">
 
             <Button Grid.Row="0"
                     Command="{Binding RefreshCmd}"
@@ -27,6 +28,113 @@
                 <Image Source="{Binding ImageFromBinding}" />
             </Grid>
 
-        </Grid>
+        </Grid>-->
+
+        <u:ToolBar Grid.Row="0">
+            <u:IconButton Command="{Binding ConnAllPlcCmd}" Content="全部连接">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+
+            <u:IconButton Command="{Binding PLCConfigCmd}" Content="设置连接">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+            <TextBlock Grid.Column="2"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       Foreground="Blue"
+                       Text="{Binding PLCConnStatus}" />
+
+
+        </u:ToolBar>
+
+
+        <DataGrid x:Name="dgPlcs"
+                  Grid.Row="1"
+                  ItemsSource="{Binding ObPLC}"
+                  SelectedItem="{Binding SelectedPLC}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="120" Header="连接状态">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Foreground="{Binding FColor}" Text="{Binding FIsConn}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding FCpuType}"
+                                    Header="CPU类型" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding FPLCType}"
+                                    Header="PLC型号" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding FName}"
+                                    Header="名称" />
+                <DataGridTextColumn Width="180"
+                                    Binding="{Binding FAddr}"
+                                    Header="地址" />
+                <DataGridTextColumn Width="280"
+                                    Binding="{Binding FMark}"
+                                    Header="备注说明" />
+
+
+                <!--  操作  -->
+                <DataGridTemplateColumn Header="操作">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="8,0,8,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                <u:IconButton Width="80"
+                                              Margin="2"
+                                              Command="{Binding DataContext.ConnCmd, ElementName=userControl}"
+                                              CommandParameter="{Binding .}"
+                                              Content="连接">
+                                    <u:IconButton.Icon>
+                                        <i:Icon FontSize="24"
+                                                Foreground="DarkBlue"
+                                                Value="mdi-pencil" />
+                                    </u:IconButton.Icon>
+                                </u:IconButton>
+                                <u:IconButton Width="80"
+                                              Margin="2"
+                                              Command="{Binding DataContext.UnCnnCmd, ElementName=userControl}"
+                                              CommandParameter="{Binding .}"
+                                              Content="断开">
+                                    <u:IconButton.Icon>
+                                        <i:Icon FontSize="24"
+                                                Foreground="DarkBlue"
+                                                Value="mdi-delete" />
+                                    </u:IconButton.Icon>
+                                </u:IconButton>
+
+                                <u:IconButton Width="80"
+                                              Margin="2"
+                                              Command="{Binding DataContext.MonitoringCmd, ElementName=userControl}"
+                                              CommandParameter="{Binding .}"
+                                              Content="监控">
+                                    <u:IconButton.Icon>
+                                        <i:Icon FontSize="24"
+                                                Foreground="DarkBlue"
+                                                Value="mdi-pencil" />
+                                    </u:IconButton.Icon>
+                                </u:IconButton>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
     </Grid>
 </UserControl>

@@ -120,7 +120,7 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
                     _globalOmronConfig.EapConfig[i].Mark,
                     _globalOmronConfig.EapConfig[i].TagName,
                     _globalOmronConfig.EapConfig[i].GlobalBeginAddress.ToString(),
-                    _globalOmronConfig.PlcConfig[i].GlobalBeginOffset.ToString(),
+                    _globalOmronConfig.EapConfig[i].GlobalBeginOffset.ToString(),
                     _globalOmronConfig.EapConfig[i].GetMBAddressTag,
                     _globalOmronConfig.EapConfig[i].GetMEAddressTag,
                     _globalOmronConfig.EapConfig[i].DataFormat.ToString()

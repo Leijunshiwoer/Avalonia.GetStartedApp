@@ -30,6 +30,8 @@
   <ItemGroup>
     <None Remove="App.config" />
     <None Remove="Assets\avalonia-logo.ico" />
+    <None Remove="Views\PLC\OP10_Siemens.xlsx" />
+    <None Remove="Views\PLC\PLCConnConfig.ini" />
     <None Remove="本地网关.xml" />
   </ItemGroup>
 
@@ -37,7 +39,10 @@
     <Content Include="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="本地网关.xml">
+    <Content Include="Assets\PLCs\PLCConnConfig.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\本地网关.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -82,6 +87,21 @@
 
   <ItemGroup>
     <Content Include="Assets\avalonia-logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\PLCs\OP10_Siemens.xlsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Update="Assets\PLCs\OP10_Siemens.xlsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AvaloniaResource>
+    <AvaloniaResource Update="Assets\PLCs\PLCConnConfig.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AvaloniaResource>
   </ItemGroup>
 
   <ItemGroup>

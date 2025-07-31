@@ -16,29 +16,12 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
     {
         private ISiemensGlobalConfig<SiemensEventIO, SiemensCpuInfo, SiemensEventInstance> _globalSiemensConfig;
 
-        // 控件引用
-     
-
         public SmartSiemensConfigForExcelForm()
         {
             InitializeComponent();
-            // 初始化控件引用
-            InitializeControls();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
-
-        /// <summary>
-        /// 初始化所有需要操作的控件引用
-        /// </summary>
-        private void InitializeControls()
-        {
-            // CPU信息相关控件
            
         }
+
 
         public void SetModel(ISiemensGlobalConfig<SiemensEventIO, SiemensCpuInfo, SiemensEventInstance> globalConfig)
         {
@@ -120,7 +103,7 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
                     _globalSiemensConfig.EapConfig[i].Mark,
                     _globalSiemensConfig.EapConfig[i].TagName,
                     _globalSiemensConfig.EapConfig[i].GlobalBeginAddress.ToString(),
-                    _globalSiemensConfig.PlcConfig[i].GlobalBeginOffset.ToString(),
+                    _globalSiemensConfig.EapConfig[i].GlobalBeginOffset.ToString(),
                     _globalSiemensConfig.EapConfig[i].GetMBAddressTag,
                     _globalSiemensConfig.EapConfig[i].GetMEAddressTag,
                     _globalSiemensConfig.EapConfig[i].DataFormat.ToString()

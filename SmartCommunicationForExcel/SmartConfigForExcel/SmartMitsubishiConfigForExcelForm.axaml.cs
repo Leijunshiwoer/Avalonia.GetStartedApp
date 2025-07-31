@@ -167,7 +167,7 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
                     _globalMitsubishiConfig.EapConfig[i].Mark,
                     _globalMitsubishiConfig.EapConfig[i].TagName,
                     _globalMitsubishiConfig.EapConfig[i].GlobalBeginAddress.ToString(),
-                    _globalMitsubishiConfig.PlcConfig[i].GlobalBeginOffset.ToString(),
+                    _globalMitsubishiConfig.EapConfig[i].GlobalBeginOffset.ToString(),
                     _globalMitsubishiConfig.EapConfig[i].GetMBAddressTag,
                     _globalMitsubishiConfig.EapConfig[i].GetMEAddressTag,
                     _globalMitsubishiConfig.EapConfig[i].DataFormat.ToString()
