@@ -16,27 +16,10 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
     {
         private IOmronGlobalConfig<OmronEventIO, OmronCpuInfo, OmronEventInstance> _globalOmronConfig;
 
-        // 控件引用
-     
-
         public SmartOmronConfigForExcelForm()
         {
             InitializeComponent();
-            // 初始化控件引用
-            InitializeControls();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
-
-        /// <summary>
-        /// 初始化所有需要操作的控件引用
-        /// </summary>
-        private void InitializeControls()
-        {
-            
+          
         }
 
         public void SetModel(IOmronGlobalConfig<OmronEventIO, OmronCpuInfo, OmronEventInstance> globalConfig)

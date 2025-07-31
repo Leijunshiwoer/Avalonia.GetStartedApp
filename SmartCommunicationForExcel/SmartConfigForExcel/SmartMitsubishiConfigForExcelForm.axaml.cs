@@ -16,78 +16,11 @@ namespace SmartCommunicationForExcel.SmartConfigForExcel
     {
         private IMitsubishiGlobalConfig<MitsubishiEventIO, MitsubishiCpuInfo, MitsubishiEventInstance> _globalMitsubishiConfig;
 
-        //// 控件引用
-        //private TextBlock lbCpuType;
-        //private TextBlock lbPlcType;
-        //private TextBlock lbMark;
-        //private TextBlock lbName;
-        //private TextBlock lbEapConfigBeginAddress;
-        //private TextBlock lbEapConfigBeginOffset;
-        //private TextBlock lbEapEventBeginAddress;
-        //private TextBlock lbEapEventBeginOffset;
-        //private TextBlock lbPlcConfigBeginAddress;
-        //private TextBlock lbPlcConfigBeginOffset;
-        //private TextBlock lbPlcEventBeginAddress;
-        //private TextBlock lbPlcEventBeginOffset;
-        //private TextBlock lbIP;
-        //private TextBlock lbPort1;
-        //private TextBlock lbPort2;
-        //private ComboBox comboBox1;
-        //private DataGrid lvEapConfig;
-        //private DataGrid lvPlcConfig;
-        //private DataGrid lvEventConfigPC;
-        //private DataGrid lvEventConfigPLC;
-
         public SmartMitsubishiConfigForExcelForm()
         {
             InitializeComponent();
-            // 初始化控件引用
-            InitializeControls();
+          
         }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
-
-        /// <summary>
-        /// 初始化所有需要操作的控件引用
-        /// </summary>
-        private void InitializeControls()
-        {
-            //// CPU信息相关控件
-            //lbCpuType = this.FindControl<TextBlock>("lbCpuType");
-            //lbPlcType = this.FindControl<TextBlock>("lbPlcType");
-            //lbMark = this.FindControl<TextBlock>("lbMark");
-            //lbName = this.FindControl<TextBlock>("lbName");
-            //lbEapConfigBeginAddress = this.FindControl<TextBlock>("lbEapConfigBeginAddress");
-            //lbEapConfigBeginOffset = this.FindControl<TextBlock>("lbEapConfigBeginOffset");
-            //lbEapEventBeginAddress = this.FindControl<TextBlock>("lbEapEventBeginAddress");
-            //lbEapEventBeginOffset = this.FindControl<TextBlock>("lbEapEventBeginOffset");
-            //lbPlcConfigBeginAddress = this.FindControl<TextBlock>("lbPlcConfigBeginAddress");
-            //lbPlcConfigBeginOffset = this.FindControl<TextBlock>("lbPlcConfigBeginOffset");
-            //lbPlcEventBeginAddress = this.FindControl<TextBlock>("lbPlcEventBeginAddress");
-            //lbPlcEventBeginOffset = this.FindControl<TextBlock>("lbPlcEventBeginOffset");
-            //lbIP = this.FindControl<TextBlock>("lbIP");
-            //lbPort1 = this.FindControl<TextBlock>("lbPort1");
-            //lbPort2 = this.FindControl<TextBlock>("lbPort2");
-
-            //// 数据表格控件
-            //lvEapConfig = this.FindControl<DataGrid>("lvEapConfig");
-            //lvPlcConfig = this.FindControl<DataGrid>("lvPlcConfig");
-            //lvEventConfigPC = this.FindControl<DataGrid>("lvEventConfigPC");
-            //lvEventConfigPLC = this.FindControl<DataGrid>("lvEventConfigPLC");
-
-            //// 下拉框控件
-            //comboBox1 = this.FindControl<ComboBox>("comboBox1");
-
-            //// 初始化DataGrid的ItemsSource
-            //lvEapConfig.ItemsSource = new List<MyConfig>();
-            //lvPlcConfig.ItemsSource = new List<MyConfig>();
-            //lvEventConfigPC.ItemsSource = new List<MyConfig>();
-            //lvEventConfigPLC.ItemsSource = new List<MyConfig>();
-        }
-
         public void SetModel(IMitsubishiGlobalConfig<MitsubishiEventIO, MitsubishiCpuInfo, MitsubishiEventInstance> globalConfig)
         {
             _globalMitsubishiConfig = globalConfig;
