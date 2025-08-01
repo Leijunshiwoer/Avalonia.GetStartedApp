@@ -100,7 +100,7 @@ namespace SmartCommunicationForExcel.Utils
             {
                 try
                 {
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
                     using (ExcelPackage package = new ExcelPackage(new FileInfo(System.IO.Directory.GetCurrentDirectory() + "\\" + strFile)))
                     {
                         int vSheetCount = package.Workbook.Worksheets.Count; //获取总Sheet页

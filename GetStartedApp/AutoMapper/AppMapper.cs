@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace GetStartedApp.AutoMapper
             {
                 var assemblys = AppDomain.CurrentDomain.GetAssemblies();
                 configure.AddMaps(assemblys);
-            });
+            },new LoggerFactory());
             Current = configuration.CreateMapper();
         }
 

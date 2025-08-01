@@ -19,6 +19,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Ursa.Controls;
 
 namespace GetStartedApp.ViewModels.PLC
@@ -176,7 +177,7 @@ namespace GetStartedApp.ViewModels.PLC
             SelectedPLC = plcModel;
             if (plcModel.FIsConn is "已连接" or "后台连接中")
             {
-                var result = _smartContainer.ShowSimensConfig(plcModel.FAddr);
+                var result = _smartContainer.ShowSiemensConfig(plcModel.FFileName);
                 if (!result.IsSuccess)
                 {
                     // 可添加监控窗口打开失败的处理
@@ -252,8 +253,8 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         private PLCModel? ParsePLCConfigFromExcel(string filePath)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
+            
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage(new FileInfo(filePath));
             // 验证Sheet名称
             ValidateExcelSheets(package);
@@ -282,63 +283,64 @@ namespace GetStartedApp.ViewModels.PLC
         /// <summary>
         /// 启动PLC自动连接线程
         /// </summary>
-        private void StartAutoConnectPLCs()
+        private async void StartAutoConnectPLCs()
         {
             for (int i = 0; i < ObPLC.Count; i++)
             {
                 int plcIndex = i;
-                new Thread(() =>
+                // 使用Task.Run并标记lambda为async
+                _ = Task.Run(async () =>
                 {
                     do
                     {
                         var plc = ObPLC[plcIndex];
                         if (plc.FIsConn != "已连接")
                         {
-                            var result = _smartContainer.StartSiemensWorkInstance(
-                                plc.FAddr,
+                            // 调用异步版本的启动方法
+                            var result = await _smartContainer.StartSiemensWorkInstance(
+                                plc.FFileName,
                                 Path.Combine(PLC_CONFIG_PATH, plc.FFileName)
                             );
                             plc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
                         }
                     }
+                    // 使用Task.Delay替代WaitOne，避免阻塞线程池线程
                     while (ObPLC[plcIndex].FIsConn != "已连接"
-                           && !_autoConnResetEvent.WaitOne(_autoConnInterval));
-                })
-                { IsBackground = true }.Start();
+                           && !await Task.Run(() => _autoConnResetEvent.WaitOne(_autoConnInterval)));
+                });
 
-                Thread.Sleep(100); // 避免并发冲突
+                await Task.Delay(100); // 异步等待，避免并发冲突
             }
         }
-
         /// <summary>
         /// 连接单个PLC
         /// </summary>
-        private void ConnectPLC(PLCModel plcModel)
+        private async void ConnectPLC(PLCModel plcModel)
         {
             var targetPlc = ObPLC.FirstOrDefault(p => p.FFileName == plcModel.FFileName);
             if (targetPlc == null) return;
 
-            var result = _smartContainer.StartSiemensWorkInstance(
-                plcModel.FAddr,
+            var result = await _smartContainer.StartSiemensWorkInstance(
+                plcModel.FFileName,
                 Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
             );
 
             targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
             if (!result.IsSuccess)
             {
-                MessageBox.ShowAsync(result.Message);
+                await  MessageBox.ShowAsync(result.Message);
             }
         }
 
         /// <summary>
         /// 断开单个PLC连接
         /// </summary>
-        private void DisconnectPLC(PLCModel plcModel)
+        private async void DisconnectPLC(PLCModel plcModel)
         {
             var targetPlc = ObPLC.FirstOrDefault(p => p.FFileName == plcModel.FFileName);
             if (targetPlc == null) return;
 
-            _smartContainer.StopSiemensWorkInstance(plcModel.FAddr);
+            await _smartContainer.StopSiemensWorkInstance(plcModel.FFileName);
             targetPlc.FIsConn = "未连接";
         }
         #endregion

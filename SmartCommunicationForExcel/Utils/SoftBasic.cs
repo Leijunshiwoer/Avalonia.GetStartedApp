@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-using System.Drawing;
 using HslCommunication;
 
 namespace SmartCommunicationForExcel.Utils
@@ -56,26 +55,7 @@ namespace SmartCommunicationForExcel.Utils
         }
 
 
-#if !NETSTANDARD2_0
-        /// <summary>
-        /// 获取内存图片的md5码 -> Get the MD5 code of the memory picture
-        /// </summary>
-        /// <param name="bitmap">内存图片</param>
-        /// <returns>Md5字符串</returns>
-        /// <example>
-        /// 下面举例实现获取一个图像的md5码
-        /// <code lang="cs" source="HslCommunication_Net45.Test\Documentation\Samples\BasicFramework\SoftBasicExample.cs" region="CalculateStreamMD5Example2" title="CalculateStreamMD5示例" />
-        /// </example>
-        public static string CalculateStreamMD5(Bitmap bitmap)
-        {
-            MemoryStream ms = new MemoryStream();
-            bitmap.Save(ms, bitmap.RawFormat);
-            MD5 md5 = new MD5CryptoServiceProvider();
-            byte[] bytes_md5 = md5.ComputeHash(ms);
-            ms.Dispose();
-            return BitConverter.ToString(bytes_md5).Replace("-", "");
-        }
-#endif
+
 
         #endregion
 
