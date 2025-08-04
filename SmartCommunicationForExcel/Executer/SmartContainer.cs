@@ -115,8 +115,6 @@ namespace SmartCommunicationForExcel.Executer
 
         #endregion
 
-
-
         #region 配置窗口管理（修复类型转换问题）
         public ResultState ShowSiemensConfig(string instanceName = "")
         {

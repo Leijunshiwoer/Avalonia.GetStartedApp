@@ -104,6 +104,7 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
             _plcClient = new SiemensS7Net(_globalConfig.CpuInfo.PlcType)
             {
                 IpAddress = _globalConfig.CpuInfo.IP,
+                Port=_globalConfig.CpuInfo.Port,
                 Rack = _globalConfig.CpuInfo.Rack,
                 Slot = _globalConfig.CpuInfo.Slot
             };
