@@ -70,7 +70,7 @@ namespace SmartCommunicationForExcel.Executer
             //Container.RegisterType<IOmronEventExecuter, DefaultOmronEventExecuter>();
             //Container.RegisterType<IMitsubishiEventExecuter, DefaultMitsubishiEventExecuter>();
             //Container.RegisterType<IBeckhoffEventExecuter, DefaultBeckhoffEventExecuter>();
-
+                
             // 注册线程池（带回调配置）
             var stpStartInfo = new STPStartInfo
             {
@@ -108,10 +108,14 @@ namespace SmartCommunicationForExcel.Executer
         {
             Container.RegisterInstance(name, instance);
         }
+        public bool IsRegister<T>(string Name)
+        {
+            return Container.IsRegistered<T>(Name);
+        }
 
         #endregion
 
-    
+
 
         #region 配置窗口管理（修复类型转换问题）
         public ResultState ShowSiemensConfig(string instanceName = "")
@@ -300,6 +304,62 @@ namespace SmartCommunicationForExcel.Executer
                 () => Container.Resolve<SiemensEventHandler>(),
                 (handler, name, config) => handler.StartAsync(name, config as SiemensGlobalConfig)
             );
+
+            //var rs = new ResultState { IsSuccess = true };
+
+            //if (instanceName == "")
+            //{
+            //    rs.IsSuccess = false;
+            //    rs.Message = "InstanceName is not allow null";
+            //    return rs;
+            //}
+
+            //try
+            //{
+            //    if (!_siemensInstances.ContainsKey(instanceName))
+            //    {
+
+            //        SiemensGlobalConfig sgc = new MyExcelFileHelper<SiemensGlobalConfig>().ExcelToSiemensObject(configFilePath);
+            //        if (null == sgc)
+            //        {
+            //            rs.IsSuccess = false;
+            //            rs.Message = "The GlobalConfig Is Null.";
+            //            return rs;
+            //        }
+
+            //        //改变扫码周期
+            //        sgc.CpuInfo.CycleTime = _cycleTime;
+
+
+            //        var tmp = Container.Resolve<SiemensEventHandler>();
+            //        if (!await tmp.StartAsync(instanceName, sgc))
+            //        {
+            //            rs.IsSuccess = false;
+            //            rs.Message = instanceName + " StartWork Fail.";
+
+            //            return rs;
+            //        }
+            //        else
+            //        {
+            //            _siemensInstances.Add(instanceName, tmp);
+            //            _siemensConfigs.Add(instanceName, sgc);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        rs.IsSuccess = false;
+            //        rs.Message = "The current instance is running";
+            //        return rs;
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    rs.IsSuccess = false;
+            //    rs.Message = ex.Message;
+            //    return rs;
+            //}
+
+            //return rs;
         }
 
         public async Task<ResultState> StopSiemensWorkInstance(string instanceName)

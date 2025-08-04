@@ -42,7 +42,7 @@ namespace GetStartedApp.ViewModels.PLC
         #endregion
 
         #region 私有字段
-        private readonly SmartContainer _smartContainer;
+        private readonly SmartContainer _smartContainer = null;
         private readonly ManualResetEvent _autoConnResetEvent = new ManualResetEvent(false);
         private bool _isAutoConnPLC = false;
         private int _autoConnInterval = 2000; // 自动重连间隔(ms)
@@ -86,6 +86,7 @@ namespace GetStartedApp.ViewModels.PLC
             _smartContainer = new SmartContainer();
             // 注册事件执行器
             _smartContainer.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
+
             // 初始化PLC配置
             InitPLCs();
         }
@@ -253,7 +254,7 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         private PLCModel? ParsePLCConfigFromExcel(string filePath)
         {
-            
+
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage(new FileInfo(filePath));
             // 验证Sheet名称
@@ -274,7 +275,7 @@ namespace GetStartedApp.ViewModels.PLC
                 FIsConn = "未连接",
                 FColor = "Black",
                 FAddr = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + (colIndex += 4)]), // 跳过4个地址偏移字段
-             
+
             };
 
             return plcModel;
@@ -328,7 +329,7 @@ namespace GetStartedApp.ViewModels.PLC
             targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
             if (!result.IsSuccess)
             {
-                await  MessageBox.ShowAsync(result.Message);
+                await MessageBox.ShowAsync(result.Message);
             }
         }
 
@@ -406,6 +407,14 @@ namespace GetStartedApp.ViewModels.PLC
             string error = "")
         {
             // 通用信息订阅逻辑（按需实现）
+            PLCModel pLCModel = ObPLC.Where(it => it.FFileName == instanceName).FirstOrDefault();
+            pLCModel.FIsConn = success ? "已连接" : "后台连接中";
+
+            if (success)
+            {
+                _smartContainer.GetSiemensEventIOByTagName(outputList, "Enable").SetInt16(1);
+            }
+
         }
 
         /// <summary>

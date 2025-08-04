@@ -1,5 +1,6 @@
 ﻿using HslCommunication;
 using HslCommunication.Profinet.Siemens;
+using SmartCommunicationForExcel.Executer;
 using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Model;
 using System;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity;
 
 namespace SmartCommunicationForExcel.EventHandle.Siemens
 {
@@ -47,9 +49,14 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
         /// <summary>
         /// 初始化西门子事件处理器
         /// </summary>
-        public SiemensEventHandler(ISiemensEventExecuter eventExecuter)
+        public SiemensEventHandler(IUnityContainer container)
         {
-            _eventExecuter = eventExecuter;
+          
+            if (container.IsRegistered<ISiemensEventExecuter>("Siemens"))
+                _eventExecuter = container.Resolve<ISiemensEventExecuter>("Siemens");
+            else
+                _eventExecuter = container.Resolve<ISiemensEventExecuter>();
+
         }
 
         /// <summary>
@@ -309,6 +316,12 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
                             HandleEventCaLLBack(task.Result as EventSiemensThreadState);
                         }, TaskScheduler.FromCurrentSynchronizationContext());
                     }
+                }
+                else
+                {
+
+                    Console.WriteLine("Read Single Event Data Fail. Error:" + eventData.Message);
+                    _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("Read Single Event Data Fail,EventName:{0}", eventInstance.EventName));
                 }
             }
             catch (Exception)
