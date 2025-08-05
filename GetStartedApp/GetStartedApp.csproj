@@ -102,6 +102,9 @@
     <AvaloniaResource Update="Assets\PLCs\OP20_Siemens.xlsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AvaloniaResource>
+    <AvaloniaResource Update="Assets\PLCs\OP30_Omron.xlsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AvaloniaResource>
     <AvaloniaResource Update="Assets\PLCs\PLCConnConfig.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AvaloniaResource>

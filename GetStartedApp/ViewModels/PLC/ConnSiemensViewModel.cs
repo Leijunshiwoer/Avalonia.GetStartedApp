@@ -8,8 +8,10 @@ using GetStartedApp.Utils.Node;
 using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
+using SmartCommunicationForExcel.EventHandle.Omron;
 using SmartCommunicationForExcel.EventHandle.Siemens;
 using SmartCommunicationForExcel.Executer;
+using SmartCommunicationForExcel.Implementation.Omron;
 using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Model;
 using System;
@@ -28,12 +30,12 @@ namespace GetStartedApp.ViewModels.PLC
     /// 西门子PLC连接视图模型
     /// 负责PLC连接管理、配置加载及状态展示
     /// </summary>
-    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter
+    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter
     {
         #region 常量定义
         // 路径与文件相关
         private const string PLC_CONFIG_PATH = @"/Assets/PLCs/";
-        private const string PLC_FILE_PREFIX = "_siemens.xlsx";
+        private const string PLC_FILE_PREFIX = "xlsx";
 
         // Excel配置相关
         private readonly string[] _sheetNames = { "CpuInfo", "EapConfig", "PlcConfig", "EventConfig" };
@@ -86,7 +88,7 @@ namespace GetStartedApp.ViewModels.PLC
             _smartContainer = new SmartContainer();
             // 注册事件执行器
             _smartContainer.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
-
+            _smartContainer.RegisterInstance<IOmronEventExecuter>(ConstName.OmronRegisterName, this);
             // 初始化PLC配置
             InitPLCs();
         }
@@ -178,11 +180,23 @@ namespace GetStartedApp.ViewModels.PLC
             SelectedPLC = plcModel;
             if (plcModel.FIsConn is "已连接" or "后台连接中")
             {
-                var result = _smartContainer.ShowSiemensConfig(plcModel.FName);
-                if (!result.IsSuccess)
+                if (plcModel.FCpuType=="Siemens")
                 {
-                    // 可添加监控窗口打开失败的处理
+                    var result = _smartContainer.ShowSiemensConfig(plcModel.FName);
+                    if (!result.IsSuccess)
+                    {
+                        // 可添加监控窗口打开失败的处理
+                    }
                 }
+                else
+                {
+                    var result = _smartContainer.ShowOmronConfig(plcModel.FName);
+                    if (!result.IsSuccess)
+                    {
+                        // 可添加监控窗口打开失败的处理
+                    }
+                }
+              
             }
         }
         #endregion
@@ -321,16 +335,34 @@ namespace GetStartedApp.ViewModels.PLC
             var targetPlc = ObPLC.FirstOrDefault(p => p.FName == plcModel.FName);
             if (targetPlc == null) return;
 
-            var result = await _smartContainer.StartSiemensWorkInstance(
-                plcModel.FName,
-                Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
-            );
 
-            targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
-            if (!result.IsSuccess)
+            if (targetPlc.FFileName.Contains("Siemens"))
             {
-                await MessageBox.ShowAsync(result.Message);
+                var result = await _smartContainer.StartSiemensWorkInstance(
+               plcModel.FName,
+               Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
+           );
+
+                targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
+                if (!result.IsSuccess)
+                {
+                    await MessageBox.ShowAsync(result.Message);
+                }
             }
+            else if (targetPlc.FFileName.Contains("Omron"))
+            {
+                var result = await _smartContainer.StartOmronWorkInstance(
+                    plcModel.FName,
+                    Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
+                );
+
+                targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
+                if (!result.IsSuccess)
+                {
+                    await MessageBox.ShowAsync(result.Message);
+                }
+            }
+
         }
 
         /// <summary>
@@ -340,8 +372,15 @@ namespace GetStartedApp.ViewModels.PLC
         {
             var targetPlc = ObPLC.FirstOrDefault(p => p.FName == plcModel.FName);
             if (targetPlc == null) return;
+            if (targetPlc.FFileName.Contains("Siemens"))
+            {
+                await _smartContainer.StopSiemensWorkInstance(plcModel.FName);
+            }
+            else
+            {
+                await _smartContainer.StopOmronWorkInstance(plcModel.FName);
 
-            await _smartContainer.StopSiemensWorkInstance(plcModel.FName);
+            }
             targetPlc.FIsConn = "未连接";
         }
         #endregion
@@ -423,6 +462,11 @@ namespace GetStartedApp.ViewModels.PLC
         public void Err(string instanceName, byte[] data, string error = "")
         {
             // 错误处理逻辑（按需实现）
+        }
+
+        public void SubscribeCommonInfo(string instanceName, bool bSuccess, List<OmronEventIO> listInput, List<OmronEventIO> listOutput, string strError = "")
+        {
+            // 订阅逻辑（按需实现）
         }
         #endregion
     }

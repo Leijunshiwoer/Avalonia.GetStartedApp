@@ -362,7 +362,7 @@ namespace SmartCommunicationForExcel.Utils
             {
                 try
                 {
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
                     using (ExcelPackage package = new ExcelPackage(new FileInfo(System.IO.Directory.GetCurrentDirectory() + "\\" + strFile)))
                     {
                         int vSheetCount = package.Workbook.Worksheets.Count; //获取总Sheet页
@@ -393,7 +393,7 @@ namespace SmartCommunicationForExcel.Utils
                                 {
                                     string cpuType = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
                                     //omronCpuInfo.CpuType = (Model.CpuType)Enum.Parse(typeof(Model.CpuType), cpuType);
-                                    //string plcType = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
+                                    string plcType = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
                                     //omronCpuInfo.PlcType = (SiemensPLCS)Enum.Parse(typeof(SiemensPLCS), plcType);
                                     string mark = GetExcelCellToStr(sheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + col++].Value);
                                     omronCpuInfo.Mark = mark;
@@ -626,7 +626,7 @@ namespace SmartCommunicationForExcel.Utils
             {
                 try
                 {
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
                     using (ExcelPackage package = new ExcelPackage(new FileInfo(System.IO.Directory.GetCurrentDirectory() + "\\" + strFile)))
                     {
                         int vSheetCount = package.Workbook.Worksheets.Count; //获取总Sheet页
@@ -888,7 +888,7 @@ namespace SmartCommunicationForExcel.Utils
             {
                 try
                 {
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
                     using (ExcelPackage package = new ExcelPackage(new FileInfo(System.IO.Directory.GetCurrentDirectory() + "\\" + strFile)))
                     {
                         int vSheetCount = package.Workbook.Worksheets.Count; //获取总Sheet页

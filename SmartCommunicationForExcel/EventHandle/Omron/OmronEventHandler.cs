@@ -31,7 +31,8 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
         /// 用于监控PLC中触发事件的信号位
         /// </summary>
         private string _eventTriggerTagName = "eventtrigger";
-
+        // 取消令牌源，用于终止工作任务
+        private readonly CancellationTokenSource _cts = new();
         /// <summary>
         /// Omron事件执行器（处理具体事件逻辑的接口）
         /// </summary>
@@ -109,7 +110,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             }
 
             // 启动工作循环任务（周期性处理PLC通信和事件）
-            _workTask = Task.Run(WorkLoopAsync);
+            _workTask = Task.Run(WorkLoopAsync, _cts.Token);
             return true;
         }
 
@@ -119,9 +120,10 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
         /// </summary>
         public async Task StopAsync()
         {
+            _cts.Cancel();
             // 等待工作任务退出（最多等待1秒）
             if (_workTask != null)
-                await _workTask.WaitAsync(TimeSpan.FromSeconds(1));
+                await _workTask.WaitAsync(TimeSpan.FromSeconds(5));
 
             // 释放资源
             Dispose();
@@ -170,7 +172,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
                 var cycleTime = ValidateCycleTime(_globalConfig.CpuInfo.CycleTime);
 
                 // 循环执行，直到资源释放
-                while (!_isDisposed)
+                while (!_cts.Token.IsCancellationRequested)
                 {
                     // 若配置为空（无事件或PLC配置），等待下一个周期
                     if (_globalConfig.EapConfig.Count == 0 || _globalConfig.PlcConfig.Count == 0)
@@ -586,15 +588,16 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             if (disposing)
             {
                 // 释放托管资源
+                _cts.Cancel();
+                _cts.Dispose();
                 _completedEventQueue.Clear();
-                _eventTriggerStatus.Clear();
             }
 
             // 释放非托管资源（关闭PLC连接）
             if (_plcClient != null)
             {
                 _plcClient.ConnectClose();
-                _plcClient = null;
+               
             }
 
             _isDisposed = true;
