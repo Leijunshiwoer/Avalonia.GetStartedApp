@@ -140,34 +140,9 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
                             continue;
                         }
                     }
-
-                    // 处理已完成事件的回写
-                    if (!_completedEventQueue.IsEmpty)
-                    {
-                        EventSiemensThreadState ets = null;
-                        if (_completedEventQueue.TryDequeue(out ets))
-                        {
-                            SyncSequenceId(ets.SE);
-
-                            var rlt = await _plcClient.WriteAsync(ets.SE.ListOutput[0].GetMEAddressTag, PackageDataToPlc(ets.SE.ListOutput));
-                            if (!rlt.IsSuccess)
-                            {
-                                Console.WriteLine("Write Single Event Data Fail.");
-                                _eventExecuter.Err(InstanceName, null, $"Write Single Event Data Fail,EventName:{ets.SE.EventName}");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Write Single Event Success;ID:{ets.SE.ListOutput[0].GetInt16()}");
-                            }
-
-                            _eventTriggerStatus[ets.EventIndex] = false; // 重置事件状态
-                        }
-                        else
-                        {
-                            _eventExecuter.Err(ets.InstanceName, null, "安全队列获取失败");
-                        }
-                    }
-
+                    // 处理已完成的事件（回写结果到PLC）
+                    await ProcessCompletedEventsAsync();
+                   
                     // 读取PLC公共区数据
                     var readResult = await ReadPlcCommonDataAsync();
                     if (readResult.IsSuccess)
@@ -216,6 +191,36 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
             {
                 // 异常处理
             }
+        }
+
+        private async Task ProcessCompletedEventsAsync()
+        {
+            if (!_completedEventQueue.IsEmpty)
+            {
+                EventSiemensThreadState ets = null;
+                if (_completedEventQueue.TryDequeue(out ets))
+                {
+                    SyncSequenceId(ets.SE);
+
+                    var rlt = await _plcClient.WriteAsync(ets.SE.ListOutput[0].GetMEAddressTag, PackageDataToPlc(ets.SE.ListOutput));
+                    if (!rlt.IsSuccess)
+                    {
+                        Console.WriteLine("Write Single Event Data Fail.");
+                        _eventExecuter.Err(InstanceName, null, $"Write Single Event Data Fail,EventName:{ets.SE.EventName}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Write Single Event Success;ID:{ets.SE.ListOutput[0].GetInt16()}");
+                    }
+
+                    _eventTriggerStatus[ets.EventIndex] = false; // 重置事件状态
+                }
+                else
+                {
+                    _eventExecuter.Err(ets.InstanceName, null, "安全队列获取失败");
+                }
+            }
+
         }
 
         /// <summary>
