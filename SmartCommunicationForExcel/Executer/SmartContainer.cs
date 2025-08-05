@@ -48,7 +48,7 @@ namespace SmartCommunicationForExcel.Executer
         private readonly Dictionary<string, SiemensEventHandler> _siemensInstances = new();
         private readonly Dictionary<string, ISiemensGlobalConfig<SiemensEventIO, SiemensCpuInfo, SiemensEventInstance>> _siemensConfigs = new();
 
-        private readonly Dictionary<string, OmronEventHandle> _omronInstances = new();
+        private readonly Dictionary<string, OmronEventHandler> _omronInstances = new();
         private readonly Dictionary<string, IOmronGlobalConfig<OmronEventIO, OmronCpuInfo, OmronEventInstance>> _omronConfigs = new();
 
         private readonly Dictionary<string, MitsubishiEventHandle> _mitsubishiInstances = new();
@@ -67,7 +67,7 @@ namespace SmartCommunicationForExcel.Executer
             // 注册事件执行器
             Container.RegisterType<ISiemensEventExecuter, DefaultSiemensEventExecuter>();
 
-            //Container.RegisterType<IOmronEventExecuter, DefaultOmronEventExecuter>();
+            Container.RegisterType<IOmronEventExecuter, DefaultOmronEventExecuter>();
             //Container.RegisterType<IMitsubishiEventExecuter, DefaultMitsubishiEventExecuter>();
             //Container.RegisterType<IBeckhoffEventExecuter, DefaultBeckhoffEventExecuter>();
                 
@@ -302,62 +302,6 @@ namespace SmartCommunicationForExcel.Executer
                 () => Container.Resolve<SiemensEventHandler>(),
                 (handler, name, config) => handler.StartAsync(name, config as SiemensGlobalConfig)
             );
-
-            //var rs = new ResultState { IsSuccess = true };
-
-            //if (instanceName == "")
-            //{
-            //    rs.IsSuccess = false;
-            //    rs.Message = "InstanceName is not allow null";
-            //    return rs;
-            //}
-
-            //try
-            //{
-            //    if (!_siemensInstances.ContainsKey(instanceName))
-            //    {
-
-            //        SiemensGlobalConfig sgc = new MyExcelFileHelper<SiemensGlobalConfig>().ExcelToSiemensObject(configFilePath);
-            //        if (null == sgc)
-            //        {
-            //            rs.IsSuccess = false;
-            //            rs.Message = "The GlobalConfig Is Null.";
-            //            return rs;
-            //        }
-
-            //        //改变扫码周期
-            //        sgc.CpuInfo.CycleTime = _cycleTime;
-
-
-            //        var tmp = Container.Resolve<SiemensEventHandler>();
-            //        if (!await tmp.StartAsync(instanceName, sgc))
-            //        {
-            //            rs.IsSuccess = false;
-            //            rs.Message = instanceName + " StartWork Fail.";
-
-            //            return rs;
-            //        }
-            //        else
-            //        {
-            //            _siemensInstances.Add(instanceName, tmp);
-            //            _siemensConfigs.Add(instanceName, sgc);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        rs.IsSuccess = false;
-            //        rs.Message = "The current instance is running";
-            //        return rs;
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    rs.IsSuccess = false;
-            //    rs.Message = ex.Message;
-            //    return rs;
-            //}
-
-            //return rs;
         }
 
         public async Task<ResultState> StopSiemensWorkInstance(string instanceName)
@@ -374,36 +318,32 @@ namespace SmartCommunicationForExcel.Executer
         #region 欧姆龙设备管理（异步改造）
         public async Task<ResultState> StartOmronWorkInstance(string instanceName, string configFilePath)
         {
-            //return await StartWorkInstanceAsync(
-            //    instanceName,
-            //    configFilePath,
-            //    _omronInstances,
-            //    _omronConfigs,
-            //    path => new MyExcelFileHelper<OmronGlobalConfig>().ExcelToOmronObject(path),
-            //    (config) =>
-            //    {
-            //        config.CpuInfo.CycleTime = _cycleTime;
-            //        return config;
-            //    },
-            //    () => Container.Resolve<OmronEventHandle>(),
-            //    (handler, name, config) => handler.StartAsync(name, config)
-            //);
+            return await StartWorkInstanceAsync(
+                instanceName,
+                configFilePath,
+                _omronInstances,
+                _omronConfigs,
+                path => new MyExcelFileHelper<OmronGlobalConfig>().ExcelToOmronObject(path),
+                (config) =>
+                {
+                    config.CpuInfo.CycleTime = _cycleTime;
+                    return config;
+                },
+                () => Container.Resolve<OmronEventHandler>(),
+                (handler, name, config) => handler.StartAsync(name, config as OmronGlobalConfig)
+            );
 
-            await Task.CompletedTask;
-            return new ResultState();
+
         }
 
         public async Task<ResultState> StopOmronWorkInstance(string instanceName)
         {
-            //return await StopWorkInstanceAsync(
-            //    instanceName,
-            //    _omronInstances,
-            //    _omronConfigs,
-            //    handler => handler.StopAsync()
-            //);
-
-            await Task.CompletedTask;
-            return new ResultState();
+            return await StopWorkInstanceAsync(
+                instanceName,
+                _omronInstances,
+                _omronConfigs,
+                handler => handler.StopAsync()
+            );
         }
         #endregion
 

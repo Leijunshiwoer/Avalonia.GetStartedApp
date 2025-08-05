@@ -178,7 +178,7 @@ namespace GetStartedApp.ViewModels.PLC
             SelectedPLC = plcModel;
             if (plcModel.FIsConn is "已连接" or "后台连接中")
             {
-                var result = _smartContainer.ShowSiemensConfig(plcModel.FFileName);
+                var result = _smartContainer.ShowSiemensConfig(plcModel.FName);
                 if (!result.IsSuccess)
                 {
                     // 可添加监控窗口打开失败的处理
@@ -299,7 +299,7 @@ namespace GetStartedApp.ViewModels.PLC
                         {
                             // 调用异步版本的启动方法
                             var result = await _smartContainer.StartSiemensWorkInstance(
-                                plc.FFileName,
+                                plc.FName,
                                 Path.Combine(PLC_CONFIG_PATH, plc.FFileName)
                             );
                             plc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
@@ -318,11 +318,11 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         private async void ConnectPLC(PLCModel plcModel)
         {
-            var targetPlc = ObPLC.FirstOrDefault(p => p.FFileName == plcModel.FFileName);
+            var targetPlc = ObPLC.FirstOrDefault(p => p.FName == plcModel.FName);
             if (targetPlc == null) return;
 
             var result = await _smartContainer.StartSiemensWorkInstance(
-                plcModel.FFileName,
+                plcModel.FName,
                 Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
             );
 
@@ -338,10 +338,10 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         private async void DisconnectPLC(PLCModel plcModel)
         {
-            var targetPlc = ObPLC.FirstOrDefault(p => p.FFileName == plcModel.FFileName);
+            var targetPlc = ObPLC.FirstOrDefault(p => p.FName == plcModel.FName);
             if (targetPlc == null) return;
 
-            await _smartContainer.StopSiemensWorkInstance(plcModel.FFileName);
+            await _smartContainer.StopSiemensWorkInstance(plcModel.FName);
             targetPlc.FIsConn = "未连接";
         }
         #endregion
@@ -407,7 +407,7 @@ namespace GetStartedApp.ViewModels.PLC
             string error = "")
         {
             // 通用信息订阅逻辑（按需实现）
-            PLCModel pLCModel = ObPLC.Where(it => it.FFileName == instanceName).FirstOrDefault();
+            PLCModel pLCModel = ObPLC.Where(it => it.FName == instanceName).FirstOrDefault();
             pLCModel.FIsConn = success ? "已连接" : "后台连接中";
 
             if (success)
