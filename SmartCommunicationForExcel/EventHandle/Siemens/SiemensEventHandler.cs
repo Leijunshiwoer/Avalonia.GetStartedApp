@@ -6,6 +6,7 @@ using SmartCommunicationForExcel.Model;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -99,8 +100,7 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
         private async Task<bool> InitializePlcClientAsync()
         {
             // 配置Hsl授权
-            Authorization.SetAuthorizationCode("4672fd9a-4743-4a08-ad2f-5cd3374e496d");
-
+            Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
             _plcClient = new SiemensS7Net(_globalConfig.CpuInfo.PlcType)
             {
                 IpAddress = _globalConfig.CpuInfo.IP,

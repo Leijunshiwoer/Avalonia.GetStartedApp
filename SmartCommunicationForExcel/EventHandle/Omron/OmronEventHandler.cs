@@ -5,6 +5,7 @@ using SmartCommunicationForExcel.Implementation.Omron;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
@@ -101,7 +102,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             _globalConfig = globalConfig;
 
             // 设置HslCommunication库授权码（用于激活库功能）
-            Authorization.SetAuthorizationCode("4672fd9a-4743-4a08-ad2f-5cd3374e496d");
+            Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
 
             // 初始化PLC客户端并建立连接
             if (!await InitializePlcClientAsync())

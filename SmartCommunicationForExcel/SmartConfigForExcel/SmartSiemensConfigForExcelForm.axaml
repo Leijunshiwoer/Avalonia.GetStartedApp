@@ -381,12 +381,14 @@
                            Grid.Column="1"
                            VerticalContentAlignment="Center"
                            Background="Green"
-                           Content="EAP端" />
+                           Content="PC"
+                           Foreground="White" />
                     <Label Grid.Row="2"
                            Grid.Column="1"
                            VerticalContentAlignment="Center"
                            Background="Blue"
-                           Content="PLC端" />
+                           Content="PLC"
+                           Foreground="White" />
                 </Grid>
             </TabItem>
         </TabControl>

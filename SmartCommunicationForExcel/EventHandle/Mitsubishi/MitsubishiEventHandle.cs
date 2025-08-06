@@ -13,6 +13,7 @@ using System.Text;
 using SmartCommunicationForExcel.Model;
 using System.Collections.Concurrent;
 using SmartCommunicationForExcel.EventHandle.Siemens;
+using System.Configuration;
 
 namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
 {
@@ -76,7 +77,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
             {
                 if (globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
                 {
-                    Authorization.SetAuthorizationCode("a6ffdfde-48bd-4684-b37b-5c2fe7c2e4c6");//A3A64C580855CE05CC340541599968F8  B7D40F4D8B229E02AC463A096BCD5707  2765FFFDDE2A8465A9522442F5A15593
+                    Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
 
                     _plcs[0] = new MelsecMcNet();
                     _plcs[0].IpAddress = globalConfig.CpuInfo.IP;
