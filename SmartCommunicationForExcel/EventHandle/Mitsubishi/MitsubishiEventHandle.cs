@@ -1,597 +1,546 @@
 ﻿using Amib.Threading;
-using System;
-using System.Collections.Generic;
-using System.Threading;
+using HslCommunication;
 using HslCommunication.Profinet.Melsec;
 using SmartCommunicationForExcel.Implementation.Mitsubishi;
-using Unity;
-using System.Diagnostics;
-using HslCommunication.Profinet.Omron;
-using HslCommunication;
-using System.Linq;
-using System.Text;
 using SmartCommunicationForExcel.Model;
+using System;
 using System.Collections.Concurrent;
-using SmartCommunicationForExcel.EventHandle.Siemens;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Threading;
+using System.Threading.Tasks;
+using Unity;
 
 namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
 {
-    public class MitsubishiEventHandle
+    /// <summary>
+    /// 三菱PLC事件处理器，负责通讯连接、数据读写和事件触发逻辑
+    /// </summary>
+    public class MitsubishiEventHandle : IDisposable
     {
-        public string InstanceName { get; set; }
-        private string EventTriggerTagName { get; set; }
-
-        private SmartThreadPool _stp;
-        private IMitsubishiEventExecuter _see;
-
-        private Thread _workThread;
-        private ManualResetEvent _terminatedEvent;
-
-        private MelsecMcNet[] _plcs;
-        //private SmartSharp7[] _plcSharp7s;
-
-       // private OmronFinsNet[] _omronPlcs;
-
+        // 事件执行器，处理具体业务逻辑
+        private readonly IMitsubishiEventExecuter _eventExecuter;
+        // 已完成事件的回写队列（线程安全）
+        private readonly ConcurrentQueue<EventMitsubishiThreadState> _completedEventQueue = new();
+        // 事件触发状态字典，动态管理事件是否正在处理
+        private readonly Dictionary<int, bool> _eventTriggerStatus = new();
+        // 取消令牌源，用于终止工作任务
+        private readonly CancellationTokenSource _cts = new();
+        // PLC客户端通讯对象
+        private MelsecMcNet _plcClient;
+        // 全局配置信息
         private MitsubishiGlobalConfig _globalConfig;
+        // 工作循环任务
+        private Task _workTask;
+        // 资源释放标记
+        private bool _isDisposed;
 
-        private bool[] _bEventTriggerCompleted = new bool[100];
+        /// <summary>
+        /// 实例名称
+        /// </summary>
+        public string InstanceName { get; set; }
 
+        /// <summary>
+        /// 事件触发标签名（默认：EventTrigger）
+        /// </summary>
+        public string EventTriggerTagName { get; set; } = "EventTrigger";
 
-        private ConcurrentQueue<EventMitsubishiThreadState> _queueHandleEventCompleted;
-
+        /// <summary>
+        /// 初始化三菱事件处理器
+        /// </summary>
         public MitsubishiEventHandle(SmartThreadPool stp, IUnityContainer container)
         {
-            _stp = stp;
-
             if (container.IsRegistered<IMitsubishiEventExecuter>("Mitsubishi"))
-                _see = container.Resolve<IMitsubishiEventExecuter>("Mitsubishi");
+                _eventExecuter = container.Resolve<IMitsubishiEventExecuter>("Mitsubishi");
             else
-                _see = container.Resolve<IMitsubishiEventExecuter>();
-
-            _queueHandleEventCompleted = new ConcurrentQueue<EventMitsubishiThreadState>();
-
-            _plcs = new MelsecMcNet[2];
-            // _plcSharp7s = new SmartSharp7[2];
-
-           // _omronPlcs = new OmronFinsNet[2];
-
-            _workThread = new Thread(new ThreadStart(WorkThread)) { IsBackground = true };
-            _terminatedEvent = new ManualResetEvent(false);
+                _eventExecuter = container.Resolve<IMitsubishiEventExecuter>();
         }
 
         /// <summary>
-        /// 启动一个单CPU事件处理实例
+        /// 启动事件处理器
         /// </summary>
-        /// <param name="strName"></param>
-        /// <param name="strEventTriggerTagName">触发事件标签名 默认EventTrigger</param>
-        /// <param name="globalConfig"></param>
-        /// <returns></returns>
-        public bool StartWork(string strName, MitsubishiGlobalConfig globalConfig, string strEventTriggerTagName = "EventTrigger")
+        /// <param name="instanceName">实例名称</param>
+        /// <param name="globalConfig">全局配置</param>
+        /// <returns>启动是否成功</returns>
+        public async Task<bool> StartAsync(string instanceName, MitsubishiGlobalConfig globalConfig)
         {
-            InstanceName = strName;
-            _globalConfig = globalConfig;
-            EventTriggerTagName = strEventTriggerTagName;
+            InstanceName = instanceName ?? throw new ArgumentNullException(nameof(instanceName));
+            _globalConfig = globalConfig ?? throw new ArgumentNullException(nameof(globalConfig));
 
-            if (globalConfig.CpuInfo.CpuType == Model.CpuType.Mitsubishi)
+            // 初始化PLC客户端
+            if (!await InitializePlcClientAsync())
             {
-                if (globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                {
-                    Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
-
-                    _plcs[0] = new MelsecMcNet();
-                    _plcs[0].IpAddress = globalConfig.CpuInfo.IP;
-                    _plcs[0].Port = globalConfig.CpuInfo.Port1;
-
-                    //_plcs[0].Rack = globalConfig.CpuInfo.Rack;
-                    //_plcs[0].Slot = globalConfig.CpuInfo.Slot;
-                    _plcs[0].SetPersistentConnection();
-
-                    _plcs[1] = new MelsecMcNet();
-                    _plcs[1].IpAddress = globalConfig.CpuInfo.IP;
-                    _plcs[1].Port = globalConfig.CpuInfo.Port2;//代替第二个端口使用
-                    //_plcs[1].Rack = globalConfig.CpuInfo.Rack;
-                    //_plcs[1].Slot = globalConfig.CpuInfo.Slot;
-                    _plcs[1].SetPersistentConnection();
-
-                    if (!_plcs[0].ConnectServer().IsSuccess)
-                        return false;
-                    if (!_plcs[1].ConnectServer().IsSuccess)
-                        return false;
-                }
-                //else if (globalConfig.CpuInfo.Dll == Model.DllType.Type_Sharp7)
-                //{
-                //    _plcSharp7s[0] = new SmartSharp7();
-                //    _plcSharp7s[0].IpAddress = globalConfig.CpuInfo.IP;
-                //    _plcSharp7s[0].Rack = globalConfig.CpuInfo.Rack;
-                //    _plcSharp7s[0].Slot = globalConfig.CpuInfo.Slot;
-                //    _plcSharp7s[0].SetPersistentConnection(true);
-
-                //    _plcSharp7s[1] = new SmartSharp7();
-                //    _plcSharp7s[1].IpAddress = globalConfig.CpuInfo.IP;
-                //    _plcSharp7s[1].Rack = globalConfig.CpuInfo.Rack;
-                //    _plcSharp7s[1].Slot = globalConfig.CpuInfo.Slot;
-                //    _plcSharp7s[1].SetPersistentConnection(true);
-                
-                //    if (!_plcSharp7s[0].ConnectServer().IsSuccess)
-                //        return false;
-                //    if (!_plcSharp7s[1].ConnectServer().IsSuccess)
-                //        return false;
-                //}
+                return false;
             }
 
-            _workThread.Start();
-
+            // 启动工作任务
+            _workTask = Task.Run(WorkLoopAsync, _cts.Token);
             return true;
         }
 
-        public void WorkStop()
+        /// <summary>
+        /// 停止事件处理器
+        /// </summary>
+        public async Task StopAsync()
         {
-            _terminatedEvent.Set();
+            _cts.Cancel();
+            if (_workTask != null)
+                await _workTask.WaitAsync(TimeSpan.FromSeconds(5)); // 等待任务退出
+
+            Dispose();
         }
 
-        /*
-         * 将 EAPConfig 定义为PC对应于DB区  PLCConfig对应于PLC的DB区
-         * 
-         * 与以前的正好相反，逻辑容易理解
-         * 
-         * 韩顺发 跟新于 2021.2.20
-         * 
-         */
+        /// <summary>
+        /// 初始化PLC客户端并建立连接
+        /// </summary>
+        private async Task<bool> InitializePlcClientAsync()
+        {
+            // 配置Hsl授权
+            Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
 
-       // private object _lock;
+            _plcClient = new MelsecMcNet
+            {
+                IpAddress = _globalConfig.CpuInfo.IP,
+                Port = _globalConfig.CpuInfo.Port1 // 使用主端口
+            };
 
-        //private void AddQueue(EventSiemensThreadState ets)
-        //{
-        //    lock(_lock)
-        //    {
-        //        _queueHandleEventCompleted.Enqueue(ets);
-        //    }
-        //}
+            // 异步连接PLC
+            var connectResult = await _plcClient.ConnectServerAsync();
+            return connectResult.IsSuccess;
+        }
 
-        //private EventSiemensThreadState GetQueue()
-        //{
-        //    lock (_lock)
-        //    {
-        //        if (_queueHandleEventCompleted.Count > 0)
-        //            return _queueHandleEventCompleted.Dequeue();
-        //        else
-        //            return null;
-        //    }
-        //}
-
-        private void WorkThread()
+        /// <summary>
+        /// 工作循环：周期性读取PLC数据并处理事件
+        /// </summary>
+        private async Task WorkLoopAsync()
         {
             try
             {
-                Stopwatch sw = new Stopwatch();
+                var cycleTime = ValidateCycleTime(_globalConfig.CpuInfo.CycleTime);
 
-                var _cycleTime = _globalConfig.CpuInfo.CycleTime;
-                if (_cycleTime < 1 || _cycleTime > 2000)
-                    _cycleTime = 10;
-
-                while (!_terminatedEvent.WaitOne(_cycleTime))
+                while (!_cts.Token.IsCancellationRequested)
                 {
+                    // 检查配置是否有效
                     if (_globalConfig.EapConfig.Count == 0 || _globalConfig.PlcConfig.Count == 0)
-                        continue;
-
-                    sw.Restart();
-
-                    //处理回写事件
-                    //var ets = GetQueue();
-                    //if(ets != null)
-                    //{ 
-                    if (!_queueHandleEventCompleted.IsEmpty)
                     {
-                        EventMitsubishiThreadState ets = null;
-                        if (_queueHandleEventCompleted.TryDequeue(out ets))
+                        await Task.Delay(cycleTime, _cts.Token);
+                        continue;
+                    }
+
+                    // 检查连接状态，自动重连
+                    if (!IsPlcConnected())
+                    {
+                        if (!await InitializePlcClientAsync())
                         {
-                            /*
-                             * 因为每次手动赋值SequenceID不方便，不需要手动在事件回调里面赋值，赋值工作由事件回调后自动完成
-                             * 
-                             * 把 PLC的 SequenceID 赋值给 EAP的SequenceID
-                             */
-                            try
-                            {
-                                MitsubishiEventIO seiEap = ets.SE.ListOutput.Where(it => it.TagName == "SequenceID").SingleOrDefault();
-                                MitsubishiEventIO seiPlc = ets.SE.ListInput.Where(it => it.TagName == "SequenceID").SingleOrDefault();
-
-                                seiEap.SetInt16(seiPlc.GetInt16());
-                            }
-                            catch
-                            {
-                                //异常暂时不做处理
-                            }
-
-
-                            if (!_plcs[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-                            {
-                                Console.WriteLine("Write Single Event Data Fail.");
-                                _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, string.Format("WriteSingleEventData Fail,EventName:{0}", ets.SE.EventName));
-                            }
-                            else
-                                Console.WriteLine("Write Single Event Success;ID:" + ets.SE.ListOutput[0].GetInt16());
-
-                            //else
-                            //{
-                            //    if (!_plcSharp7s[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-                            //    {
-                            //        Console.WriteLine("Write Single Event Data Fail.");
-                            //        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("WriteSingleEventData Fail,EventName:{0}", ets.SE.EventName));
-                            //    }
-                            //}
-                            _bEventTriggerCompleted[ets.EventIndex] = false;
-                        }
-                        else
-                        {
-                            _see.Err(ets.InstanceName,null, "安全队列获取失败");
+                            await Task.Delay(cycleTime, _cts.Token);
+                            continue;
                         }
                     }
 
+                    // 处理已完成的事件（回写结果到PLC）
+                    await ProcessCompletedEventsAsync();
 
-                    //获取当前PLC内部写入值
-                    //HslCommunication.OperateResult<byte[]> _rlt = _plcs[0].Read(_globalConfig.PlcConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.PlcConfig));
-                    //if (_rlt.IsSuccess)
-                    //    ResolveDataToEvent(_rlt.Content, _globalConfig.PlcConfig);
-                    //else
-                    //{
-                    //    _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig);
-                    //    continue;
-                    //}
-
-                    HslCommunication.OperateResult<byte[]> rlt = _plcs[0].Read(_globalConfig.PlcConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.PlcConfig));
-                    if (rlt.IsSuccess)
+                    // 读取PLC公共区数据
+                    var readResult = await ReadPlcCommonDataAsync();
+                    if (readResult.IsSuccess)
                     {
                         try
                         {
-                            ResolveDataToEvent(rlt.Content, _globalConfig.PlcConfig);
+                            // 解析PLC数据到配置
+                            ResolveEventData(readResult.Content, _globalConfig.PlcConfig);
                         }
                         catch (Exception ex)
                         {
-                            _see.Err(_globalConfig.FileName, rlt.Content, ex.Message);
+                            _eventExecuter.Err(_globalConfig.FileName, readResult.Content, ex.Message);
                         }
-                        //公共事件处理
-                        _see.SubscribeCommonInfo(InstanceName, true, _globalConfig.PlcConfig, _globalConfig.EapConfig);
-                        //处理事件触发
-                        HandleEventTrigger(_globalConfig.PlcConfig.Find(t => t.TagName == EventTriggerTagName));
 
-                        if (!_plcs[0].Write(_globalConfig.EapConfig[0].GetMBAddressTag, PackageDataToPlc(_globalConfig.EapConfig)).IsSuccess)
+                        // 公共事件处理
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, true, _globalConfig.PlcConfig, _globalConfig.EapConfig);
+                        // 处理事件触发
+                        await ProcessEventTriggersAsync();
+
+                        // 回写公共区数据到PLC
+                        var writeResult = await WritePlcCommonDataAsync();
+                        if (!writeResult.IsSuccess)
                         {
                             Console.WriteLine("WriteCommonData Fail.");
-                            _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, "WriteCommonData Fail");
+                            _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, "WriteCommonData Fail");
                         }
                     }
                     else
                     {
                         Console.WriteLine("ReadCommonData Fail.");
-                        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, $"ReadCommonData Fail {rlt.Message}");
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, $"ReadCommonData Fail {readResult.Message}");
                     }
+
+                    // 等待周期结束
+                    await Task.Delay(cycleTime, _cts.Token);
                 }
-                _plcs[0].ConnectClose();
-                _plcs[1].ConnectClose();
-            }catch(Exception ex)
-            {
-                _see.Err(_globalConfig.FileName, Encoding.Default.GetBytes("Error"), ex.Message);
+
+                // 关闭PLC连接
+                ClosePlcConnection();
             }
-}
+            catch (OperationCanceledException)
+            {
+                // 正常取消，忽略
+            }
+            catch (Exception ex)
+            {
+                _eventExecuter.Err(_globalConfig.FileName, null, ex.Message);
+            }
+        }
 
         /// <summary>
-        /// 处理事件触发位
+        /// 处理已完成的事件（回写结果到PLC）
         /// </summary>
-        /// <param name="mitsubishiEventIO"></param>
-        private void HandleEventTrigger(MitsubishiEventIO mitsubishiEventIO)
+        private async Task ProcessCompletedEventsAsync()
         {
-            if (null == mitsubishiEventIO)
+            if (!_completedEventQueue.IsEmpty)
             {
-                Console.WriteLine("Get SequenceID Event Fail,It's Not Find SequenceID EventInstance.");
-                _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, "Get SequenceID Event Fail, It's Not Find SequenceID EventInstance.");
+                if (_completedEventQueue.TryDequeue(out var ets))
+                {
+                    SyncSequenceId(ets.SE);
+
+                    var writeResult = await _plcClient.WriteAsync(
+                        ets.SE.ListOutput[0].GetMBAddressTag,
+                        PackageDataToPlc(ets.SE.ListOutput)
+                    );
+
+                    if (!writeResult.IsSuccess)
+                    {
+                        Console.WriteLine("Write Single Event Data Fail.");
+                        _eventExecuter.Err(InstanceName, null, $"Write Single Event Data Fail,EventName:{ets.SE.EventName}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Write Single Event Success;ID:{ets.SE.ListOutput[0].GetInt16()}");
+                    }
+
+                    _eventTriggerStatus[ets.EventIndex] = false; // 重置事件状态
+                }
+                else
+                {
+                    _eventExecuter.Err(InstanceName, null, "安全队列获取失败");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 读取PLC公共区数据
+        /// </summary>
+        private async Task<OperateResult<byte[]>> ReadPlcCommonDataAsync()
+        {
+            var address = _globalConfig.PlcConfig[0].GetMBAddressTag;
+            var length = GetRWLength(_globalConfig.PlcConfig);
+            return await _plcClient.ReadAsync(address, length);
+        }
+
+        /// <summary>
+        /// 处理事件触发逻辑
+        /// </summary>
+        private async Task ProcessEventTriggersAsync()
+        {
+            // 查找事件触发标签
+            var triggerConfig = _globalConfig.PlcConfig
+                .FirstOrDefault(t => t.TagName.Trim().Equals(EventTriggerTagName, StringComparison.OrdinalIgnoreCase));
+
+            if (triggerConfig == null)
+            {
+                _eventExecuter.Err(InstanceName, null, "请检查公共区EventTrigger是否定义错误");
                 return;
             }
 
-            bool[] triggers = mitsubishiEventIO.TransBool(mitsubishiEventIO.DataValue, 0, mitsubishiEventIO.DataValue.Length);
+            // 解析触发位
+            var triggers = triggerConfig.TransBool(triggerConfig.DataValue, 0, triggerConfig.DataValue.Length);
 
-            for (int i = 0; i < triggers.Length; i++)
+            for (var i = 0; i < triggers.Length; i++)
             {
-                if (triggers[i])
-                {//有事件触发
-                    if (i < _globalConfig.EventConfig.Count)
-                    {//事件触发位配置有事件
-                        MitsubishiEventInstance ei = _globalConfig.EventConfig[i];
-
-                        if (ei.DisableEvent)
-                            continue;
-
-                        if (ei.ListInput.Count > 0 && ei.ListOutput.Count > 0)
-                        {//已经有线程处理当前事件 当前事件正在处理中
-                            if (!_bEventTriggerCompleted[i])
-                            {
-                                HslCommunication.OperateResult<byte[]> rlt = _plcs[1].Read(ei.ListInput[0].GetMBAddressTag, GetRWLength(ei.ListInput));
-                                if (rlt.IsSuccess)
-                                {
-                                    //解析数据到事件结构
-                                    try
-                                    {
-                                        ResolveDataToEvent(rlt.Content, ei.ListInput);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _see.Err(_globalConfig.FileName, rlt.Content, ex.Message);
-                                        return;
-                                    }
-
-                                    short? nInputSequenceID = ei.ListInput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-                                    short? nOutSequenceID = ei.ListOutput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-
-                                    if (nInputSequenceID != nOutSequenceID)
-                                    {//事件ID不一致 当前事件触发
-                                        _bEventTriggerCompleted[i] = true;
-
-                                        //事件回调处理完毕 将在事件处理线程上执行
-                                        ei.OnEventTriggerCompleted += (ets) =>
-                                        {
-                                            Console.WriteLine("Handle Event Callback");
-                                        };
-
-                                        /*
-                                         * 对事件的再次封装 实现key值实现交互
-                                         */
-                                        //启动线程处理当前事件
-                                        //_stp.QueueWorkItem(HandleEvent, new EventMitsubishiThreadState()
-                                        //{
-                                        //    InstanceName = InstanceName,
-                                        //    EventIndex = i,
-                                        //    SE = ei
-                                        //});
-
-
-                                        //启动线程处理当前事件
-                                        _stp.QueueWorkItem(new WorkItemCallback(HandleEvent), new EventMitsubishiThreadState()
-                                        {
-                                            InstanceName = InstanceName,
-                                            EventIndex = i,
-                                            SE = ei
-                                        }, HandleEventCaLLBack);
-                                        
-                                    }
-                                    else
-                                    {//触发位依旧存在 事件ID同步写入失败 重试写入
-                                        if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                                        {
-                                            if (!_plcs[1].Write(ei.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ei.ListOutput)).IsSuccess)
-                                                Console.WriteLine("Write Single Event Retry Data Fail.");
-                                            else
-                                                Console.WriteLine("Write Single Event Retry Success;ID:" + ei.ListOutput[0].GetInt16());
-                                        }
-                                        //else
-                                        //{
-                                        //    if (!_plcSharp7s[1].Write(ei.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ei.ListOutput)).IsSuccess)
-                                        //        Console.WriteLine("Write Single Event Retry Data Fail.");
-                                        //}
-                                    }
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Read Single Event Data Fail. Error:" + rlt.Message);
-                                    _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("Read Single Event Data Fail,EventName:{0}", ei.EventName));
-                                }
-                                
-                                //else if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Sharp7)
-                                //{
-                                //    OperateResult<byte[]> rlt = _plcSharp7s[1].Read(ei.ListInput[0].GetMBAddressTag, GetRWLength(ei.ListInput));
-                                //    if (rlt.IsSuccess)
-                                //    {
-                                //        //解析数据到事件结构
-                                //        ResolveDataToEvent(rlt.Content, ei.ListInput);
-
-                                //        short? nInputSequenceID = ei.ListInput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-                                //        short? nOutSequenceID = ei.ListOutput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-
-                                //        if (nInputSequenceID != nOutSequenceID)
-                                //        {//事件ID不一致 当前事件触发
-                                //            _bEventTriggerCompleted[i] = true;
-                                //            //事件回调处理完毕 将在事件处理线程上执行
-                                //            ei.OnEventTriggerCompleted += (ets) =>
-                                //            {
-                                //                Console.WriteLine("Handle Event Callback");
-                                //                //if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                                //                //{
-                                //                //    var rlt1 = _plcs[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput));
-                                //                //    if (!rlt1.IsSuccess)
-                                //                //        Console.WriteLine("Write Single Event Data Fail. Error:" + rlt.Message);
-                                //                //    Console.WriteLine(ets.SE.ListOutput[0].GetMBAddressTag);
-                                //                //}
-                                //                //else
-                                //                //{
-                                //                //    var rlt2 = _plcSharp7s[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput));
-                                //                //    if (!rlt2.IsSuccess)
-                                //                //        Console.WriteLine("Write Single Event Data Fail. Error:" + rlt.Message);
-                                //                //}
-
-                                //                //_bEventTriggerCompleted[ets.EventIndex] = false;
-                                //                //Console.WriteLine("EventCallBack " + ets.SE.EventName + " " + ets.SE.ListOutput[0].GetInt16());
-                                //            };
-                                //            //启动线程处理当前事件
-                                //            _stp.QueueWorkItem(new WorkItemCallback(_see.HandleEvent), new EventThreadState()
-                                //            {
-                                //                InstanceName = InstanceName,
-                                //                EventIndex = i,
-                                //                SE = ei
-                                //            }, HandleEventCaLLBack);
-                                //        }
-                                //    }
-                                //    else
-                                //    {
-                                //        Console.WriteLine("Read Single Event Data Fail. Error:" + rlt.Message);
-                                //        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("Read Single Event Data Fail,EventName:{0}", ei.EventName));
-                                //    }
-                                //}
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("The Event Don't Have Input Or Output.");
-                        }
-                    }
+                if (triggers[i] && i < _globalConfig.EventConfig.Count)
+                {
+                    await ProcessSingleEventTriggerAsync(i);
                 }
             }
         }
 
         /// <summary>
-        /// 事件处理完毕 回调写入数据到PLC ？？会出现不回调的现象  采用事件回调处理
+        /// 处理单个事件触发
         /// </summary>
-        /// <param name="wir"></param>
-        private void HandleEventCaLLBack(IWorkItemResult wir)
+        private async Task ProcessSingleEventTriggerAsync(int eventIndex)
         {
-            EventMitsubishiThreadState ets = wir.Result as EventMitsubishiThreadState;
-            //Console.WriteLine("Push Data ID:" + ets.SE.ListOutput[0].GetInt16());
-            //_queueHandleEventCompleted.Enqueue(ets);
-            _queueHandleEventCompleted.Enqueue(ets);
+            var eventInstance = _globalConfig.EventConfig[eventIndex];
 
-            //if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-            //{
-            //    if (!_plcs[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-            //        Console.WriteLine("Write Single Event Data Fail.");
-            //}
-            //else
-            //{
-            //    if (!_plcSharp7s[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-            //        Console.WriteLine("Write Single Event Data Fail.");
-            //}
-            //_bEventTriggerCompleted[ets.EventIndex] = false;
+            // 检查事件是否禁用或配置不完整
+            if (eventInstance.DisableEvent || eventInstance.ListInput.Count == 0 || eventInstance.ListOutput.Count == 0)
+                return;
+
+            // 检查事件是否正在处理中
+            if (_eventTriggerStatus.TryGetValue(eventIndex, out var isProcessing) && isProcessing)
+                return;
+
+            // 标记事件为处理中
+            _eventTriggerStatus[eventIndex] = true;
+
+            try
+            {
+                // 读取事件数据
+                var eventData = await ReadEventDataAsync(eventInstance);
+                if (eventData.IsSuccess)
+                {
+                    try
+                    {
+                        // 解析事件数据
+                        ResolveEventData(eventData.Content, eventInstance.ListInput);
+                    }
+                    catch (Exception ex)
+                    {
+                        _eventExecuter.Err(_globalConfig.FileName, eventData.Content, ex.Message);
+                        return;
+                    }
+
+                    // 检查序列ID是否匹配（避免重复处理）
+                    if (IsSequenceIdMismatch(eventInstance))
+                    {
+                        // 异步处理事件
+                        var threadState = new EventMitsubishiThreadState
+                        {
+                            InstanceName = InstanceName,
+                            EventIndex = eventIndex,
+                            SE = eventInstance
+                        };
+
+                        // 异步处理事件并设置回调
+                        _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
+                            .ContinueWith(task =>
+                            {
+                                if (task.Exception != null)
+                                {
+                                    _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
+                                    return;
+                                }
+                                HandleEventCallback(task.Result as EventMitsubishiThreadState);
+                            }, TaskScheduler.Default);
+                    }
+                    else
+                    {
+                        // 序列ID匹配，重试写入
+                        var writeResult = await _plcClient.WriteAsync(
+                            eventInstance.ListOutput[0].GetMBAddressTag,
+                            PackageDataToPlc(eventInstance.ListOutput)
+                        );
+
+                        if (!writeResult.IsSuccess)
+                            Console.WriteLine("Write Single Event Retry Data Fail.");
+                        else
+                            Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Read Single Event Data Fail. Error:" + eventData.Message);
+                    _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig,
+                        $"Read Single Event Data Fail,EventName:{eventInstance.EventName}");
+                }
+            }
+            catch (Exception)
+            {
+                _eventTriggerStatus[eventIndex] = false;
+            }
         }
 
+        /// <summary>
+        /// 事件处理完成后的回调方法
+        /// </summary>
+        private void HandleEventCallback(EventMitsubishiThreadState ets)
+        {
+            Console.WriteLine($"Push Data ID:{ets.SE.ListOutput[0].GetInt16()}");
+            _completedEventQueue.Enqueue(ets);
+        }
+
+        #region 工具方法（数据处理/校验）
+        /// <summary>
+        /// 验证周期时间（确保在10-2000ms范围内）
+        /// </summary>
+        private int ValidateCycleTime(int cycleTime) => Math.Clamp(cycleTime, 10, 2000);
 
         /// <summary>
-        //获取单个事件读取/写入长度
+        /// 检查PLC连接状态
         /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        private ushort GetRWLength(List<MitsubishiEventIO> input)
+        private bool IsPlcConnected()
         {
-            short length = 0;
-
-            foreach (var item in input)
+            try
             {
-                length += item.Length;
+                // 检查IP是否可达
+                var ping = new Ping();
+                var reply = ping.Send(_globalConfig.CpuInfo.IP, 1000);
+                if (reply?.Status != IPStatus.Success)
+                    return false;
+
+                // 检查连接状态
+                return true;
             }
-            return (ushort)(length);
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
-        /// 将配置文件对象封装到字节数组
+        /// 关闭PLC连接
         /// </summary>
-        /// <param name="plcConfig"></param>
-        private byte[] PackageDataToPlc(List<MitsubishiEventIO> listConfig)
+        private void ClosePlcConnection()
         {
-            byte[] writeData = new byte[GetRWLength(listConfig) * 2];
-            for (int i = 0; i < listConfig.Count; i++)
-            {
-                Array.Copy(listConfig[i].DataValue, 0, writeData, (listConfig[i].MBAdr - listConfig[0].MBAdr) * 2, listConfig[i].Length * 2);
-                listConfig[i].GetDataValueStr();
-            }
+            _plcClient?.ConnectClose();
+        }
 
+        /// <summary>
+        /// 解析PLC数据到事件配置
+        /// </summary>
+        private void ResolveEventData(byte[] data, List<MitsubishiEventIO> configs)
+        {
+            if (data == null || data.Length == 0) return;
+
+            foreach (var config in configs)
+            {
+                var sourceOffset = (config.MBAdr - configs[0].MBAdr) * 2;
+                var targetLength = config.Length * 2;
+
+                // 内存复制优化
+                data.AsSpan(sourceOffset, targetLength)
+                    .CopyTo(config.DataValue.AsSpan(0, targetLength));
+
+                config.GetDataValueStr();
+            }
+        }
+
+        /// <summary>
+        /// 打包事件数据为PLC字节数组
+        /// </summary>
+        private byte[] PackageDataToPlc(List<MitsubishiEventIO> configs)
+        {
+            byte[] writeData = new byte[GetRWLength(configs)];
+            for (int i = 0; i < configs.Count; i++)
+            {
+                Array.Copy(configs[i].DataValue, 0, writeData,
+                    (configs[i].MBAdr - configs[0].MBAdr) * 2,
+                    configs[i].Length * 2);
+                configs[i].GetDataValueStr();
+            }
             return writeData;
         }
 
         /// <summary>
-        ///将读取到的PLC数据解析到配置对象 
+        /// 计算数据区长度
         /// </summary>
-        /// <param name="content"></param>
-        private void ResolveDataToEvent(byte[] content, List<MitsubishiEventIO> listConfig)
+        private ushort GetRWLength(List<MitsubishiEventIO> input)
         {
-            for (int i = 0; i < listConfig.Count; i++)
+            short length = 0;
+            foreach (var item in input)
             {
-                Array.Copy(content, (listConfig[i].MBAdr - listConfig[0].MBAdr) * 2, listConfig[i].DataValue, 0, listConfig[i].Length * 2);
-                listConfig[i].GetDataValueStr();
+                length += item.Length;
             }
+            return (ushort)(length * 2);
         }
 
-        public object HandleEvent(object obj)
+        /// <summary>
+        /// 检查序列ID是否不匹配（需要处理事件）
+        /// </summary>
+        private bool IsSequenceIdMismatch(MitsubishiEventInstance instance)
         {
-            var se = obj as EventSiemensThreadState;
-            if (se != null)
+            var inputId = instance.ListInput
+                .FirstOrDefault(t => t.TagName.Trim().Equals("sequenceid", StringComparison.OrdinalIgnoreCase))?.GetInt16() ?? 0;
+
+            var outputId = instance.ListOutput
+                .FirstOrDefault(t => t.TagName.Trim().Equals("sequenceid", StringComparison.OrdinalIgnoreCase))?.GetInt16() ?? 0;
+
+            return inputId != outputId;
+        }
+
+        /// <summary>
+        /// 同步序列ID（PLC → EAP）
+        /// </summary>
+        private void SyncSequenceId(MitsubishiEventInstance instance)
+        {
+            try
             {
-                //处理事件
-                //将数据打包
-                //Dictionary<string, Tuple<string, object>> keyValuePairs = new Dictionary<string, Tuple<string, object>>();
-                List<MyData> keyValuePairs = new List<MyData>();
-                //遍历所有PLC下发数据
-                for (int i = 0; i < se.SE.ListInput.Count; i++)
+                var inputIdConfig = instance.ListInput
+                    .FirstOrDefault(t => t.TagName.Trim().Equals("sequenceid", StringComparison.OrdinalIgnoreCase));
+
+                var outputIdConfig = instance.ListOutput
+                    .FirstOrDefault(t => t.TagName.Trim().Equals("sequenceid", StringComparison.OrdinalIgnoreCase));
+
+                if (inputIdConfig != null && outputIdConfig != null)
                 {
-                    if (se.SE.ListInput[i].DTType == CDataType.DTInt)
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int32, ValueData = se.SE.ListInput[i].GetInt32() });
-                    //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Int32", se.SE.ListInput[i].GetInt32()));
-                    if (se.SE.ListInput[i].DTType == CDataType.DTShort)
-                        //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Int16", se.SE.ListInput[i].GetInt16()));
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int16, ValueData = se.SE.ListInput[i].GetInt16() });
-                    if (se.SE.ListInput[i].DTType == CDataType.DTString)
-                        //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("String", se.SE.ListInput[i].GetString()));
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.String, ValueData = se.SE.ListInput[i].GetString() });
-                    if (se.SE.ListInput[i].DTType == CDataType.DTFloat)
-                        //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Float", se.SE.ListInput[i].GetSingle()));
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Float, ValueData = se.SE.ListInput[i].GetSingle() });
-                }
-
-                //添加当前工序 放在【EventClass】
-                keyValuePairs.Add(new MyData() { Key = "EventClass", ValueType = MyData.MyType.String, ValueData = se.SE.EventClass });
-
-                PlcEventParamModel plcEventInputParamModel = new PlcEventParamModel()
-                {
-                    PlcName = se.InstanceName,
-                    EventName = se.SE.EventName,
-                    EventClass = se.SE.EventClass,
-                    StartTime = DateTime.Now,
-                    Params = keyValuePairs
-                };
-
-                //调用处理接口
-
-                PlcEventParamModel plcEventOutputParamModel = _see.HandleEventWithKey(plcEventInputParamModel);
-                //将消息写入到PLC
-                for (int i = 0; i < se.SE.ListOutput.Count; i++)
-                {
-                    if (plcEventOutputParamModel.Params != null)
-                    {
-                        //匹配相同项
-                        for (int j = 0; j < plcEventOutputParamModel.Params.Count; j++)
-                        {
-                            //if (plcEventOutputParamModel.Params.Keys.Contains(se.SE.ListOutput[i].TagName))
-                            if (plcEventOutputParamModel.Params.Any(it => it.Key == se.SE.ListOutput[i].TagName))
-                            {
-                                //将返回值写入plc
-                                // var p = plcEventOutputParamModel.Params.Get(se.SE.ListOutput[i].TagName);
-                                var p = plcEventOutputParamModel.Params.Where(it => it.Key == se.SE.ListOutput[i].TagName).SingleOrDefault();
-                                if (p != null)
-                                {
-                                    if (p.ValueType == MyData.MyType.Int32)
-                                    {
-                                        se.SE.ListOutput[i].SetInt32(Convert.ToInt32(p.ValueData));
-                                    }
-                                    if (p.ValueType == MyData.MyType.Int16)
-                                    {
-                                        se.SE.ListOutput[i].SetInt16(Convert.ToInt16(p.ValueData));
-                                    }
-                                    if (p.ValueType == MyData.MyType.String)
-                                    {
-                                        se.SE.ListOutput[i].SetString(p.ValueData.ToString());
-                                    }
-                                    if (p.ValueType == MyData.MyType.WString)
-                                    {
-                                        se.SE.ListOutput[i].SetWString(p.ValueData.ToString());
-                                    }
-                                    if (p.ValueType == MyData.MyType.Float)
-                                    {
-                                        se.SE.ListOutput[i].SetFloat(Convert.ToSingle(p.ValueData));
-
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    outputIdConfig.SetInt16(inputIdConfig.GetInt16());
                 }
             }
-
-            return se;
+            catch { }
         }
+
+        /// <summary>
+        /// 回写公共区数据到PLC
+        /// </summary>
+        private async Task<OperateResult> WritePlcCommonDataAsync()
+        {
+            return await _plcClient.WriteAsync(
+                _globalConfig.EapConfig[0].GetMBAddressTag,
+                PackageDataToPlc(_globalConfig.EapConfig)
+            );
+        }
+
+        /// <summary>
+        /// 读取事件数据
+        /// </summary>
+        private async Task<OperateResult<byte[]>> ReadEventDataAsync(MitsubishiEventInstance instance)
+        {
+            var address = instance.ListInput[0].GetMBAddressTag;
+            var length = GetRWLength(instance.ListInput);
+            return await _plcClient.ReadAsync(address, length);
+        }
+
+     
+        #endregion
+
+        #region 资源释放
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// 释放资源的具体实现
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed) return;
+
+            if (disposing)
+            {
+                // 释放托管资源
+                _cts.Cancel();
+                _cts.Dispose();
+                _completedEventQueue.Clear();
+                _eventTriggerStatus.Clear();
+            }
+
+            // 释放非托管资源（关闭PLC连接）
+            ClosePlcConnection();
+
+            _isDisposed = true;
+        }
+
+        /// <summary>
+        /// 析构函数
+        /// </summary>
+        ~MitsubishiEventHandle()
+        {
+            Dispose(false);
+        }
+        #endregion
     }
 }

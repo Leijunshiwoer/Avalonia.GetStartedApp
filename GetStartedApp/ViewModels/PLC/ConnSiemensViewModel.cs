@@ -8,9 +8,11 @@ using GetStartedApp.Utils.Node;
 using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
+using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
 using SmartCommunicationForExcel.EventHandle.Siemens;
 using SmartCommunicationForExcel.Executer;
+using SmartCommunicationForExcel.Implementation.Mitsubishi;
 using SmartCommunicationForExcel.Implementation.Omron;
 using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Model;
@@ -30,7 +32,7 @@ namespace GetStartedApp.ViewModels.PLC
     /// 西门子PLC连接视图模型
     /// 负责PLC连接管理、配置加载及状态展示
     /// </summary>
-    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter
+    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter,IMitsubishiEventExecuter
     {
         #region 常量定义
         // 路径与文件相关
@@ -467,6 +469,11 @@ namespace GetStartedApp.ViewModels.PLC
         public void SubscribeCommonInfo(string instanceName, bool bSuccess, List<OmronEventIO> listInput, List<OmronEventIO> listOutput, string strError = "")
         {
             // 订阅逻辑（按需实现）
+        }
+      
+        public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<MitsubishiEventIO> listInput, List<MitsubishiEventIO> listOutput, string strError = "")
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

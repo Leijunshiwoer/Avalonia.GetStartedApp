@@ -1,5 +1,4 @@
-﻿using Amib.Threading;
-using Microsoft.Extensions.Logging;
+﻿
 using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
@@ -11,15 +10,8 @@ using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Interface;
 using SmartCommunicationForExcel.Model;
 using SmartCommunicationForExcel.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Unity;
-using Unity.Injection;
-// 或
- using Avalonia.Controls;
-using Karambolo.Extensions.Logging.File; // 如果是Avalonia
+
 
 namespace SmartCommunicationForExcel.Executer
 {
@@ -66,22 +58,21 @@ namespace SmartCommunicationForExcel.Executer
 
             // 注册事件执行器
             Container.RegisterType<ISiemensEventExecuter, DefaultSiemensEventExecuter>();
-
             Container.RegisterType<IOmronEventExecuter, DefaultOmronEventExecuter>();
-            //Container.RegisterType<IMitsubishiEventExecuter, DefaultMitsubishiEventExecuter>();
+            Container.RegisterType<IMitsubishiEventExecuter, DefaultMitsubishiEventExecuter>();
             //Container.RegisterType<IBeckhoffEventExecuter, DefaultBeckhoffEventExecuter>();
                 
-            // 注册线程池（带回调配置）
-            var stpStartInfo = new STPStartInfo
-            {
-                CallToPostExecute = CallToPostExecute.Always,
-                FillStateWithArgs = true
-            };
-            var smartThreadPool = new SmartThreadPool(stpStartInfo)
-            {
-                Name = "SmartThread From Container"
-            };
-            Container.RegisterInstance(smartThreadPool);
+            //// 注册线程池（带回调配置）
+            //var stpStartInfo = new STPStartInfo
+            //{
+            //    CallToPostExecute = CallToPostExecute.Always,
+            //    FillStateWithArgs = true
+            //};
+            //var smartThreadPool = new SmartThreadPool(stpStartInfo)
+            //{
+            //    Name = "SmartThread From Container"
+            //};
+            //Container.RegisterInstance(smartThreadPool);
         }
 
         #endregion
@@ -350,36 +341,32 @@ namespace SmartCommunicationForExcel.Executer
         #region 三菱设备管理（异步改造）
         public async Task<ResultState> StartMitsubishiWorkInstance(string instanceName, string configFilePath)
         {
-            //return await StartWorkInstanceAsync(
-            //    instanceName,
-            //    configFilePath,
-            //    _mitsubishiInstances,
-            //    _mitsubishiConfigs,
-            //    path => new MyExcelFileHelper<MitsubishiGlobalConfig>().ExcelToMitsubishiObject(path),
-            //    (config) =>
-            //    {
-            //        config.CpuInfo.CycleTime = _cycleTime;
-            //        return config;
-            //    },
-            //    () => Container.Resolve<MitsubishiEventHandle>(),
-            //    (handler, name, config) => handler.StartAsync(name, config)
-            //);
+            return await StartWorkInstanceAsync(
+                instanceName,
+                configFilePath,
+                _mitsubishiInstances,
+                _mitsubishiConfigs,
+                path => new MyExcelFileHelper<MitsubishiGlobalConfig>().ExcelToMitsubishiObject(path),
+                (config) =>
+                {
+                    config.CpuInfo.CycleTime = _cycleTime;
+                    return config;
+                },
+                () => Container.Resolve<MitsubishiEventHandle>(),
+                (handler, name, config) => handler.StartAsync(name, config as MitsubishiGlobalConfig)
+            );
 
-            await Task.CompletedTask;
-            return new ResultState();
+
         }
 
         public async Task<ResultState> StopMitsubishiWorkInstance(string instanceName)
         {
-            //return await StopWorkInstanceAsync(
-            //    instanceName,
-            //    _mitsubishiInstances,
-            //    _mitsubishiConfigs,
-            //    handler => handler.StopAsync()
-            //);
-
-            await Task.CompletedTask;
-            return new ResultState();
+            return await StopWorkInstanceAsync(
+                instanceName,
+                _mitsubishiInstances,
+                _mitsubishiConfigs,
+                handler => handler.StopAsync()
+            );
         }
         #endregion
 

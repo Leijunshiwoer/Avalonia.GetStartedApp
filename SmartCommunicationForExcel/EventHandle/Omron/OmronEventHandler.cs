@@ -369,6 +369,19 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
                                 HandleEventCallback(task.Result as EventOmronThreadState);
                             }, TaskScheduler.FromCurrentSynchronizationContext());
                     }
+                    else
+                    {
+                        // 序列ID匹配，重试写入
+                        var writeResult = await _plcClient.WriteAsync(
+                            eventInstance.ListOutput[0].GetMBAddressTag,
+                            PackageDataToPlc(eventInstance.ListOutput)
+                        );
+
+                        if (!writeResult.IsSuccess)
+                            Console.WriteLine("Write Single Event Retry Data Fail.");
+                        else
+                            Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                    }
                 }
                 else
                 {

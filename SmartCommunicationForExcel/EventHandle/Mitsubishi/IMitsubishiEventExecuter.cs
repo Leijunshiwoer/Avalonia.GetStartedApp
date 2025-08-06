@@ -13,7 +13,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
         //[Obsolete("8.0之前版本被遗弃", false)]
         object HandleEvent(object sei);//object EventIstance
 
-        PlcEventParamModel HandleEventWithKey(object PlcEventParamModel);
+        //PlcEventParamModel HandleEventWithKey(object PlcEventParamModel);
 
         void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<MitsubishiEventIO> listInput, List<MitsubishiEventIO> listOutput, string strError = "");
 
