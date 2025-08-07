@@ -190,9 +190,17 @@ namespace GetStartedApp.ViewModels.PLC
                         // 可添加监控窗口打开失败的处理
                     }
                 }
-                else
+                else if (plcModel.FCpuType == "Omron")
                 {
                     var result = _smartContainer.ShowOmronConfig(plcModel.FName);
+                    if (!result.IsSuccess)
+                    {
+                        // 可添加监控窗口打开失败的处理
+                    }
+                }
+                else
+                {
+                    var result = _smartContainer.ShowMitsubishiConfig(plcModel.FName);
                     if (!result.IsSuccess)
                     {
                         // 可添加监控窗口打开失败的处理
@@ -364,6 +372,19 @@ namespace GetStartedApp.ViewModels.PLC
                     await MessageBox.ShowAsync(result.Message);
                 }
             }
+            else if (targetPlc.FFileName.Contains("Mitsubishi"))
+            {
+                var result = await _smartContainer.StartMitsubishiWorkInstance(
+                  plcModel.FName,
+                  Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
+              );
+
+                targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
+                if (!result.IsSuccess)
+                {
+                    await MessageBox.ShowAsync(result.Message);
+                }
+            }
 
         }
 
@@ -378,9 +399,14 @@ namespace GetStartedApp.ViewModels.PLC
             {
                 await _smartContainer.StopSiemensWorkInstance(plcModel.FName);
             }
-            else
+            else if (targetPlc.FFileName.Contains("Omron"))
             {
                 await _smartContainer.StopOmronWorkInstance(plcModel.FName);
+
+            }
+            else
+            {
+                await _smartContainer.StopMitsubishiWorkInstance(plcModel.FName);
 
             }
             targetPlc.FIsConn = "未连接";
@@ -473,7 +499,7 @@ namespace GetStartedApp.ViewModels.PLC
       
         public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<MitsubishiEventIO> listInput, List<MitsubishiEventIO> listOutput, string strError = "")
         {
-            throw new NotImplementedException();
+           
         }
         #endregion
     }

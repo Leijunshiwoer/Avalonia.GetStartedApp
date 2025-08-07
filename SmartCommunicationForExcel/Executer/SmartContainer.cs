@@ -43,7 +43,7 @@ namespace SmartCommunicationForExcel.Executer
         private readonly Dictionary<string, OmronEventHandler> _omronInstances = new();
         private readonly Dictionary<string, IOmronGlobalConfig<OmronEventIO, OmronCpuInfo, OmronEventInstance>> _omronConfigs = new();
 
-        private readonly Dictionary<string, MitsubishiEventHandle> _mitsubishiInstances = new();
+        private readonly Dictionary<string, MitsubishiEventHandler> _mitsubishiInstances = new();
         private readonly Dictionary<string, IMitsubishiGlobalConfig<MitsubishiEventIO, MitsubishiCpuInfo, MitsubishiEventInstance>> _mitsubishiConfigs = new();
 
         private readonly Dictionary<string, BeckhoffEventHandle> _beckhoffInstances = new();
@@ -140,25 +140,28 @@ namespace SmartCommunicationForExcel.Executer
         {
             var result = new ResultState { IsSuccess = true };
 
-            if (string.IsNullOrEmpty(instanceName))
+            if (!string.IsNullOrEmpty(instanceName))
             {
-                _smartOmronConfigForm ??= new SmartConfigForExcel.SmartOmronConfigForExcelForm();
-                _smartOmronConfigForm.Show();
-                return result;
-            }
+                if (_omronConfigs.TryGetValue(instanceName, out var config))
+                {
+                    _smartOmronConfigForm = new SmartConfigForExcel.SmartOmronConfigForExcelForm();
+                    _smartOmronConfigForm.SetModel(config);
+                    _smartOmronConfigForm.Show();
+                    return result;
+                }
+                else
+                {
+                    result.IsSuccess = false;
+                    result.Message = $"未找到实例 [{instanceName}] 的配置";
+                    return result;
+                }
 
-            if (_omronConfigs.TryGetValue(instanceName, out var config))
-            {
-                _smartOmronConfigForm ??= new SmartConfigForExcel.SmartOmronConfigForExcelForm();
-                _smartOmronConfigForm.SetModel(config);
-                _smartOmronConfigForm.Show();
             }
             else
             {
-                result.IsSuccess = false;
-                result.Message = $"未找到实例 [{instanceName}] 的配置";
-            }
 
+
+            }
             return result;
         }
 
@@ -166,24 +169,26 @@ namespace SmartCommunicationForExcel.Executer
         {
             var result = new ResultState { IsSuccess = true };
 
-            if (string.IsNullOrEmpty(instanceName))
+            if (!string.IsNullOrEmpty(instanceName))
             {
-                _smartMitsubishiConfigForm ??= new SmartConfigForExcel.SmartMitsubishiConfigForExcelForm();
-                _smartMitsubishiConfigForm.Show();
-                return result;
-            }
-
-            if (_mitsubishiConfigs.TryGetValue(instanceName, out var config))
-            {
-                _smartMitsubishiConfigForm ??= new SmartConfigForExcel.SmartMitsubishiConfigForExcelForm();
-                _smartMitsubishiConfigForm.SetModel(config);
-                _smartMitsubishiConfigForm.Show();
+                if (_mitsubishiConfigs.TryGetValue(instanceName, out var config))
+                {
+                    _smartMitsubishiConfigForm = new SmartConfigForExcel.SmartMitsubishiConfigForExcelForm();
+                    _smartMitsubishiConfigForm.SetModel(config);
+                    _smartMitsubishiConfigForm.Show();
+                }
+                else
+                {
+                    result.IsSuccess = false;
+                    result.Message = $"未找到实例 [{instanceName}] 的配置";
+                }
             }
             else
             {
-                result.IsSuccess = false;
-                result.Message = $"未找到实例 [{instanceName}] 的配置";
+
             }
+
+           
 
             return result;
         }
@@ -352,7 +357,7 @@ namespace SmartCommunicationForExcel.Executer
                     config.CpuInfo.CycleTime = _cycleTime;
                     return config;
                 },
-                () => Container.Resolve<MitsubishiEventHandle>(),
+                () => Container.Resolve<MitsubishiEventHandler>(),
                 (handler, name, config) => handler.StartAsync(name, config as MitsubishiGlobalConfig)
             );
 

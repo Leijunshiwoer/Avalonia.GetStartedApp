@@ -4,14 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:SmartCommunicationForExcel.SmartConfigForExcel"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        Title="SmartMisubishiConfigForExcelForm"
+        Title="三菱智能配置Excel表单"
         Width="1200"
         Height="800"
         mc:Ignorable="d">
     <Grid>
         <TabControl>
-            <!--  CPU Info 标签页  -->
-            <TabItem Header="CpuInfo">
+            <!--  CPU信息标签页  -->
+            <TabItem Header="CPU信息">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="300" />
@@ -22,111 +22,111 @@
                     <StackPanel Margin="20">
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="CpuType" />
+                                   Text="CPU类型" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="PlcType" />
+                                   Text="PLC类型" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="Mark" />
+                                   Text="标识" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="Name" />
+                                   Text="名称" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="EapConfigBeginAddress" />
+                                   Text="EAP配置起始地址" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="EapConfigBeginOffset" />
+                                   Text="EAP配置起始偏移量" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="EapEventBeginAddress" />
+                                   Text="EAP事件起始地址" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="EapEventBeginOffset" />
+                                   Text="EAP事件起始偏移量" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="PlcConfigBeginAddress" />
+                                   Text="PLC配置起始地址" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="PlcConfigBeginOffset" />
+                                   Text="PLC配置起始偏移量" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="PlcEventBeginAddress" />
+                                   Text="PLC事件起始地址" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="PlcEventBeginOffset" />
+                                   Text="PLC事件起始偏移量" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="IP" />
+                                   Text="IP地址" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="Port1" />
+                                   Text="端口1" />
                         <TextBlock Margin="0,0,0,10"
                                    Foreground="Blue"
-                                   Text="Port2" />
+                                   Text="端口2" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="20">
                         <TextBlock Name="lbCpuType"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="CpuType" />
+                                   Text="CPU类型" />
                         <TextBlock Name="lbPlcType"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="PlcType" />
+                                   Text="PLC类型" />
                         <TextBlock Name="lbMark"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="Mark" />
+                                   Text="标识" />
                         <TextBlock Name="lbName"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="Name" />
+                                   Text="名称" />
                         <TextBlock Name="lbEapConfigBeginAddress"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="EapConfigBeginAddress" />
+                                   Text="EAP配置起始地址" />
                         <TextBlock Name="lbEapConfigBeginOffset"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="EapConfigBeginOffset" />
+                                   Text="EAP配置起始偏移量" />
                         <TextBlock Name="lbEapEventBeginAddress"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="EapEventBeginAddress" />
+                                   Text="EAP事件起始地址" />
                         <TextBlock Name="lbEapEventBeginOffset"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="EapEventBeginOffset" />
+                                   Text="EAP事件起始偏移量" />
                         <TextBlock Name="lbPlcConfigBeginAddress"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="PlcConfigBeginAddress" />
+                                   Text="PLC配置起始地址" />
                         <TextBlock Name="lbPlcConfigBeginOffset"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="PlcConfigBeginOffset" />
+                                   Text="PLC配置起始偏移量" />
                         <TextBlock Name="lbPlcEventBeginAddress"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="PlcEventBeginAddress" />
+                                   Text="PLC事件起始地址" />
                         <TextBlock Name="lbPlcEventBeginOffset"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="PlcEventBeginOffset" />
+                                   Text="PLC事件起始偏移量" />
                         <TextBlock Name="lbIP"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="IP" />
+                                   Text="IP地址" />
                         <TextBlock Name="lbPort1"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="Port1" />
+                                   Text="端口1" />
                         <TextBlock Name="lbPort2"
                                    Margin="0,0,0,10"
                                    Foreground="Black"
-                                   Text="Port2" />
+                                   Text="端口2" />
                     </StackPanel>
                     <Button Grid.Column="3"
                             Width="60"
@@ -136,8 +136,8 @@
                 </Grid>
             </TabItem>
 
-            <!--  EapConfig 标签页 - 使用 DataGrid 替代 ListView  -->
-            <TabItem Header="EapConfig">
+            <!--  EAP配置标签页  -->
+            <TabItem Header="EAP配置">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
@@ -149,43 +149,43 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
-                                                Header="No" />
+                                                Header="序号" />
                             <DataGridTextColumn Width="200"
                                                 Binding="{Binding DateValue}"
-                                                Header="DateValue" />
+                                                Header="日期值" />
                             <DataGridTextColumn Width="60"
                                                 Binding="{Binding Length}"
-                                                Header="Length" />
+                                                Header="长度" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MBAdr}"
-                                                Header="MBAdr" />
+                                                Header="MB地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MEAdr}"
-                                                Header="MEAdr" />
+                                                Header="ME地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DTType}"
-                                                Header="DTType" />
+                                                Header="数据类型" />
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding Mark}"
-                                                Header="Mark" />
+                                                Header="标识" />
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding TagName}"
-                                                Header="TagName" />
+                                                Header="标签名称" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginAddress}"
-                                                Header="GlobalBeginAddress" />
+                                                Header="全局起始地址" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginOffset}"
-                                                Header="GlobalBeginOffset" />
+                                                Header="全局起始偏移量" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMBAddressTag}"
-                                                Header="GetMBAddressTag" />
+                                                Header="获取MB地址标签" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMEAddressTag}"
-                                                Header="GetMEAddressTag" />
+                                                Header="获取ME地址标签" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DataFormat}"
-                                                Header="DataFormat" />
+                                                Header="数据格式" />
                         </DataGrid.Columns>
                     </DataGrid>
                     <Button Grid.Column="1"
@@ -196,8 +196,8 @@
                 </Grid>
             </TabItem>
 
-            <!--  PlcConfig 标签页 - 使用 DataGrid 替代 ListView  -->
-            <TabItem Header="PlcConfig">
+            <!--  PLC配置标签页  -->
+            <TabItem Header="PLC配置">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
@@ -209,43 +209,43 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
-                                                Header="No" />
+                                                Header="序号" />
                             <DataGridTextColumn Width="200"
                                                 Binding="{Binding DateValue}"
-                                                Header="DateValue" />
+                                                Header="日期值" />
                             <DataGridTextColumn Width="60"
                                                 Binding="{Binding Length}"
-                                                Header="Length" />
+                                                Header="长度" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MBAdr}"
-                                                Header="MBAdr" />
+                                                Header="MB地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MEAdr}"
-                                                Header="MEAdr" />
+                                                Header="ME地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DTType}"
-                                                Header="DTType" />
+                                                Header="数据类型" />
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding Mark}"
-                                                Header="Mark" />
+                                                Header="标识" />
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding TagName}"
-                                                Header="TagName" />
+                                                Header="标签名称" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginAddress}"
-                                                Header="GlobalBeginAddress" />
+                                                Header="全局起始地址" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginOffset}"
-                                                Header="GlobalBeginOffset" />
+                                                Header="全局起始偏移量" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMBAddressTag}"
-                                                Header="GetMBAddressTag" />
+                                                Header="获取MB地址标签" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMEAddressTag}"
-                                                Header="GetMEAddressTag" />
+                                                Header="获取ME地址标签" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DataFormat}"
-                                                Header="DataFormat" />
+                                                Header="数据格式" />
                         </DataGrid.Columns>
                     </DataGrid>
                     <Button Grid.Column="1"
@@ -256,8 +256,8 @@
                 </Grid>
             </TabItem>
 
-            <!--  EventConfig 标签页 - 使用 DataGrid 替代 ListView  -->
-            <TabItem Header="EventConfig">
+            <!--  事件配置标签页  -->
+            <TabItem Header="事件配置">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto" />
@@ -284,7 +284,7 @@
                                 Content="刷新" />
                     </StackPanel>
 
-                    <!--  PC 事件列表  -->
+                    <!--  PC事件列表  -->
                     <DataGrid x:Name="lvEventConfigPC"
                               Grid.Row="1"
                               x:DataType="local:MyConfig"
@@ -292,47 +292,47 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
-                                                Header="No" />
+                                                Header="序号" />
                             <DataGridTextColumn Width="200"
                                                 Binding="{Binding DateValue}"
-                                                Header="DateValue" />
+                                                Header="日期值" />
                             <DataGridTextColumn Width="60"
                                                 Binding="{Binding Length}"
-                                                Header="Length" />
+                                                Header="长度" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MBAdr}"
-                                                Header="MBAdr" />
+                                                Header="MB地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MEAdr}"
-                                                Header="MEAdr" />
+                                                Header="ME地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DTType}"
-                                                Header="DTType" />
+                                                Header="数据类型" />
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding Mark}"
-                                                Header="Mark" />
+                                                Header="标识" />
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding TagName}"
-                                                Header="TagName" />
+                                                Header="标签名称" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginAddress}"
-                                                Header="GlobalBeginAddress" />
+                                                Header="全局起始地址" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginOffset}"
-                                                Header="GlobalBeginOffset" />
+                                                Header="全局起始偏移量" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMBAddressTag}"
-                                                Header="GetMBAddressTag" />
+                                                Header="获取MB地址标签" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMEAddressTag}"
-                                                Header="GetMEAddressTag" />
+                                                Header="获取ME地址标签" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DataFormat}"
-                                                Header="DataFormat" />
+                                                Header="数据格式" />
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!--  PLC 事件列表  -->
+                    <!--  PLC事件列表  -->
                     <DataGrid x:Name="lvEventConfigPLC"
                               Grid.Row="2"
                               x:DataType="local:MyConfig"
@@ -340,43 +340,43 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
-                                                Header="No" />
+                                                Header="序号" />
                             <DataGridTextColumn Width="200"
                                                 Binding="{Binding DateValue}"
-                                                Header="DateValue" />
+                                                Header="日期值" />
                             <DataGridTextColumn Width="60"
                                                 Binding="{Binding Length}"
-                                                Header="Length" />
+                                                Header="长度" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MBAdr}"
-                                                Header="MBAdr" />
+                                                Header="MB地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding MEAdr}"
-                                                Header="MEAdr" />
+                                                Header="ME地址" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DTType}"
-                                                Header="DTType" />
+                                                Header="数据类型" />
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding Mark}"
-                                                Header="Mark" />
+                                                Header="标识" />
                             <DataGridTextColumn Width="120"
                                                 Binding="{Binding TagName}"
-                                                Header="TagName" />
+                                                Header="标签名称" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginAddress}"
-                                                Header="GlobalBeginAddress" />
+                                                Header="全局起始地址" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GlobalBeginOffset}"
-                                                Header="GlobalBeginOffset" />
+                                                Header="全局起始偏移量" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMBAddressTag}"
-                                                Header="GetMBAddressTag" />
+                                                Header="获取MB地址标签" />
                             <DataGridTextColumn Width="100"
                                                 Binding="{Binding GetMEAddressTag}"
-                                                Header="GetMEAddressTag" />
+                                                Header="获取ME地址标签" />
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding DataFormat}"
-                                                Header="DataFormat" />
+                                                Header="数据格式" />
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -384,12 +384,14 @@
                            Grid.Column="1"
                            VerticalContentAlignment="Center"
                            Background="Green"
-                           Content="PC" />
+                           Content="PC"
+                           Foreground="White" />
                     <Label Grid.Row="2"
                            Grid.Column="1"
                            VerticalContentAlignment="Center"
                            Background="Blue"
-                           Content="PLC" />
+                           Content="PLC"
+                           Foreground="White" />
                 </Grid>
             </TabItem>
         </TabControl>

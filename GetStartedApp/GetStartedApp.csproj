@@ -28,6 +28,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AvaloniaResource Remove="Assets\PLCs\OP10_Siemens.xlsx" />
+    <AvaloniaResource Remove="Assets\PLCs\OP20_Siemens.xlsx" />
+    <AvaloniaResource Remove="Assets\PLCs\OP30_Omron.xlsx" />
+    <AvaloniaResource Remove="Assets\PLCs\OP40_Mitsubishi.xlsx" />
+    <AvaloniaResource Remove="Assets\PLCs\PLCConnConfig.ini" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="App.config" />
     <None Remove="Assets\avalonia-logo.ico" />
     <None Remove="Views\PLC\OP10_Siemens.xlsx" />
@@ -39,8 +47,17 @@
     <Content Include="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\PLCs\OP20_Siemens.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PLCs\OP30_Omron.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PLCs\OP40_Mitsubishi.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\PLCs\PLCConnConfig.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\本地网关.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -91,23 +108,8 @@
 
   <ItemGroup>
     <Content Include="Assets\PLCs\OP10_Siemens.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AvaloniaResource Update="Assets\PLCs\OP10_Siemens.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </AvaloniaResource>
-    <AvaloniaResource Update="Assets\PLCs\OP20_Siemens.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </AvaloniaResource>
-    <AvaloniaResource Update="Assets\PLCs\OP30_Omron.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </AvaloniaResource>
-    <AvaloniaResource Update="Assets\PLCs\PLCConnConfig.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </AvaloniaResource>
   </ItemGroup>
 
   <ItemGroup>

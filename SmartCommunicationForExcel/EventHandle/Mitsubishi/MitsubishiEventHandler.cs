@@ -18,7 +18,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
     /// <summary>
     /// 三菱PLC事件处理器，负责通讯连接、数据读写和事件触发逻辑
     /// </summary>
-    public class MitsubishiEventHandle : IDisposable
+    public class MitsubishiEventHandler : IDisposable
     {
         // 事件执行器，处理具体业务逻辑
         private readonly IMitsubishiEventExecuter _eventExecuter;
@@ -50,7 +50,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
         /// <summary>
         /// 初始化三菱事件处理器
         /// </summary>
-        public MitsubishiEventHandle(SmartThreadPool stp, IUnityContainer container)
+        public MitsubishiEventHandler(IUnityContainer container)
         {
             if (container.IsRegistered<IMitsubishiEventExecuter>("Mitsubishi"))
                 _eventExecuter = container.Resolve<IMitsubishiEventExecuter>("Mitsubishi");
@@ -537,7 +537,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
         /// <summary>
         /// 析构函数
         /// </summary>
-        ~MitsubishiEventHandle()
+        ~MitsubishiEventHandler()
         {
             Dispose(false);
         }
