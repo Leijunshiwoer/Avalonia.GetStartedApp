@@ -1,4 +1,5 @@
 ﻿
+using Avalonia;
 using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
@@ -130,8 +131,6 @@ namespace SmartCommunicationForExcel.Executer
             }
             else
             {
-              
-
             }
             return result;
         }

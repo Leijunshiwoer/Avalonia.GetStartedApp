@@ -10,7 +10,7 @@ namespace SmartCommunicationForExcel.Model
     {
         public static readonly string SiemensRegisterName = "Siemens";
         public static readonly string OmronRegisterName = "Omron";
-        public static readonly string MitsubishiName = "Mitsubishi";
-        public static readonly string BeckhoffName = "Beckhoff";
+        public static readonly string MitsubishiRegisterName = "Mitsubishi";
+        public static readonly string BeckhoffRegisterName = "Beckhoff";
     }
 }

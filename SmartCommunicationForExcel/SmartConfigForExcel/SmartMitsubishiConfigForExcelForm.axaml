@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:SmartCommunicationForExcel.SmartConfigForExcel"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        Title="三菱智能配置Excel表单"
+        Title="三菱配置窗口"
         Width="1200"
         Height="800"
         mc:Ignorable="d">

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.TextFormatting;
+using Avalonia.Threading;
 using GetStartedApp.Models;
 using GetStartedApp.Utils.Node;
 using NetTaste;
@@ -91,8 +92,12 @@ namespace GetStartedApp.ViewModels.PLC
             // 注册事件执行器
             _smartContainer.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
             _smartContainer.RegisterInstance<IOmronEventExecuter>(ConstName.OmronRegisterName, this);
-            // 初始化PLC配置
-            InitPLCs();
+            _smartContainer.RegisterInstance<IMitsubishiEventExecuter>(ConstName.MitsubishiRegisterName, this);
+
+            // 初始化Excel许可证（仅需设置一次）
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            // 异步初始化PLC配置，避免阻塞UI
+            _ = InitializeAsync();
         }
         #endregion
 
@@ -213,32 +218,74 @@ namespace GetStartedApp.ViewModels.PLC
 
         #region PLC连接管理
         /// <summary>
-        /// 初始化PLC列表（从配置文件加载）
+        /// 异步初始化流程
         /// </summary>
-        private void InitPLCs()
+        private async Task InitializeAsync()
         {
             try
             {
-                var fullConfigPath = Path.Combine(Directory.GetCurrentDirectory(), PLC_CONFIG_PATH.TrimStart('/'));
-                var plcModels = GetPLCConfigFromFolder(fullConfigPath);
-
-                if (plcModels?.Any() ?? false)
-                {
-                    ObPLC = new ObservableCollection<PLCModel>(plcModels);
-                }
+                // 加载PLC配置
+                await InitPLCsAsync();
 
                 // 自动连接PLC（若启用）
                 if (_isAutoConnPLC)
                 {
-                    StartAutoConnectPLCs();
+                   
+                    await StartAutoConnectPLCs();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.ShowAsync($"初始化PLC失败：{ex.Message}");
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    MessageBox.ShowAsync($"初始化失败：{ex.Message}");
+                });
+            }
+           
+        }
+        /// <summary>
+        /// 异步初始化PLC列表（从配置文件加载）
+        /// </summary>
+        private async Task InitPLCsAsync()
+        {
+            try
+            {
+                // 1. 后台线程执行耗时操作
+                var plcModels = await Task.Run(() =>
+                {
+                    var fullConfigPath = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        PLC_CONFIG_PATH.TrimStart('/')
+                    );
+                    return GetPLCConfigFromFolder(fullConfigPath);
+                });
+
+                // 2. UI线程更新集合
+                if (plcModels?.Any() ?? false)
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        ObPLC = new ObservableCollection<PLCModel>(plcModels);
+                    });
+                }
+                else
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        ObPLC.Clear();
+                        PLCConnStatus = "未找到PLC配置文件";
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    PLCConnStatus = "配置加载失败";
+                    MessageBox.ShowAsync($"初始化PLC失败：{ex.Message}");
+                });
             }
         }
-
         /// <summary>
         /// 从文件夹加载PLC配置
         /// </summary>
@@ -278,8 +325,6 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         private PLCModel? ParsePLCConfigFromExcel(string filePath)
         {
-
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage(new FileInfo(filePath));
             // 验证Sheet名称
             ValidateExcelSheets(package);
@@ -308,7 +353,7 @@ namespace GetStartedApp.ViewModels.PLC
         /// <summary>
         /// 启动PLC自动连接线程
         /// </summary>
-        private async void StartAutoConnectPLCs()
+        private async Task StartAutoConnectPLCs()
         {
             for (int i = 0; i < ObPLC.Count; i++)
             {
