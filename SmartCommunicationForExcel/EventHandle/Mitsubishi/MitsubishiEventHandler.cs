@@ -24,8 +24,8 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
         private readonly IMitsubishiEventExecuter _eventExecuter;
         // 已完成事件的回写队列（线程安全）
         private readonly ConcurrentQueue<EventMitsubishiThreadState> _completedEventQueue = new();
-        // 事件触发状态字典，动态管理事件是否正在处理
-        private readonly Dictionary<int, bool> _eventTriggerStatus = new();
+        // 事件触发状态布尔数组，动态管理事件是否正在处理 100个事件
+        private readonly bool[] _eventTriggerStatus = new bool[100];
         // 取消令牌源，用于终止工作任务
         private readonly CancellationTokenSource _cts = new();
         // PLC客户端通讯对象
@@ -274,74 +274,74 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
             // 检查事件是否禁用或配置不完整
             if (eventInstance.DisableEvent || eventInstance.ListInput.Count == 0 || eventInstance.ListOutput.Count == 0)
                 return;
-
-            // 检查事件是否正在处理中
-            if (_eventTriggerStatus.TryGetValue(eventIndex, out var isProcessing) && isProcessing)
-                return;
-
-            // 标记事件为处理中
-            _eventTriggerStatus[eventIndex] = true;
-
             try
             {
-                // 读取事件数据
-                var eventData = await ReadEventDataAsync(eventInstance);
-                if (eventData.IsSuccess)
+
+                // 检查事件是否正在处理中
+                if (!_eventTriggerStatus[eventIndex])
                 {
-                    try
+                    // 读取事件数据
+                    var eventData = await ReadEventDataAsync(eventInstance);
+                    if (eventData.IsSuccess)
                     {
-                        // 解析事件数据
-                        ResolveEventData(eventData.Content, eventInstance.ListInput);
-                    }
-                    catch (Exception ex)
-                    {
-                        _eventExecuter.Err(_globalConfig.FileName, eventData.Content, ex.Message);
-                        return;
-                    }
-
-                    // 检查序列ID是否匹配（避免重复处理）
-                    if (IsSequenceIdMismatch(eventInstance))
-                    {
-                        // 异步处理事件
-                        var threadState = new EventMitsubishiThreadState
+                        try
                         {
-                            InstanceName = InstanceName,
-                            EventIndex = eventIndex,
-                            SE = eventInstance
-                        };
+                            // 解析事件数据
+                            ResolveEventData(eventData.Content, eventInstance.ListInput);
+                        }
+                        catch (Exception ex)
+                        {
+                            _eventExecuter.Err(_globalConfig.FileName, eventData.Content, ex.Message);
+                            return;
+                        }
 
-                        // 异步处理事件并设置回调
-                        _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
-                            .ContinueWith(task =>
+                        // 检查序列ID是否匹配（避免重复处理）
+                        if (IsSequenceIdMismatch(eventInstance))
+                        {
+                            // 标记事件为处理中
+                            _eventTriggerStatus[eventIndex] = true;
+                            // 异步处理事件
+                            var threadState = new EventMitsubishiThreadState
                             {
-                                if (task.Exception != null)
+                                InstanceName = InstanceName,
+                                EventIndex = eventIndex,
+                                SE = eventInstance
+                            };
+
+                            // 异步处理事件并设置回调
+                            _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
+                                .ContinueWith(task =>
                                 {
-                                    _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
-                                    return;
-                                }
-                                HandleEventCallback(task.Result as EventMitsubishiThreadState);
-                            }, TaskScheduler.Default);
+                                    if (task.Exception != null)
+                                    {
+                                        _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
+                                        return;
+                                    }
+                                    HandleEventCallback(task.Result as EventMitsubishiThreadState);
+                                }, TaskScheduler.Default);
+                        }
+                        else
+                        {
+                            // 序列ID匹配，重试写入
+                            var writeResult = await _plcClient.WriteAsync(
+                                eventInstance.ListOutput[0].GetMBAddressTag,
+                                PackageDataToPlc(eventInstance.ListOutput)
+                            );
+
+                            if (!writeResult.IsSuccess)
+                                Console.WriteLine("Write Single Event Retry Data Fail.");
+                            else
+                                Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                        }
                     }
                     else
                     {
-                        // 序列ID匹配，重试写入
-                        var writeResult = await _plcClient.WriteAsync(
-                            eventInstance.ListOutput[0].GetMBAddressTag,
-                            PackageDataToPlc(eventInstance.ListOutput)
-                        );
-
-                        if (!writeResult.IsSuccess)
-                            Console.WriteLine("Write Single Event Retry Data Fail.");
-                        else
-                            Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                        Console.WriteLine("Read Single Event Data Fail. Error:" + eventData.Message);
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig,
+                            $"Read Single Event Data Fail,EventName:{eventInstance.EventName}");
                     }
                 }
-                else
-                {
-                    Console.WriteLine("Read Single Event Data Fail. Error:" + eventData.Message);
-                    _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig,
-                        $"Read Single Event Data Fail,EventName:{eventInstance.EventName}");
-                }
+                  
             }
             catch (Exception)
             {
@@ -525,7 +525,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
                 _cts.Cancel();
                 _cts.Dispose();
                 _completedEventQueue.Clear();
-                _eventTriggerStatus.Clear();
+              
             }
 
             // 释放非托管资源（关闭PLC连接）

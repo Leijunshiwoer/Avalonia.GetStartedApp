@@ -46,10 +46,10 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
         private readonly ConcurrentQueue<EventOmronThreadState> _completedEventQueue = new ConcurrentQueue<EventOmronThreadState>();
 
         /// <summary>
-        /// 事件触发状态字典（记录每个事件是否正在处理中，防止重复处理）
-        /// Key：事件索引，Value：是否处理中
+        /// 事件触发状态布尔数组（记录每个事件是否正在处理中，防止重复处理）
+        /// 数组长度固定为100，支持最多100个事件
         /// </summary>
-        private readonly Dictionary<int, bool> _eventTriggerStatus = new Dictionary<int, bool>();
+        private readonly bool[] _eventTriggerStatus = new bool[100];
 
         /// <summary>
         /// Omron PLC通信客户端（基于HslCommunication库的Fins协议客户端）
@@ -320,80 +320,83 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             // 检查事件是否禁用或配置不完整（无输入/输出配置则跳过）
             if (eventInstance.DisableEvent || eventInstance.ListInput.Count == 0 || eventInstance.ListOutput.Count == 0)
                 return;
-
-            // 检查事件是否正在处理中（防止重复处理）
-            if (_eventTriggerStatus.TryGetValue(eventIndex, out var isProcessing) && isProcessing)
-                return;
-
-            // 标记事件为处理中
-            _eventTriggerStatus[eventIndex] = true;
-
             try
             {
-                // 从PLC读取该事件的输入数据
-                var eventDataResult = await ReadEventDataAsync(eventInstance);
-                if (eventDataResult.IsSuccess)
+
+                // 检查事件是否正在处理中（防止重复处理）
+                if (!_eventTriggerStatus[eventIndex])
                 {
-                    try
+                    // 从PLC读取该事件的输入数据
+                    var eventDataResult = await ReadEventDataAsync(eventInstance);
+                    if (eventDataResult.IsSuccess)
                     {
-                        // 解析事件数据到输入配置中
-                        ResolveEventData(eventDataResult.Content, eventInstance.ListInput);
-                    }
-                    catch (Exception ex)
-                    {
-                        _eventExecuter.Err(_globalConfig.FileName, eventDataResult.Content, ex.Message);
-                        return;
-                    }
-
-                    // 检查序列ID是否匹配（避免重复处理旧事件）
-                    if (!IsSequenceIdMismatch(eventInstance))
-                    {
-                        // 封装事件状态，提交给事件执行器处理
-                        var threadState = new EventOmronThreadState
+                        try
                         {
-                            InstanceName = InstanceName,
-                            EventIndex = eventIndex,
-                            SE = eventInstance
-                        };
+                            // 解析事件数据到输入配置中
+                            ResolveEventData(eventDataResult.Content, eventInstance.ListInput);
+                        }
+                        catch (Exception ex)
+                        {
+                            _eventExecuter.Err(_globalConfig.FileName, eventDataResult.Content, ex.Message);
+                            return;
+                        }
 
-                        // 异步执行事件逻辑（使用Task.Run避免阻塞工作循环）
-                        _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
-                            .ContinueWith(task =>
+                        // 检查序列ID是否匹配（避免重复处理旧事件）不等于触发事件
+                        if (IsSequenceIdMismatch(eventInstance))
+                        {
+
+                            // 标记事件为处理中
+                            _eventTriggerStatus[eventIndex] = true;
+
+                            // 封装事件状态，提交给事件执行器处理
+                            var threadState = new EventOmronThreadState
                             {
-                                // 事件处理完成后回调（将结果加入完成队列）
-                                if (task.Exception != null)
+                                InstanceName = InstanceName,
+                                EventIndex = eventIndex,
+                                SE = eventInstance
+                            };
+
+                            // 异步执行事件逻辑（使用Task.Run避免阻塞工作循环）
+                            _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
+                                .ContinueWith(task =>
                                 {
-                                    _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
-                                    return;
-                                }
-                                HandleEventCallback(task.Result as EventOmronThreadState);
-                            }, TaskScheduler.FromCurrentSynchronizationContext());
+                                    // 事件处理完成后回调（将结果加入完成队列）
+                                    if (task.Exception != null)
+                                    {
+                                        _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
+                                        return;
+                                    }
+                                    HandleEventCallback(task.Result as EventOmronThreadState);
+                                });
+                        }
+                        else
+                        {
+                            // 序列ID匹配，重试写入
+                            var writeResult = await _plcClient.WriteAsync(
+                                eventInstance.ListOutput[0].GetMBAddressTag,
+                                PackageDataToPlc(eventInstance.ListOutput)
+                            );
+
+                            if (!writeResult.IsSuccess)
+                                Console.WriteLine("Write Single Event Retry Data Fail.");
+                            else
+                                Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                        }
                     }
                     else
                     {
-                        // 序列ID匹配，重试写入
-                        var writeResult = await _plcClient.WriteAsync(
-                            eventInstance.ListOutput[0].GetMBAddressTag,
-                            PackageDataToPlc(eventInstance.ListOutput)
+                        Console.WriteLine($"事件数据读取失败: {eventDataResult.Message}");
+                        _eventExecuter.SubscribeCommonInfo(
+                            InstanceName,
+                            false,
+                            _globalConfig.EapConfig,
+                            _globalConfig.PlcConfig,
+                            $"事件数据读取失败，事件名: {eventInstance.EventName}"
                         );
-
-                        if (!writeResult.IsSuccess)
-                            Console.WriteLine("Write Single Event Retry Data Fail.");
-                        else
-                            Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
                     }
                 }
-                else
-                {
-                    Console.WriteLine($"事件数据读取失败: {eventDataResult.Message}");
-                    _eventExecuter.SubscribeCommonInfo(
-                        InstanceName,
-                        false,
-                        _globalConfig.EapConfig,
-                        _globalConfig.PlcConfig,
-                        $"事件数据读取失败，事件名: {eventInstance.EventName}"
-                    );
-                }
+                    
+              
             }
             catch (Exception)
             {

@@ -462,7 +462,19 @@ namespace GetStartedApp.ViewModels.PLC
         public object HandleEvent(object eventData)
         {
             // 事件处理逻辑（按需实现）
-            throw new NotImplementedException();
+            EventSiemensThreadState se = eventData as EventSiemensThreadState;
+            if (se!=null)
+            {
+                PLCModel pLCModel = ObPLC.Where(it => it.FAddr == se.InstanceName).FirstOrDefault();
+
+                //事件索引为0时，可能是初始化或连接事件
+                if (se.EventIndex==0)
+                {
+                    se.SE.ListOutput[1].SetInt16(1);
+                }
+            }
+
+            return se;
         }
 
         /// <summary>
