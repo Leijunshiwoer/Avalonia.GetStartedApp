@@ -15,7 +15,7 @@ using System.Configuration;
 
 namespace SmartCommunicationForExcel.EventHandle.Beckhoff
 {
-    public class BeckhoffEventHandle
+    public class BeckhoffEventHandler
     {
         public string InstanceName { get; set; }
         private string EventTriggerTagName { get; set; }
@@ -38,7 +38,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
 
         private ConcurrentQueue<EventBeckhoffThreadState> _queueHandleEventCompleted;
 
-        public BeckhoffEventHandle(SmartThreadPool stp, IUnityContainer container)
+        public BeckhoffEventHandler(SmartThreadPool stp, IUnityContainer container)
         {
             _stp = stp;
 

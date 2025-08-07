@@ -47,7 +47,7 @@ namespace SmartCommunicationForExcel.Executer
         private readonly Dictionary<string, MitsubishiEventHandler> _mitsubishiInstances = new();
         private readonly Dictionary<string, IMitsubishiGlobalConfig<MitsubishiEventIO, MitsubishiCpuInfo, MitsubishiEventInstance>> _mitsubishiConfigs = new();
 
-        private readonly Dictionary<string, BeckhoffEventHandle> _beckhoffInstances = new();
+        private readonly Dictionary<string, BeckhoffEventHandler> _beckhoffInstances = new();
         private readonly Dictionary<string, IBeckhoffGlobalConfig<BeckhoffEventIO, BeckhoffCpuInfo, BeckhoffEventInstance>> _beckhoffConfigs = new();
         #endregion
 
