@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp.Core", "GetSt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartCommunicationForExcel", "SmartCommunicationForExcel\SmartCommunicationForExcel.csproj", "{236CB9AE-B1A9-C19A-CEF6-46C8960947BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp.Browser", "Avalonia.GetStartedApp.Browser\GetStartedApp.Browser.csproj", "{D9B64ABF-91B9-2ADB-1AFF-10850961C149}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStartedApp.Desktop", "Avalonia.GetStartedApp.Desktop\GetStartedApp.Desktop.csproj", "{16117034-82D2-D2C0-FC07-EA8EC7C1C02C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{236CB9AE-B1A9-C19A-CEF6-46C8960947BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{236CB9AE-B1A9-C19A-CEF6-46C8960947BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{236CB9AE-B1A9-C19A-CEF6-46C8960947BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9B64ABF-91B9-2ADB-1AFF-10850961C149}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9B64ABF-91B9-2ADB-1AFF-10850961C149}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9B64ABF-91B9-2ADB-1AFF-10850961C149}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9B64ABF-91B9-2ADB-1AFF-10850961C149}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16117034-82D2-D2C0-FC07-EA8EC7C1C02C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16117034-82D2-D2C0-FC07-EA8EC7C1C02C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16117034-82D2-D2C0-FC07-EA8EC7C1C02C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16117034-82D2-D2C0-FC07-EA8EC7C1C02C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

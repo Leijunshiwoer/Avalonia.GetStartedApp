@@ -65,7 +65,6 @@ namespace GetStartedApp
         private static Mutex mutex;
         protected override AvaloniaObject CreateShell()
         {
-            Console.WriteLine("CreateShell()");
             MainWindow sell = null;
             mutex = new Mutex(true, "GetStartApp");
             if (mutex.WaitOne(0, false))
@@ -78,7 +77,6 @@ namespace GetStartedApp
                 //检查当前用户是否为管理员
                 //直接启动应用程序
                 sell = Container.Resolve<MainWindow>();
-
                 var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
                 messageManagerService.Initialize(sell);
             }

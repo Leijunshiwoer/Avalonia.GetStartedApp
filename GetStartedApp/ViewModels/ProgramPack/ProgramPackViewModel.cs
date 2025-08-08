@@ -28,9 +28,9 @@ namespace GetStartedApp.ViewModels.ProgramPack
             // replace with your update path/url
             _um = new UpdateManager("http://192.168.115.132:5678");
 
-            TextLog = Program.Log.ToString();
+           // TextLog = Program.Log.ToString();
 
-            Program.Log.LogUpdated += LogUpdated;
+           // Program.Log.LogUpdated += LogUpdated;
             UpdateStatus();
         }
 
@@ -94,7 +94,7 @@ namespace GetStartedApp.ViewModels.ProgramPack
             }
             catch (Exception ex)
             {
-                Program.Log.LogError(ex, "检查更新时发生错误");
+                //Program.Log.LogError(ex, "检查更新时发生错误");
             }
 
             UpdateStatus();
@@ -115,7 +115,7 @@ namespace GetStartedApp.ViewModels.ProgramPack
             }
             catch (Exception ex)
             {
-                Program.Log.LogError(ex, "下载更新时发生错误");
+               // Program.Log.LogError(ex, "下载更新时发生错误");
             }
 
             UpdateStatus();
@@ -157,7 +157,7 @@ namespace GetStartedApp.ViewModels.ProgramPack
 
         private void Working()
         {
-            Program.Log.LogInformation("");
+          //  Program.Log.LogInformation("");
             IsEnabled01 = false;
             IsEnabled02 = false;
             IsEnabled03 = false;

@@ -17,19 +17,19 @@
 
 	<ItemGroup>
 		<!-- Avalonia 核心依赖 -->
-		<PackageReference Include="Avalonia" Version="11.3.2" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.2" />
+		<PackageReference Include="Avalonia" Version="11.3.3" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.3" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.3" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.3" />
 		<PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
 		<PackageReference Include="EPPlus" Version="8.0.8" />
 		<PackageReference Include="HslCommunication" Version="12.3.3" />
 		<PackageReference Include="Karambolo.Extensions.Logging.File" Version="3.6.3" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.8" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="SmartThreadPool.dll" Version="2.3.0" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.7" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.8" />
 		<PackageReference Include="Unity" Version="5.11.10" />
 	</ItemGroup>
 
