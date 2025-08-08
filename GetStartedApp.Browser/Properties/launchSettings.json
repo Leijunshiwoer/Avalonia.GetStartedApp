@@ -1,6 +1,6 @@
 {
     "profiles": {
-    "Avalonia.GetStartedApp.Browser": {
+    "GetStartedApp.Browser": {
         "commandName": "Project",
         "launchBrowser": true,
         "environmentVariables": {
