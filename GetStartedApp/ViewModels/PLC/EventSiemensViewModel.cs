@@ -6,26 +6,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Avalonia.Threading; // Avalonia的Dispatcher命名空间
 
 namespace GetStartedApp.ViewModels.PLC
 {
-    public class EventSiemensViewModel: ViewModelBase
+    public class EventSiemensViewModel : ViewModelBase
     {
-        public EventSiemensViewModel(ISiemensEvent siemensEvent)
-        {
-            siemensEvent.Instance(this);
-        }
-
-
-
-        private ObservableCollection<PlcEventModel> _ObPlcEvnet;
+        // 直接初始化集合，确保始终使用同一个实例
+        private readonly ObservableCollection<PlcEventModel> _obPlcEvnet = new ObservableCollection<PlcEventModel>();
 
         public ObservableCollection<PlcEventModel> ObPlcEvnet
         {
-            get { return _ObPlcEvnet ?? (_ObPlcEvnet = new ObservableCollection<PlcEventModel>()); }
-            set { SetProperty(ref _ObPlcEvnet, value); }
+            get { return _obPlcEvnet; }
         }
 
         private List<PlcEventModel> m_plcEvent = new List<PlcEventModel>();
@@ -36,14 +28,14 @@ namespace GetStartedApp.ViewModels.PLC
             set { SetProperty(ref m_plcEvent, value); }
         }
 
+        public EventSiemensViewModel(ISiemensEvent siemensEvent)
+        {
+            siemensEvent.Instance(this);
+        }
+
         public PlcEventParamModel DoEvent(PlcEventParamModel param)
         {
-            //开始处理  跟新到界面 按照PLC分类 每一类放在一个地方 每一类最多存放 20个
-            //InsertObPlcEvent(param);
-
-            //通过事件名称 判断事件类型 名称后面带 _IN _OUT 表示进出站 不带的表示其他用途
-            //**************************************************************
-
+            // 核心业务逻辑处理
             List<MyData> keyValuePairs = new List<MyData>();
             string st = param.Params.GetMyData("WorkStage").ValueData.ToString();
             PlcEventParamModel toPlcParam = new PlcEventParamModel
@@ -52,6 +44,7 @@ namespace GetStartedApp.ViewModels.PLC
                 PlcName = param.PlcName,
                 EventName = param.EventName,
                 StartTime = param.StartTime,
+                EventClass = st,
                 Params = keyValuePairs
             };
 
@@ -72,11 +65,13 @@ namespace GetStartedApp.ViewModels.PLC
             }
             catch (Exception ex)
             {
-
                 throw;
             }
 
             toPlcParam.RandomCode = param.RandomCode;
+
+            // 添加事件记录，确保在UI线程执行
+            AddEventRecord(toPlcParam);
 
             return toPlcParam;
         }
@@ -86,24 +81,60 @@ namespace GetStartedApp.ViewModels.PLC
         private List<MyData> PartReq(List<MyData> @params)
         {
             List<MyData> toPcDatas = new List<MyData>();
-            toPcDatas.SetValue_ResultAndMessageW(1, "请求产品SN成功!");
-
+            toPcDatas.SetValue_ResultAndMessageW(1, "成功");
             return toPcDatas;
         }
         #endregion
 
-
+        #region 私有方法
         private string ExtractEventNameType(string eventName)
         {
             string[] cs = eventName.Split('_');
-            if (cs.Length > 1)
+            return cs.Length > 1 ? cs[cs.Length - 1] : string.Empty;
+        }
+
+        // 适配Avalonia的UI线程更新逻辑
+        private void AddEventRecord(PlcEventParamModel param)
+        {
+            // 检查当前是否在UI线程
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                return cs[cs.Length - 1];
+                // 在UI线程，直接更新
+                UpdateCollection(param);
             }
             else
             {
-                return string.Empty;
+                // 不在UI线程，调度到UI线程执行
+                Dispatcher.UIThread.Post(() => UpdateCollection(param));
+                // 如果需要等待执行完成，可以使用InvokeAsync:
+                //await Dispatcher.UIThread.InvokeAsync(() => UpdateCollection(param));
             }
         }
+
+        // 实际执行集合更新的方法
+        private void UpdateCollection(PlcEventParamModel param)
+        {
+            var newRecord = new PlcEventModel
+            {
+                PlcEventLogId = param.PlcEventLogId,
+                RandomCode = param.RandomCode,
+                FName = param.PlcName,
+                FStationName = param.EventClass,
+                FAddr = param.PlcAddr,
+                FEvent = param.EventName,
+                FStartTime = param.StartTime,
+                FDoTime = (DateTime.Now - param.StartTime).TotalMilliseconds,
+                FResult = param.Params.FirstOrDefault(it => it.Key == "ResultCode")?.ValueData.ToString(),
+                FResultMark = param.Params.FirstOrDefault(it => it.Key == "Message")?.ValueData.ToString(),
+            };
+
+            if (ObPlcEvnet.Count >= 100)
+            {
+                ObPlcEvnet.RemoveAt(ObPlcEvnet.Count - 1);
+            }
+
+            ObPlcEvnet.Insert(0, newRecord);
+        }
+        #endregion
     }
 }

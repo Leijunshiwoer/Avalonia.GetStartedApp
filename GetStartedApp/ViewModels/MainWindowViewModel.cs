@@ -35,8 +35,11 @@ public partial class MainWindowViewModel : ViewModelBase
         //初始化操作
         _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(DashboardView));
 
+        _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(ConnSiemens));
+        _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(EventSiemens));
+
 #if DEBUG
-        User="developer";
+        User ="developer";
         Password="123";
 
 #endif

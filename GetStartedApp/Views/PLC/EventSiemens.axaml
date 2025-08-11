@@ -15,9 +15,9 @@
                   ItemsSource="{Binding ObPlcEvnet}">
 
             <DataGrid.Columns>
-                <DataGridTextColumn Width="80"
+                <!--<DataGridTextColumn Width="80"
                                     Binding="{Binding FId}"
-                                    Header="ID" />
+                                    Header="ID" />-->
                 <DataGridTextColumn Width="120"
                                     Binding="{Binding FName}"
                                     Header="名称" />
@@ -32,15 +32,16 @@
                                     Header="事件名称" />
                 <DataGridTextColumn Width="180"
                                     Binding="{Binding FStartTime}"
-                                    Header="请求时间"
-                                    />
-                <DataGridTextColumn Width="80"
+                                    Header="请求时间" />
+                <DataGridTextColumn Width="120"
                                     Binding="{Binding FDoTime}"
                                     Header="处理耗时(ms)" />
                 <DataGridTemplateColumn Header="回复结果">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Width="50"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
                                        Background="{Binding FResultColor}"
                                        Foreground="White"
                                        Text="{Binding FResult}" />
