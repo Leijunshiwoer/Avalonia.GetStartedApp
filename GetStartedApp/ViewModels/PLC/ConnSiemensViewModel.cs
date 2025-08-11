@@ -4,11 +4,13 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
+using GetStartedApp.Interface;
 using GetStartedApp.Models;
 using GetStartedApp.Utils.Node;
 using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
+using SmartCommunicationForExcel;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
 using SmartCommunicationForExcel.EventHandle.Siemens;
@@ -48,6 +50,7 @@ namespace GetStartedApp.ViewModels.PLC
 
         #region 私有字段
         private readonly SmartContainer _smartContainer = null;
+        private readonly ISiemensEvent _siemensEvent;
         private readonly ManualResetEvent _autoConnResetEvent = new ManualResetEvent(false);
         private bool _isAutoConnPLC = false;
         private int _autoConnInterval = 2000; // 自动重连间隔(ms)
@@ -86,8 +89,9 @@ namespace GetStartedApp.ViewModels.PLC
         #endregion
 
         #region 构造函数
-        public ConnSiemensViewModel()
+        public ConnSiemensViewModel(ISiemensEvent siemensEvent)
         {
+            _siemensEvent= siemensEvent;
             _smartContainer = new SmartContainer();
             // 注册事件执行器
             _smartContainer.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
@@ -510,12 +514,77 @@ namespace GetStartedApp.ViewModels.PLC
             EventSiemensThreadState se = eventData as EventSiemensThreadState;
             if (se!=null)
             {
-                PLCModel pLCModel = ObPLC.Where(it => it.FAddr == se.InstanceName).FirstOrDefault();
+                PLCModel pLCModel = ObPLC.Where(it => it.FName == se.InstanceName).FirstOrDefault();
+                List<MyData> keyValuePairs = new List<MyData>();
 
-                //事件索引为0时，可能是初始化或连接事件
-                if (se.EventIndex==0)
+                //遍历所有PLC下发数据
+                for (int i = 0; i < se.SE.ListInput.Count; i++)
                 {
-                    se.SE.ListOutput[1].SetInt16(1);
+                    if (se.SE.ListInput[i].DTType == CDataType.DTInt)
+                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int32, ValueData = se.SE.ListInput[i].GetInt32() });
+                    if (se.SE.ListInput[i].DTType == CDataType.DTShort)
+                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int16, ValueData = se.SE.ListInput[i].GetInt16() });
+                    if (se.SE.ListInput[i].DTType == CDataType.DTString)
+                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.String, ValueData = se.SE.ListInput[i].GetString() });
+                    if (se.SE.ListInput[i].DTType == CDataType.DTFloat)
+                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Float, ValueData = se.SE.ListInput[i].GetSingle() });
+                }
+
+                //添加当前工序 放在[EventClass]
+                keyValuePairs.Add(new MyData() { Key = "WorkStage", ValueType = MyData.MyType.String, ValueData = se.SE.EventClass });
+
+                PlcEventParamModel plcEventInputParamModel = new PlcEventParamModel()
+                {
+                    PlcName = se.InstanceName,
+                    PlcAddr = pLCModel.FAddr,
+                    EventName = se.SE.EventName,
+                    EventClass = se.SE.EventClass,
+                    StartTime = DateTime.Now,
+                    Params = keyValuePairs
+                };
+
+                //调用处理接口
+                PlcEventParamModel plcEventOutputParamModel = (PlcEventParamModel)_siemensEvent.DoEvent(plcEventInputParamModel);
+
+                for (int i = 0; i < se.SE.ListOutput.Count; i++)
+                {
+                    if (plcEventOutputParamModel.Params != null)
+                    {
+                        //匹配相同项
+                        for (int j = 0; j < plcEventOutputParamModel.Params.Count; j++)
+                        {
+                            //if (plcEventOutputParamModel.Params.Keys.Contains(se.SE.ListOutput[i].TagName))
+                            if (plcEventOutputParamModel.Params.Any(it => it.Key == se.SE.ListOutput[i].TagName))
+                            {
+                                //将返回值写入plc
+                                // var p = plcEventOutputParamModel.Params.Get(se.SE.ListOutput[i].TagName);
+                                var p = plcEventOutputParamModel.Params.Where(it => it.Key == se.SE.ListOutput[i].TagName).SingleOrDefault();
+                                if (p != null)
+                                {
+                                    if (p.ValueType == MyData.MyType.Int32)
+                                    {
+                                        se.SE.ListOutput[i].SetInt32(Convert.ToInt32(p.ValueData));
+                                    }
+                                    if (p.ValueType == MyData.MyType.Int16)
+                                    {
+                                        se.SE.ListOutput[i].SetInt16(Convert.ToInt16(p.ValueData));
+                                    }
+                                    if (p.ValueType == MyData.MyType.String)
+                                    {
+                                        se.SE.ListOutput[i].SetString(p.ValueData.ToString());
+                                    }
+                                    if (p.ValueType == MyData.MyType.WString)
+                                    {
+                                        se.SE.ListOutput[i].SetWString(p.ValueData.ToString());
+                                    }
+                                    if (p.ValueType == MyData.MyType.Float)
+                                    {
+                                        se.SE.ListOutput[i].SetFloat(Convert.ToSingle(p.ValueData));
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

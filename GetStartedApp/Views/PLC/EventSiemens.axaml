@@ -1,0 +1,56 @@
+<UserControl x:Class="GetStartedApp.EventSiemens"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:GetStartedApp.ViewModels.PLC;assembly=GetStartedApp"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             x:CompileBindings="True"
+             x:DataType="vm:EventSiemensViewModel"
+             mc:Ignorable="d">
+    <Grid RowDefinitions="auto,*">
+        <DataGrid x:Name="dg"
+                  Grid.Row="1"
+                  ItemsSource="{Binding ObPlcEvnet}">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="80"
+                                    Binding="{Binding FId}"
+                                    Header="ID" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding FName}"
+                                    Header="名称" />
+                <DataGridTextColumn Width="120"
+                                    Binding="{Binding FAddr}"
+                                    Header="地址" />
+                <DataGridTextColumn Width="140"
+                                    Binding="{Binding FStationName}"
+                                    Header="工序名称" />
+                <DataGridTextColumn Width="240"
+                                    Binding="{Binding FEvent}"
+                                    Header="事件名称" />
+                <DataGridTextColumn Width="180"
+                                    Binding="{Binding FStartTime}"
+                                    Header="请求时间"
+                                    />
+                <DataGridTextColumn Width="80"
+                                    Binding="{Binding FDoTime}"
+                                    Header="处理耗时(ms)" />
+                <DataGridTemplateColumn Header="回复结果">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Width="50"
+                                       Background="{Binding FResultColor}"
+                                       Foreground="White"
+                                       Text="{Binding FResult}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Width="820"
+                                    Binding="{Binding FResultMark}"
+                                    Header="回复提示" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

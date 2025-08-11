@@ -9,6 +9,7 @@ using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
 using Example;
 using GetStartedApp.AutoMapper;
+using GetStartedApp.Interface;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.Utils.Services;
 using GetStartedApp.ViewModels;
@@ -128,6 +129,7 @@ namespace GetStartedApp
             containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
 
             containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
+            containerRegistry.RegisterInstance<ISiemensEvent>(new SiemensEvent());
             // Dialogs
             //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
             //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
@@ -145,6 +147,7 @@ namespace GetStartedApp
             containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
             containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
             containerRegistry.RegisterForNavigation <ConnSiemens, ConnSiemensViewModel>();
+            containerRegistry.RegisterForNavigation<EventSiemens, EventSiemensViewModel>();
             containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>("ProcessRoute");
         }
 
