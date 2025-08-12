@@ -132,16 +132,6 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
                         continue;
                     }
 
-                    // 检查连接状态，自动重连
-                    if (!IsPlcConnected())
-                    {
-                        if (!await InitializePlcClientAsync())
-                        {
-                            await Task.Delay(cycleTime, _cts.Token);
-                            continue;
-                        }
-                    }
-
                     // 处理已完成的事件（回写结果到PLC）
                     await ProcessCompletedEventsAsync();
 
@@ -376,24 +366,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
         /// </summary>
         private int ValidateCycleTime(int cycleTime) => Math.Clamp(cycleTime, 10, 2000);
 
-        /// <summary>
-        /// 检查PLC连接状态
-        /// </summary>
-        private bool IsPlcConnected()
-        {
-            try
-            {
-                // 简单 ping 检查网络连通性
-                var ping = new Ping();
-                var reply = ping.Send(_plcClient.IpAddress, 1000);
-                return reply?.Status == IPStatus.Success;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
+    
         /// <summary>
         /// 解析PLC数据到事件配置
         /// </summary>
