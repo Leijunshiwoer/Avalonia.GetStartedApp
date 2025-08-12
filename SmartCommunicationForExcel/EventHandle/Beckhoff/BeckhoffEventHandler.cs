@@ -1,468 +1,439 @@
-﻿using Amib.Threading;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HslCommunication;
 using HslCommunication.Profinet.Beckhoff;
-using System.Collections.Concurrent;
-using Unity;
 using SmartCommunicationForExcel.Implementation.Beckhoff;
-using HslCommunication;
-using System.Diagnostics;
-using System.Threading;
+using SmartCommunicationForExcel.Model;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Threading;
+using System.Threading.Tasks;
+using Unity;
 
 namespace SmartCommunicationForExcel.EventHandle.Beckhoff
 {
-    public class BeckhoffEventHandler
+    /// <summary>
+    /// 倍福PLC事件处理器，负责通讯连接、数据读写和事件触发逻辑
+    /// </summary>
+    public class BeckhoffEventHandler : IDisposable
     {
-        public string InstanceName { get; set; }
-        private string EventTriggerTagName { get; set; }
-
-        private SmartThreadPool _stp;
-        private IBeckhoffEventExecuter _see;
-
-        private Thread _workThread;
-        private ManualResetEvent _terminatedEvent;
-
-        private BeckhoffAdsNet[] _plcs;
-        //private SmartSharp7[] _plcSharp7s;
-
-        // private OmronFinsNet[] _omronPlcs;
-
+        // 事件执行器，处理具体业务逻辑
+        private readonly IBeckhoffEventExecuter _eventExecuter;
+        // 已完成事件的回写队列（线程安全）
+        private readonly ConcurrentQueue<EventBeckhoffThreadState> _completedEventQueue = new();
+        // 事件触发状态布尔数组，管理事件是否正在处理
+        private bool[] _eventTriggerStatus = new bool[100];
+        // 取消令牌源，用于终止工作任务
+        private readonly CancellationTokenSource _cts = new();
+        // PLC客户端通讯对象
+        private BeckhoffAdsNet _plcClient;
+        // 全局配置信息
         private BeckhoffGlobalConfig _globalConfig;
+        // 工作循环任务
+        private Task _workTask;
+        // 资源释放标记
+        private bool _isDisposed;
 
-        private bool[] _bEventTriggerCompleted = new bool[100];
+        /// <summary>
+        /// 实例名称
+        /// </summary>
+        public string InstanceName { get; set; }
 
+        /// <summary>
+        /// 事件触发标签名（默认：EventTrigger）
+        /// </summary>
+        public string EventTriggerTagName { get; set; } = "EventTrigger";
 
-        private ConcurrentQueue<EventBeckhoffThreadState> _queueHandleEventCompleted;
-
-        public BeckhoffEventHandler(SmartThreadPool stp, IUnityContainer container)
+        /// <summary>
+        /// 初始化倍福事件处理器
+        /// </summary>
+        public BeckhoffEventHandler(IUnityContainer container)
         {
-            _stp = stp;
-
             if (container.IsRegistered<IBeckhoffEventExecuter>("Beckhoff"))
-                _see = container.Resolve<IBeckhoffEventExecuter>("Beckhoff");
+                _eventExecuter = container.Resolve<IBeckhoffEventExecuter>("Beckhoff");
             else
-                _see = container.Resolve<IBeckhoffEventExecuter>();
-
-            _queueHandleEventCompleted = new ConcurrentQueue<EventBeckhoffThreadState>();
-
-            _plcs = new BeckhoffAdsNet[2];
-
-            _workThread = new Thread(new ThreadStart(WorkThread)) { IsBackground = true };
-            _terminatedEvent = new ManualResetEvent(false);
+                _eventExecuter = container.Resolve<IBeckhoffEventExecuter>();
         }
 
         /// <summary>
-        /// 启动一个单CPU事件处理实例
+        /// 启动事件处理器
         /// </summary>
-        /// <param name="strName"></param>
-        /// <param name="strEventTriggerTagName">触发事件标签名 默认EventTrigger</param>
-        /// <param name="globalConfig"></param>
-        /// <returns></returns>
-        public bool StartWork(string strName, BeckhoffGlobalConfig globalConfig, string strEventTriggerTagName = "EventTrigger")
+        /// <param name="instanceName">实例名称</param>
+        /// <param name="globalConfig">全局配置</param>
+        /// <returns>启动是否成功</returns>
+        public async Task<bool> StartAsync(string instanceName, BeckhoffGlobalConfig globalConfig)
         {
-            InstanceName = strName;
-            _globalConfig = globalConfig;
-            EventTriggerTagName = strEventTriggerTagName;
+            InstanceName = instanceName ?? throw new ArgumentNullException(nameof(instanceName));
+            _globalConfig = globalConfig ?? throw new ArgumentNullException(nameof(globalConfig));
 
-            if (globalConfig.CpuInfo.CpuType == Model.CpuType.Beckhoff)
+            // 初始化PLC客户端
+            if (!await InitializePlcClientAsync())
             {
-                if (globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                {
-                    Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
-
-                    _plcs[0] = new BeckhoffAdsNet();
-                    _plcs[0].IpAddress = globalConfig.CpuInfo.IP;
-                    _plcs[0].Port = globalConfig.CpuInfo.Port;
-                    _plcs[0].SetTargetAMSNetId(globalConfig.CpuInfo.TargetNetId);
-                    _plcs[0].SetSenderAMSNetId(globalConfig.CpuInfo.SenderNetId);
-                    _plcs[0].SetPersistentConnection();
-
-                    //_plcs[1] = new BeckhoffAdsNet();
-                    //_plcs[1].IpAddress = globalConfig.CpuInfo.IP;
-                    //_plcs[1].Port = globalConfig.CpuInfo.Port;
-                    //_plcs[1].SetTargetAMSNetId(globalConfig.CpuInfo.TargetNetId);
-                    //_plcs[1].SetSenderAMSNetId(globalConfig.CpuInfo.SenderNetId);
-                    //_plcs[1].SetPersistentConnection();
-
-                    if (!_plcs[0].ConnectServer().IsSuccess)
-                        return false;
-                    //if (!_plcs[1].ConnectServer().IsSuccess)
-                    //    return false;
-                }
+                return false;
             }
 
-            _workThread.Start();
-
+            // 启动工作任务
+            _workTask = Task.Run(WorkLoopAsync, _cts.Token);
             return true;
         }
 
-        public void WorkStop()
+        /// <summary>
+        /// 停止事件处理器
+        /// </summary>
+        public async Task StopAsync()
         {
-            _terminatedEvent.Set();
+            _cts.Cancel();
+            if (_workTask != null)
+                await _workTask.WaitAsync(TimeSpan.FromSeconds(5)); // 等待任务退出
+
+            Dispose();
         }
 
+        /// <summary>
+        /// 初始化PLC客户端并建立连接
+        /// </summary>
+        private async Task<bool> InitializePlcClientAsync()
+        {
+            // 配置Hsl授权
+            Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
 
-        private void WorkThread()
+            _plcClient = new BeckhoffAdsNet
+            {
+                IpAddress = _globalConfig.CpuInfo.IP,
+                Port = _globalConfig.CpuInfo.Port,
+                AmsPort=851,
+               UseAutoAmsNetID=true
+                
+            };
+            //_plcClient.SetTargetAMSNetId(_globalConfig.CpuInfo.TargetNetId);
+            //_plcClient.SetSenderAMSNetId(_globalConfig.CpuInfo.SenderNetId);
+           
+            var connectResult = await _plcClient.ConnectServerAsync();
+            return connectResult.IsSuccess;
+        }
+
+        /// <summary>
+        /// 工作循环：周期性读取PLC数据并处理事件
+        /// </summary>
+        private async Task WorkLoopAsync()
         {
             try
             {
-                Stopwatch sw = new Stopwatch();
+                var cycleTime = ValidateCycleTime(_globalConfig.CpuInfo.CycleTime);
 
-                var _cycleTime = _globalConfig.CpuInfo.CycleTime;
-                if (_cycleTime < 1 || _cycleTime > 2000)
-                    _cycleTime = 1;
-
-                while (!_terminatedEvent.WaitOne(_cycleTime))
+                while (!_cts.Token.IsCancellationRequested)
                 {
+                    // 检查配置是否有效
                     if (_globalConfig.EapConfig.Count == 0 || _globalConfig.PlcConfig.Count == 0)
-                        continue;
-
-                    sw.Restart();
-
-                    //处理回写事件
-                    //var ets = GetQueue();
-                    //if(ets != null)
-                    //{ 
-                    if (!_queueHandleEventCompleted.IsEmpty)
                     {
-                        EventBeckhoffThreadState ets = null;
-                        if (_queueHandleEventCompleted.TryDequeue(out ets))
+                        await Task.Delay(cycleTime, _cts.Token);
+                        continue;
+                    }
+
+                    // 检查连接状态，自动重连
+                    if (!IsPlcConnected())
+                    {
+                        if (!await InitializePlcClientAsync())
                         {
-                            /*
-                             * 因为每次手动赋值SequenceID不方便，不需要手动在事件回调里面赋值，赋值工作由事件回调后自动完成
-                             * 
-                             * 把 PLC的 SequenceID 赋值给 EAP的SequenceID
-                             */
-                            try
-                            {
-                                BeckhoffEventIO seiEap = ets.SE.ListOutput.Where(it => it.TagName == "SequenceID").SingleOrDefault();
-                                BeckhoffEventIO seiPlc = ets.SE.ListInput.Where(it => it.TagName == "SequenceID").SingleOrDefault();
-
-                                seiEap.SetInt16(seiPlc.GetInt16());
-                            }
-                            catch
-                            {
-                                //异常暂时不做处理
-                            }
-
-                            // if (!_plcs[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-                            HslCommunication.OperateResult operateResult = _plcs[0].Write(ets.SE.PC_LabelName, PackageDataToPlc(ets.SE.ListOutput));
-                            if (!operateResult.IsSuccess)//通过标签写入
-                            {
-                                Console.WriteLine("Write Single Event Data Fail.");
-                                _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, string.Format("WriteSingleEventData Fail,EventName:{0}", ets.SE.EventName));
-                            }
-                            else
-                            {
-                                Console.WriteLine("Write Single Event Success;ID:" + ets.SE.ListOutput[0].GetInt16());
-                                _see.Err(ets.InstanceName, null, $"写事件失败：Code {operateResult.ErrorCode},Message {operateResult.Message}");
-                            }
-
-                            //else
-                            //{
-                            //    if (!_plcSharp7s[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput)).IsSuccess)
-                            //    {
-                            //        Console.WriteLine("Write Single Event Data Fail.");
-                            //        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("WriteSingleEventData Fail,EventName:{0}", ets.SE.EventName));
-                            //    }
-                            //}
-                            _bEventTriggerCompleted[ets.EventIndex] = false;
-                        }
-                        else
-                        {
-                            _see.Err(ets.InstanceName, null, "安全队列获取失败");
+                            await Task.Delay(cycleTime, _cts.Token);
+                            continue;
                         }
                     }
 
-                    //获取当前PLC内部写入值
-                    //HslCommunication.OperateResult<byte[]> _rlt = _plcs[0].Read(_globalConfig.PlcConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.PlcConfig));
-                    //if (_rlt.IsSuccess)
-                    //    ResolveDataToEvent(_rlt.Content, _globalConfig.PlcConfig);
-                    //else
-                    //{
-                    //    _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig);
-                    //    continue;
-                    //}
+                    // 处理已完成的事件（回写结果到PLC）
+                    await ProcessCompletedEventsAsync();
 
-                    //HslCommunication.OperateResult<byte[]> rlt = _plcs[0].Read(_globalConfig.PlcConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.PlcConfig));
-                    string label = $"s={_globalConfig.CpuInfo.PlcConfigLabel}";
-                    ushort sss = GetRWLength(_globalConfig.PlcConfig);
-                    HslCommunication.OperateResult<byte[]> rlt = _plcs[0].Read($"s={_globalConfig.CpuInfo.PlcConfigLabel}", GetRWLength(_globalConfig.PlcConfig));
-                    if (rlt.IsSuccess)
+                    // 读取PLC公共区数据
+                    var readResult = await ReadPlcCommonDataAsync();
+                    if (readResult.IsSuccess)
                     {
                         try
                         {
-                            ResolveDataToEvent(rlt.Content, _globalConfig.PlcConfig);
+                            // 解析PLC数据到配置
+                            ResolveEventData(readResult.Content, _globalConfig.PlcConfig);
                         }
                         catch (Exception ex)
                         {
-                            _see.Err(_globalConfig.FileName, rlt.Content, ex.Message);
+                            _eventExecuter.Err(_globalConfig.FileName, readResult.Content, ex.Message);
                         }
-                        //公共事件处理
-                        _see.SubscribeCommonInfo(InstanceName, true, _globalConfig.PlcConfig, _globalConfig.EapConfig);
-                        //处理事件触发
-                        HandleEventTrigger(_globalConfig.PlcConfig.Find(t => t.TagName == EventTriggerTagName));
 
-                        HslCommunication.OperateResult operateResult = _plcs[0].Write($"s={_globalConfig.CpuInfo.EapConfigLabel}", PackageDataToPlc(_globalConfig.EapConfig));
-                        if (!operateResult.IsSuccess)
+                        // 公共事件处理
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, true, _globalConfig.PlcConfig, _globalConfig.EapConfig);
+                        // 处理事件触发
+                        await ProcessEventTriggersAsync();
+
+                        // 回写公共区数据到PLC
+                        var writeResult = await WritePlcCommonDataAsync();
+                        if (!writeResult.IsSuccess)
                         {
                             Console.WriteLine("WriteCommonData Fail.");
-                            _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, $"WriteCommonData Fail {operateResult.Message}");
-                        }
-                        else
-                        {
-                            //_see.Err(InstanceName, null, $"eap公共区写失败:{operateResult.Message}" );
+                            _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig,
+                                $"WriteCommonData Fail: {writeResult.Message}");
                         }
                     }
                     else
                     {
                         Console.WriteLine("ReadCommonData Fail.");
-                        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, $"ReadCommonData Fail {rlt.Message}");
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig,
+                            $"ReadCommonData Fail: {readResult.Message}");
                     }
 
-                    //else if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Sharp7)
-                    //{
-                    //    ////获取当前PLC内部写入值
-                    //    //OperateResult<byte[]> _rlt = _plcSharp7s[0].Read(_globalConfig.PlcConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.PlcConfig));
-                    //    //if (_rlt.IsSuccess)
-                    //    //    ResolveDataToEvent(_rlt.Content, _globalConfig.PlcConfig);
-                    //    //else
-                    //    //{
-                    //    //    _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig);
-                    //    //    continue;
-                    //    //}
-
-                    //    OperateResult<byte[]> rlt = _plcSharp7s[0].Read(_globalConfig.EapConfig[0].GetMBAddressTag, GetRWLength(_globalConfig.EapConfig));
-                    //    if (rlt.IsSuccess)
-                    //    {
-                    //        ResolveDataToEvent(rlt.Content, _globalConfig.EapConfig);
-                    //        //公共事件处理
-                    //        _see.SubscribeCommonInfo(InstanceName, true, _globalConfig.EapConfig, _globalConfig.PlcConfig);
-                    //        //处理事件触发
-                    //        HandleEventTrigger(_globalConfig.EapConfig.Find(t => t.TagName == EventTriggerTagName));
-
-                    //        if (!_plcSharp7s[0].Write(_globalConfig.PlcConfig[0].GetMBAddressTag, PackageDataToPlc(_globalConfig.PlcConfig)).IsSuccess)
-                    //        {
-                    //            Console.WriteLine("WriteCommonData Fail.");
-                    //            _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, "WriteCommonData Fail");
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        Console.WriteLine("ReadCommonData Fail.");
-                    //        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, "ReadCommonData Fail");
-                    //    }
-                    //}
+                    // 等待周期结束
+                    await Task.Delay(cycleTime, _cts.Token);
                 }
 
-                //Close Connect
-                //switch (_globalConfig.CpuInfo.Dll)
-                //{
-                //    case Model.DllType.Type_Hsl:
-                _plcs[0].ConnectClose();
-            //    _plcs[1].ConnectClose();
-                //      break;
-                //case Model.DllType.Type_Sharp7:
-                //    _plcSharp7s[0].ConnectClose();
-                //    _plcSharp7s[1].ConnectClose();
-                //    break;
-                //     default:
-                //        break;
-                // }
+                // 关闭PLC连接
+                //_plcClient.ConnectClose();
+            }
+            catch (OperationCanceledException)
+            {
+                // 正常取消，忽略
             }
             catch (Exception ex)
             {
-                _see.Err(_globalConfig.FileName, Encoding.Default.GetBytes("Error"), ex.Message);
+                _eventExecuter.Err(_globalConfig.FileName, null, ex.Message);
             }
         }
 
         /// <summary>
-        /// 处理事件触发位
+        /// 处理已完成的事件（回写结果到PLC）
         /// </summary>
-        /// <param name="siemensEventIO"></param>
-        private void HandleEventTrigger(BeckhoffEventIO siemensEventIO)
+        private async Task ProcessCompletedEventsAsync()
         {
-            if (null == siemensEventIO)
+            if (!_completedEventQueue.IsEmpty)
             {
-                Console.WriteLine("Get SequenceID Event Fail,It's Not Find SequenceID EventInstance.");
-                _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig, "Get SequenceID Event Fail, It's Not Find SequenceID EventInstance.");
-                return;
-            }
+                while (_completedEventQueue.TryDequeue(out var ets))
+                {
+                    try
+                    {
+                        // 同步SequenceID（PLC → EAP）
+                        SyncSequenceId(ets.SE);
 
-            bool[] triggers = siemensEventIO.TransBool(siemensEventIO.DataValue, 0, siemensEventIO.DataValue.Length);
+                        // 回写事件结果
+                        var writeAddress = $"s={ets.SE.PC_LabelName}";
+                        var writeData = PackageDataToPlc(ets.SE.ListOutput);
+                        var rlt = await Task.Run(() => _plcClient.Write(writeAddress, writeData));
 
-            for (int i = 0; i < triggers.Length; i++)
-            {
-                if (triggers[i])
-                {//有事件触发
-                    if (i < _globalConfig.EventConfig.Count)
-                    {//事件触发位配置有事件
-                        BeckhoffEventInstance ei = _globalConfig.EventConfig[i];
-
-                        if (ei.DisableEvent)
-                            continue;
-
-                        if (ei.ListInput.Count > 0 && ei.ListOutput.Count > 0)
-                        {//已经有线程处理当前事件 当前事件正在处理中
-                            if (!_bEventTriggerCompleted[i])
-                            {
-
-                                //HslCommunication.OperateResult<byte[]> rlt = _plcs[1].Read(ei.ListInput[0].GetMBAddressTag, GetRWLength(ei.ListInput));
-                                HslCommunication.OperateResult<byte[]> rlt = _plcs[0].Read($"s={ei.PLC_LabelName}", GetRWLength(ei.ListInput));
-                                if (rlt.IsSuccess)
-                                {
-                                    //解析数据到事件结构
-                                    try
-                                    {
-                                        ResolveDataToEvent(rlt.Content, ei.ListInput);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _see.Err(_globalConfig.FileName, rlt.Content, ex.Message);
-                                        return;
-                                    }
-
-                                    short? nInputSequenceID = ei.ListInput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-                                    short? nOutSequenceID = ei.ListOutput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-
-                                    if (nInputSequenceID != nOutSequenceID)
-                                    {//事件ID不一致 当前事件触发
-                                        _bEventTriggerCompleted[i] = true;
-
-                                        //事件回调处理完毕 将在事件处理线程上执行
-                                        ei.OnEventTriggerCompleted += (ets) =>
-                                        {
-                                            Console.WriteLine("Handle Event Callback");
-                                        };
-
-                                        /*
-                                         * 对事件的再次封装 实现key值实现交互
-                                         */
-                                        //启动线程处理当前事件
-                                        //_stp.QueueWorkItem(HandleEvent, new EventSiemensThreadState()
-                                        //{
-                                        //    InstanceName = InstanceName,
-                                        //    EventIndex = i,
-                                        //    SE = ei
-                                        //});
-
-                                        //启动线程处理当前事件
-                                        _stp.QueueWorkItem(new WorkItemCallback(_see.HandleEvent), new EventBeckhoffThreadState()
-                                        {
-                                            InstanceName = InstanceName,
-                                            EventIndex = i,
-                                            SE = ei
-                                        }, HandleEventCaLLBack);
-                                    }
-                                    else
-                                    {//触发位依旧存在 事件ID同步写入失败 重试写入
-                                        if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                                        {
-                                            if (!_plcs[0].Write($"s={ei.PC_LabelName}", PackageDataToPlc(ei.ListOutput)).IsSuccess)
-                                                Console.WriteLine("Write Single Event Retry Data Fail.");
-                                            else
-                                                Console.WriteLine("Write Single Event Retry Success;ID:" + ei.ListOutput[0].GetInt16());
-                                        }
-                                        //else
-                                        //{
-                                        //    if (!_plcSharp7s[1].Write(ei.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ei.ListOutput)).IsSuccess)
-                                        //        Console.WriteLine("Write Single Event Retry Data Fail.");
-                                        //}
-                                    }
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Read Single Event Data Fail. Error:" + rlt.Message);
-                                    _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("Read Single Event Data Fail,EventName:{0}", ei.EventName));
-                                }
-
-                                //else if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Sharp7)
-                                //{
-                                //    OperateResult<byte[]> rlt = _plcSharp7s[1].Read(ei.ListInput[0].GetMBAddressTag, GetRWLength(ei.ListInput));
-                                //    if (rlt.IsSuccess)
-                                //    {
-                                //        //解析数据到事件结构
-                                //        ResolveDataToEvent(rlt.Content, ei.ListInput);
-
-                                //        short? nInputSequenceID = ei.ListInput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-                                //        short? nOutSequenceID = ei.ListOutput.Find(t => t.TagName == "SequenceID")?.GetInt16() ?? 0;
-
-                                //        if (nInputSequenceID != nOutSequenceID)
-                                //        {//事件ID不一致 当前事件触发
-                                //            _bEventTriggerCompleted[i] = true;
-                                //            //事件回调处理完毕 将在事件处理线程上执行
-                                //            ei.OnEventTriggerCompleted += (ets) =>
-                                //            {
-                                //                Console.WriteLine("Handle Event Callback");
-                                //                //if (_globalConfig.CpuInfo.Dll == Model.DllType.Type_Hsl)
-                                //                //{
-                                //                //    var rlt1 = _plcs[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput));
-                                //                //    if (!rlt1.IsSuccess)
-                                //                //        Console.WriteLine("Write Single Event Data Fail. Error:" + rlt.Message);
-                                //                //    Console.WriteLine(ets.SE.ListOutput[0].GetMBAddressTag);
-                                //                //}
-                                //                //else
-                                //                //{
-                                //                //    var rlt2 = _plcSharp7s[1].Write(ets.SE.ListOutput[0].GetMBAddressTag, PackageDataToPlc(ets.SE.ListOutput));
-                                //                //    if (!rlt2.IsSuccess)
-                                //                //        Console.WriteLine("Write Single Event Data Fail. Error:" + rlt.Message);
-                                //                //}
-
-                                //                //_bEventTriggerCompleted[ets.EventIndex] = false;
-                                //                //Console.WriteLine("EventCallBack " + ets.SE.EventName + " " + ets.SE.ListOutput[0].GetInt16());
-                                //            };
-                                //            //启动线程处理当前事件
-                                //            _stp.QueueWorkItem(new WorkItemCallback(_see.HandleEvent), new EventThreadState()
-                                //            {
-                                //                InstanceName = InstanceName,
-                                //                EventIndex = i,
-                                //                SE = ei
-                                //            }, HandleEventCaLLBack);
-                                //        }
-                                //    }
-                                //    else
-                                //    {
-                                //        Console.WriteLine("Read Single Event Data Fail. Error:" + rlt.Message);
-                                //        _see.SubscribeCommonInfo(InstanceName, false, _globalConfig.EapConfig, _globalConfig.PlcConfig, string.Format("Read Single Event Data Fail,EventName:{0}", ei.EventName));
-                                //    }
-                                //}
-                            }
+                        if (!rlt.IsSuccess)
+                        {
+                            Console.WriteLine("Write Single Event Data Fail.");
+                            _eventExecuter.Err(InstanceName, null,
+                                $"Write Single Event Data Fail, EventName:{ets.SE.EventName}, Error:{rlt.Message}");
                         }
                         else
                         {
-                            Console.WriteLine("The Event Don't Have Input Or Output.");
+                            Console.WriteLine($"Write Single Event Success;ID:{ets.SE.ListOutput[0].GetInt16()}");
                         }
+
+                        _eventTriggerStatus[ets.EventIndex] = false; // 重置事件状态
+                    }
+                    catch (Exception ex)
+                    {
+                        _eventExecuter.Err(ets.InstanceName, null, $"处理完成事件异常: {ex.Message}");
                     }
                 }
             }
         }
 
         /// <summary>
-        /// 事件处理完毕 回调写入数据到PLC ？？会出现不回调的现象  采用事件回调处理
+        /// 读取PLC公共区数据
         /// </summary>
-        /// <param name="wir"></param>
-        private void HandleEventCaLLBack(IWorkItemResult wir)
+        private async Task<OperateResult<byte[]>> ReadPlcCommonDataAsync()
         {
-            EventBeckhoffThreadState ets = wir.Result as EventBeckhoffThreadState;
-            Console.WriteLine("Push Data ID:" + ets.SE.ListOutput[0].GetInt16());
-            //_queueHandleEventCompleted.Enqueue(ets);
-            _queueHandleEventCompleted.Enqueue(ets);
+            var address = $"s={_globalConfig.CpuInfo.PlcConfigLabel}";
+            var length = GetRWLength(_globalConfig.PlcConfig);
+            return await _plcClient.ReadAsync(address, length);
         }
 
+        /// <summary>
+        /// 处理事件触发逻辑
+        /// </summary>
+        private async Task ProcessEventTriggersAsync()
+        {
+            // 查找事件触发标签
+            var triggerConfig = _globalConfig.PlcConfig
+                .FirstOrDefault(t => t.TagName.Trim().Equals(EventTriggerTagName, StringComparison.OrdinalIgnoreCase));
+
+            if (triggerConfig == null)
+            {
+                _eventExecuter.Err(InstanceName, null, "请检查公共区EventTrigger是否定义错误");
+                return;
+            }
+
+            // 解析触发位
+            var triggers = triggerConfig.TransBool(triggerConfig.DataValue, 0, triggerConfig.DataValue.Length);
+
+            for (var i = 0; i < triggers.Length; i++)
+            {
+                if (triggers[i] && i < _globalConfig.EventConfig.Count)
+                {
+                    await ProcessSingleEventTriggerAsync(i);
+                }
+            }
+        }
 
         /// <summary>
-        //获取单个事件读取/写入长度
+        /// 处理单个事件触发
         /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
+        private async Task ProcessSingleEventTriggerAsync(int eventIndex)
+        {
+            var eventInstance = _globalConfig.EventConfig[eventIndex];
+
+            // 检查事件是否禁用或配置不完整
+            if (eventInstance.DisableEvent || eventInstance.ListInput.Count == 0 || eventInstance.ListOutput.Count == 0)
+                return;
+
+            try
+            {
+                // 检查事件是否正在处理中
+                if (!_eventTriggerStatus[eventIndex])
+                {
+                    // 读取事件数据
+                    var eventData = await ReadEventDataAsync(eventInstance);
+                    if (eventData.IsSuccess)
+                    {
+                        try
+                        {
+                            // 解析事件数据
+                            ResolveEventData(eventData.Content, eventInstance.ListInput);
+                        }
+                        catch (Exception ex)
+                        {
+                            _eventExecuter.Err(_globalConfig.FileName, eventData.Content, ex.Message);
+                            return;
+                        }
+
+                        // 检查序列ID是否匹配（避免重复处理）
+                        if (IsSequenceIdMismatch(eventInstance))
+                        {
+                            // 标记事件为处理中
+                            _eventTriggerStatus[eventIndex] = true;
+
+                            // 异步处理事件
+                            var threadState = new EventBeckhoffThreadState
+                            {
+                                InstanceName = InstanceName,
+                                EventIndex = eventIndex,
+                                SE = eventInstance
+                            };
+
+                            // 用Task.Run处理事件
+                            _ = Task.Run(() => _eventExecuter.HandleEvent(threadState))
+                                .ContinueWith(task =>
+                                {
+                                    if (task.Exception != null)
+                                    {
+                                        _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
+                                        _eventTriggerStatus[eventIndex] = false;
+                                        return;
+                                    }
+                                    HandleEventCallback(task.Result as EventBeckhoffThreadState);
+                                }, _cts.Token);
+                        }
+                        else
+                        {
+                            // 序列ID匹配，重试写入
+                            var writeResult =
+                             await _plcClient.WriteAsync($"s={eventInstance.PC_LabelName}", PackageDataToPlc(eventInstance.ListOutput));
+
+                            if (!writeResult.IsSuccess)
+                                Console.WriteLine("Write Single Event Retry Data Fail.");
+                            else
+                                Console.WriteLine($"Write Single Event Retry Success;ID:{eventInstance.ListOutput[0].GetInt16()}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Read Single Event Data Fail. Error:" + eventData.Message);
+                        _eventExecuter.SubscribeCommonInfo(InstanceName, false, _globalConfig.PlcConfig, _globalConfig.EapConfig,
+                            $"Read Single Event Data Fail, EventName:{eventInstance.EventName}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                _eventTriggerStatus[eventIndex] = false;
+            }
+        }
+
+        /// <summary>
+        /// 事件处理完成后的回调方法
+        /// </summary>
+        private void HandleEventCallback(EventBeckhoffThreadState ets)
+        {
+            if (ets != null)
+            {
+                Console.WriteLine($"Push Data ID:{ets.SE.ListOutput[0].GetInt16()}");
+                _completedEventQueue.Enqueue(ets);
+            }
+        }
+
+        #region 工具方法（数据处理/校验）
+        /// <summary>
+        /// 验证周期时间（确保在10-2000ms范围内）
+        /// </summary>
+        private int ValidateCycleTime(int cycleTime) => Math.Clamp(cycleTime, 10, 2000);
+
+        /// <summary>
+        /// 检查PLC连接状态
+        /// </summary>
+        private bool IsPlcConnected()
+        {
+            try
+            {
+                // 简单 ping 检查网络连通性
+                var ping = new Ping();
+                var reply = ping.Send(_plcClient.IpAddress, 1000);
+                return reply?.Status == IPStatus.Success;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 解析PLC数据到事件配置
+        /// </summary>
+        private void ResolveEventData(byte[] data, List<BeckhoffEventIO> configs)
+        {
+            if (data == null || data.Length == 0) return;
+
+            foreach (var config in configs)
+            {
+                var sourceOffset = config.MBAdr - configs[0].MBAdr;
+                var targetLength = config.Length * 2;
+
+                // 用Span优化内存复制
+                data.AsSpan(sourceOffset, targetLength)
+                    .CopyTo(config.DataValue.AsSpan(0, targetLength));
+
+                config.GetDataValueStr();
+            }
+        }
+
+        /// <summary>
+        /// 打包事件数据为PLC字节数组
+        /// </summary>
+        private byte[] PackageDataToPlc(List<BeckhoffEventIO> configs)
+        {
+            byte[] writeData = new byte[GetRWLength(configs)];
+            for (int i = 0; i < configs.Count; i++)
+            {
+                Array.Copy(configs[i].DataValue, 0, writeData, configs[i].MBAdr - configs[0].MBAdr, configs[i].Length * 2);
+                configs[i].GetDataValueStr();
+            }
+            return writeData;
+        }
+
+        /// <summary>
+        /// 计算数据区长度
+        /// </summary>
         private ushort GetRWLength(List<BeckhoffEventIO> input)
         {
             short length = 0;
-
             foreach (var item in input)
             {
                 length += item.Length;
@@ -471,119 +442,95 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
         }
 
         /// <summary>
-        /// 将配置文件对象封装到字节数组
+        /// 检查序列ID是否不匹配（需要处理事件）
+        /// 
         /// </summary>
-        /// <param name="plcConfig"></param>
-        private byte[] PackageDataToPlc(List<BeckhoffEventIO> listConfig)
+        private bool IsSequenceIdMismatch(BeckhoffEventInstance instance)
         {
-            byte[] writeData = new byte[GetRWLength(listConfig)];
-            for (int i = 0; i < listConfig.Count; i++)
-            {
-                Array.Copy(listConfig[i].DataValue, 0, writeData, listConfig[i].MBAdr - listConfig[0].MBAdr, listConfig[i].Length * 2);
-                listConfig[i].GetDataValueStr();
-            }
+            var inputId = instance.ListInput
+                .FirstOrDefault(t => t.TagName.Trim().Equals("SequenceID", StringComparison.OrdinalIgnoreCase))?.GetInt16() ?? 0;
 
-            return writeData;
+            var outputId = instance.ListOutput
+                .FirstOrDefault(t => t.TagName.Trim().Equals("SequenceID", StringComparison.OrdinalIgnoreCase))?.GetInt16() ?? 0;
+
+            return inputId != outputId;
         }
 
         /// <summary>
-        ///将读取到的PLC数据解析到配置对象 
+        /// 同步序列ID（PLC → EAP）
         /// </summary>
-        /// <param name="content"></param>
-        private void ResolveDataToEvent(byte[] content, List<BeckhoffEventIO> listConfig)
+        private void SyncSequenceId(BeckhoffEventInstance instance)
         {
-            for (int i = 0; i < listConfig.Count; i++)
+            try
             {
-                Array.Copy(content, listConfig[i].MBAdr - listConfig[0].MBAdr, listConfig[i].DataValue, 0, listConfig[i].Length * 2);
-                listConfig[i].GetDataValueStr();
+                var inputIdConfig = instance.ListInput
+                    .FirstOrDefault(t => t.TagName.Trim().Equals("SequenceID", StringComparison.OrdinalIgnoreCase));
+
+                var outputIdConfig = instance.ListOutput
+                    .FirstOrDefault(t => t.TagName.Trim().Equals("SequenceID", StringComparison.OrdinalIgnoreCase));
+
+                if (inputIdConfig != null && outputIdConfig != null)
+                {
+                    outputIdConfig.SetInt16(inputIdConfig.GetInt16());
+                }
             }
+            catch { }
         }
 
-        //public void HandleEvent(EventSiemensThreadState se)
-        //{
-        //    if (se != null)
-        //    {
-        //        //处理事件
-        //        //将数据打包
-        //        //Dictionary<string, Tuple<string, object>> keyValuePairs = new Dictionary<string, Tuple<string, object>>();
-        //        List<MyData> keyValuePairs = new List<MyData>();
-        //        //遍历所有PLC下发数据
-        //        for (int i = 0; i < se.SE.ListInput.Count; i++)
-        //        {
-        //            if (se.SE.ListInput[i].DTType == CDataType.DTInt)
-        //                keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int32, ValueData = se.SE.ListInput[i].GetInt32() });
-        //            //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Int32", se.SE.ListInput[i].GetInt32()));
-        //            if (se.SE.ListInput[i].DTType == CDataType.DTShort)
-        //                //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Int16", se.SE.ListInput[i].GetInt16()));
-        //                keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int16, ValueData = se.SE.ListInput[i].GetInt16() });
-        //            if (se.SE.ListInput[i].DTType == CDataType.DTString)
-        //                //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("String", se.SE.ListInput[i].GetString()));
-        //                keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.String, ValueData = se.SE.ListInput[i].GetString() });
-        //            if (se.SE.ListInput[i].DTType == CDataType.DTFloat)
-        //                //keyValuePairs.Add(se.SE.ListInput[i].TagName, new Tuple<string, object>("Float", se.SE.ListInput[i].GetSingle()));
-        //                keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Float, ValueData = se.SE.ListInput[i].GetSingle() });
-        //        }
+        /// <summary>
+        /// 回写公共区数据到PLC
+        /// </summary>
+        private async Task<OperateResult> WritePlcCommonDataAsync()
+        {
+            var writeAddress = $"s={_globalConfig.CpuInfo.EapConfigLabel}";
+            var writeData = PackageDataToPlc(_globalConfig.EapConfig);
+            return await _plcClient.WriteAsync(writeAddress, writeData);
+        }
 
-        //        //添加当前工序 放在【EventClass】
-        //        keyValuePairs.Add(new MyData() { Key = "EventClass", ValueType = MyData.MyType.String, ValueData = se.SE.EventClass });
+        /// <summary>
+        /// 读取事件数据
+        /// </summary>
+        private async Task<OperateResult<byte[]>> ReadEventDataAsync(BeckhoffEventInstance instance)
+        {
+            var address = $"s={instance.PLC_LabelName}";
+            var length = GetRWLength(instance.ListInput);
+            return await _plcClient.ReadAsync(address, length);
+        }
+        #endregion
 
-        //        PlcEventParamModel plcEventInputParamModel = new PlcEventParamModel()
-        //        {
-        //            PlcName = se.InstanceName,
-        //            EventName = se.SE.EventName,
-        //            EventClass = se.SE.EventClass,
-        //            StartTime = DateTime.Now,
-        //            Params = keyValuePairs
-        //        };
+        #region 资源释放
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-        //        //调用处理接口
+        /// <summary>
+        /// 释放资源的具体实现
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed) return;
 
-        //        PlcEventParamModel plcEventOutputParamModel = _see.HandleEventWithKey(plcEventInputParamModel);
-        //        //将消息写入到PLC
-        //        for (int i = 0; i < se.SE.ListOutput.Count; i++)
-        //        {
-        //            if (plcEventOutputParamModel.Params != null)
-        //            {
-        //                //匹配相同项
-        //                for (int j = 0; j < plcEventOutputParamModel.Params.Count; j++)
-        //                {
-        //                    //if (plcEventOutputParamModel.Params.Keys.Contains(se.SE.ListOutput[i].TagName))
-        //                    if (plcEventOutputParamModel.Params.Any(it => it.Key == se.SE.ListOutput[i].TagName))
-        //                    {
-        //                        //将返回值写入plc
-        //                        // var p = plcEventOutputParamModel.Params.Get(se.SE.ListOutput[i].TagName);
-        //                        var p = plcEventOutputParamModel.Params.Where(it => it.Key == se.SE.ListOutput[i].TagName).SingleOrDefault();
-        //                        if (p != null)
-        //                        {
-        //                            if (p.ValueType == MyData.MyType.Int32)
-        //                            {
-        //                                se.SE.ListOutput[i].SetInt32(Convert.ToInt32(p.ValueData));
-        //                            }
-        //                            if (p.ValueType == MyData.MyType.Int16)
-        //                            {
-        //                                se.SE.ListOutput[i].SetInt16(Convert.ToInt16(p.ValueData));
-        //                            }
-        //                            if (p.ValueType == MyData.MyType.String)
-        //                            {
-        //                                se.SE.ListOutput[i].SetString(p.ValueData.ToString());
-        //                            }
-        //                            if (p.ValueType == MyData.MyType.WString)
-        //                            {
-        //                                se.SE.ListOutput[i].SetWString(p.ValueData.ToString());
-        //                            }
-        //                            if (p.ValueType == MyData.MyType.Float)
-        //                            {
-        //                                se.SE.ListOutput[i].SetFloat(Convert.ToSingle(p.ValueData));
+            if (disposing)
+            {
+                // 释放托管资源
+                _cts.Cancel();
+                _cts.Dispose();
+                _completedEventQueue.Clear();
+            }
 
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
+            // 释放非托管资源（关闭PLC连接）
+            if (_plcClient != null)
+            {
+                _plcClient.ConnectClose();
+            }
 
-        //    _queueHandleEventCompleted.Enqueue(se);
-        //}
+            _isDisposed = true;
+        }
+        #endregion
     }
 }

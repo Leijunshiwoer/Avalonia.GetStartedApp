@@ -61,7 +61,7 @@ namespace SmartCommunicationForExcel.Executer
             Container.RegisterType<ISiemensEventExecuter, DefaultSiemensEventExecuter>();
             Container.RegisterType<IOmronEventExecuter, DefaultOmronEventExecuter>();
             Container.RegisterType<IMitsubishiEventExecuter, DefaultMitsubishiEventExecuter>();
-            //Container.RegisterType<IBeckhoffEventExecuter, DefaultBeckhoffEventExecuter>();
+            Container.RegisterType<IBeckhoffEventExecuter, DefaultBeckhoffEventExecuter>();
                 
             //// 注册线程池（带回调配置）
             //var stpStartInfo = new STPStartInfo
@@ -196,25 +196,20 @@ namespace SmartCommunicationForExcel.Executer
         {
             var result = new ResultState { IsSuccess = true };
 
-            if (string.IsNullOrEmpty(instanceName))
+            if (!string.IsNullOrEmpty(instanceName))
             {
-                _smartBeckhoffConfigForm ??= new SmartConfigForExcel.SmartBeckhoffConfigForExcelForm();
-                _smartBeckhoffConfigForm.Show();
-                return result;
+                if (_beckhoffConfigs.TryGetValue(instanceName, out var config))
+                {
+                    _smartBeckhoffConfigForm = new SmartConfigForExcel.SmartBeckhoffConfigForExcelForm();
+                    _smartBeckhoffConfigForm.SetModel(config);
+                    _smartBeckhoffConfigForm.Show();
+                }
+                else
+                {
+                    result.IsSuccess = false;
+                    result.Message = $"未找到实例 [{instanceName}] 的配置";
+                }
             }
-
-            if (_beckhoffConfigs.TryGetValue(instanceName, out var config))
-            {
-                _smartBeckhoffConfigForm ??= new SmartConfigForExcel.SmartBeckhoffConfigForExcelForm();
-                _smartBeckhoffConfigForm.SetModel(config);
-                _smartBeckhoffConfigForm.Show();
-            }
-            else
-            {
-                result.IsSuccess = false;
-                result.Message = $"未找到实例 [{instanceName}] 的配置";
-            }
-
             return result;
         }
         #endregion
@@ -378,36 +373,30 @@ namespace SmartCommunicationForExcel.Executer
         //待实现
         public async Task<ResultState> StartBeckhoffWorkInstance(string instanceName, string configFilePath)
         {
-            //return await StartWorkInstanceAsync(
-            //    instanceName,
-            //    configFilePath,
-            //    _beckhoffInstances,
-            //    _beckhoffConfigs,
-            //    path => new MyExcelFileHelper<BeckhoffGlobalConfig>().ExcelToBeckhoffObject(path),
-            //    (config) =>
-            //    {
-            //        config.CpuInfo.CycleTime = _cycleTime;
-            //        return config;
-            //    },
-            //    () => Container.Resolve<BeckhoffEventHandle>(),
-            //    (handler, name, config) => handler.StartAsync(name, config)
-            //);
-
-            await Task.CompletedTask;
-            return new ResultState();
+            return await StartWorkInstanceAsync(
+                instanceName,
+                configFilePath,
+                _beckhoffInstances,
+                _beckhoffConfigs,
+                path => new MyExcelFileHelper<BeckhoffGlobalConfig>().ExcelToBeckhoffObject(path),
+                (config) =>
+                {
+                    config.CpuInfo.CycleTime = _cycleTime;
+                    return config;
+                },
+                () => Container.Resolve<BeckhoffEventHandler>(),
+                (handler, name, config) => handler.StartAsync(name, config as BeckhoffGlobalConfig)
+            );
         }
 
         public async Task<ResultState> StopBeckhoffWorkInstance(string instanceName)
         {
-            //return await StopWorkInstanceAsync(
-            //    instanceName,
-            //    _beckhoffInstances,
-            //    _beckhoffConfigs,
-            //    handler => handler.StopAsync()
-            //);
-
-            await Task.CompletedTask;
-            return new ResultState();
+            return await StopWorkInstanceAsync(
+                instanceName,
+                _beckhoffInstances,
+                _beckhoffConfigs,
+                handler => handler.StopAsync()
+            );
         }
         #endregion
 

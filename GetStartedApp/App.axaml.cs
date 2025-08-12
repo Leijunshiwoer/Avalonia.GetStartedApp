@@ -48,14 +48,15 @@ namespace GetStartedApp
 {
     public partial class App : PrismApplication
     {
-        static App()
-        {
-            InitializeLogging();
-        }
+        public AvaloniaObject MainWindow { get; private set; }
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
             base.Initialize();  // Required to initialize Prism.Avalonia - DO NOT REMOVE
+
+            InitializeLogging();
+            // 注册全局异常处理事件
+            RegisterGlobalExceptionHandlers();
         }
 
         protected override void OnInitialized()
@@ -80,6 +81,8 @@ namespace GetStartedApp
                 sell = Container.Resolve<MainWindow>();
                 var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
                 messageManagerService.Initialize(sell);
+
+                MainWindow = sell;
             }
             else
             {
@@ -99,16 +102,14 @@ namespace GetStartedApp
         // App.xaml.cs
         public override void OnFrameworkInitializationCompleted()
         {
-            // 注册全局异常处理事件
-            RegisterGlobalExceptionHandlers();
-
-            // 监听应用程序退出事件（确保日志刷新）
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+           
+            if (base.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime classicDesktopStyleApplicationLifetime)
             {
-                desktop.Exit += (sender, e) =>
-                {
-                    Log.CloseAndFlush(); // 程序退出时刷新日志到文件
-                };
+                classicDesktopStyleApplicationLifetime.MainWindow = MainWindow as Window;
+            }
+            else if (base.ApplicationLifetime is ISingleViewApplicationLifetime singleViewApplicationLifetime)
+            {
+                singleViewApplicationLifetime.MainView = MainWindow as Control;
             }
 
             base.OnFrameworkInitializationCompleted();

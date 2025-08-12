@@ -32,6 +32,7 @@
     <AvaloniaResource Remove="Assets\PLCs\OP20_Siemens.xlsx" />
     <AvaloniaResource Remove="Assets\PLCs\OP30_Omron.xlsx" />
     <AvaloniaResource Remove="Assets\PLCs\OP40_Mitsubishi.xlsx" />
+    <AvaloniaResource Remove="Assets\PLCs\OP50_Beckhoff.xlsx" />
     <AvaloniaResource Remove="Assets\PLCs\PLCConnConfig.ini" />
   </ItemGroup>
 
@@ -54,6 +55,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\PLCs\OP40_Mitsubishi.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\PLCs\OP50_Beckhoff.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\PLCs\PLCConnConfig.ini">

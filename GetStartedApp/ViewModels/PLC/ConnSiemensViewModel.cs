@@ -11,10 +11,12 @@ using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
 using SmartCommunicationForExcel;
+using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
 using SmartCommunicationForExcel.EventHandle.Siemens;
 using SmartCommunicationForExcel.Executer;
+using SmartCommunicationForExcel.Implementation.Beckhoff;
 using SmartCommunicationForExcel.Implementation.Mitsubishi;
 using SmartCommunicationForExcel.Implementation.Omron;
 using SmartCommunicationForExcel.Implementation.Siemens;
@@ -35,7 +37,7 @@ namespace GetStartedApp.ViewModels.PLC
     /// 西门子PLC连接视图模型
     /// 负责PLC连接管理、配置加载及状态展示
     /// </summary>
-    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter,IMitsubishiEventExecuter
+    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter,IMitsubishiEventExecuter,IBeckhoffEventExecuter
     {
         #region 常量定义
         // 路径与文件相关
@@ -207,7 +209,7 @@ namespace GetStartedApp.ViewModels.PLC
                         // 可添加监控窗口打开失败的处理
                     }
                 }
-                else
+                else if (plcModel.FCpuType == "Mitsubishi")
                 {
                     var result = _smartContainer.ShowMitsubishiConfig(plcModel.FName);
                     if (!result.IsSuccess)
@@ -215,7 +217,19 @@ namespace GetStartedApp.ViewModels.PLC
                         // 可添加监控窗口打开失败的处理
                     }
                 }
-              
+                else if (plcModel.FCpuType == "Beckhoff")
+                {
+                    var result = _smartContainer.ShowBeckhoffConfig(plcModel.FName);
+                    if (!result.IsSuccess)
+                    {
+                        // 可添加监控窗口打开失败的处理
+                    }
+                }
+                else
+                {
+                    MessageBox.ShowAsync("不支持的PLC类型");
+                }
+
             }
         }
         #endregion
@@ -434,6 +448,23 @@ namespace GetStartedApp.ViewModels.PLC
                     await MessageBox.ShowAsync(result.Message);
                 }
             }
+            else if (targetPlc.FFileName.Contains("Beckhoff"))
+            {
+                var result = await _smartContainer.StartBeckhoffWorkInstance(
+                  plcModel.FName,
+                  Path.Combine(PLC_CONFIG_PATH, plcModel.FFileName)
+              );
+                targetPlc.FIsConn = result.IsSuccess ? "已连接" : "连接失败";
+                if (!result.IsSuccess)
+                {
+                    await MessageBox.ShowAsync(result.Message);
+                }
+            }
+            else
+            {
+                targetPlc.FIsConn = "连接失败";
+                await MessageBox.ShowAsync("不支持的PLC类型");
+            }
 
         }
 
@@ -453,10 +484,19 @@ namespace GetStartedApp.ViewModels.PLC
                 await _smartContainer.StopOmronWorkInstance(plcModel.FName);
 
             }
-            else
+            else if (targetPlc.FFileName.Contains("Mitsubishi"))
             {
                 await _smartContainer.StopMitsubishiWorkInstance(plcModel.FName);
 
+            }
+            else if (targetPlc.FFileName.Contains("Beckhoff"))
+            {
+                await _smartContainer.StopBeckhoffWorkInstance(plcModel.FName);
+            }
+            else
+            {
+                await MessageBox.ShowAsync("不支持的PLC类型");
+                return;
             }
             targetPlc.FIsConn = "未连接";
         }
@@ -626,6 +666,11 @@ namespace GetStartedApp.ViewModels.PLC
         public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<MitsubishiEventIO> listInput, List<MitsubishiEventIO> listOutput, string strError = "")
         {
            
+        }
+
+        public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<BeckhoffEventIO> listInput, List<BeckhoffEventIO> listOutput, string strError = "")
+        {
+            
         }
         #endregion
     }
