@@ -19,12 +19,16 @@
   <ItemGroup>
     <AvaloniaXaml Remove="publish\**" />
     <AvaloniaXaml Remove="releases\**" />
+    <AvaloniaXaml Remove="Views\UserControls\**" />
     <Compile Remove="publish\**" />
     <Compile Remove="releases\**" />
+    <Compile Remove="Views\UserControls\**" />
     <EmbeddedResource Remove="publish\**" />
     <EmbeddedResource Remove="releases\**" />
+    <EmbeddedResource Remove="Views\UserControls\**" />
     <None Remove="publish\**" />
     <None Remove="releases\**" />
+    <None Remove="Views\UserControls\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -94,10 +98,6 @@
 	  <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
 	  <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 	  <PackageReference Include="Velopack" Version="0.0.1298" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Views\UserControls\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -278,7 +278,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
             try
             {
                 // 检查事件是否正在处理中
-                if (!_eventTriggerStatus[eventIndex])
+                if (_eventTriggerStatus[eventIndex])
                 {
                     // 读取事件数据
                     var eventData = await ReadEventDataAsync(eventInstance);
