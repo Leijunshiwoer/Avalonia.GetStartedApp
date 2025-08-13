@@ -9,7 +9,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
     {
 
         /*------------------------------事件处理----------------------------------------------------*/
-        public object HandleEvent(object state)
+        public EventMitsubishiThreadState HandleEvent(EventMitsubishiThreadState state)
         {
             EventMitsubishiThreadState sei = state as EventMitsubishiThreadState;
 

@@ -318,7 +318,7 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
                                     return;
                                 }
                                 // 调用回调逻辑
-                                HandleEventCaLLBack(task.Result as EventSiemensThreadState);
+                                HandleEventCaLLBack(task.Result);
                             }); // 去掉调度器参数，使用默认的线程池调度器
                         }
                         else

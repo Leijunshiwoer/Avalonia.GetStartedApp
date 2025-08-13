@@ -368,7 +368,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
                                         _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
                                         return;
                                     }
-                                    HandleEventCallback(task.Result as EventOmronThreadState);
+                                    HandleEventCallback(task.Result);
                                 });
                         }
                         else

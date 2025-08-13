@@ -9,7 +9,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
 {
     public interface IOmronEventExecuter
     {
-        object HandleEvent(object sei);//object EventIstance
+        EventOmronThreadState HandleEvent(EventOmronThreadState se);//object EventIstance
 
         void SubscribeCommonInfo(string instanceName, bool bSuccess, List<OmronEventIO> listInput, List<OmronEventIO> listOutput, string strError = "");
         void Err(string strInstanceName, byte[] data, string strError = "");

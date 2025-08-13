@@ -15,7 +15,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
             
         }
 
-        public object HandleEvent(object state)
+        public EventBeckhoffThreadState HandleEvent(EventBeckhoffThreadState state)
         {
             var sei = state as EventBeckhoffThreadState;
 

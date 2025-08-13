@@ -9,16 +9,13 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
     {
 
         /*------------------------------事件处理----------------------------------------------------*/
-        public object HandleEvent(object state)
+       
+        public EventSiemensThreadState HandleEvent(EventSiemensThreadState se)
         {
-            EventSiemensThreadState sei = state as EventSiemensThreadState;
-
-            Console.WriteLine("Event " + sei.SE.EventName + " Trigger Handle.");
-            sei.SE.ListOutput[0].SetInt16(sei.SE.ListInput[1].GetInt16());
-
-            return sei;
+            Console.WriteLine("Event " + se.SE.EventName + " Trigger Handle.");
+            se.SE.ListOutput[0].SetInt16(se.SE.ListInput[1].GetInt16());
+            return se;
         }
-
         /*------------------------------公共区订阅----------------------------------------------------*/
         /*-----------------------------可选择性创建 用于事件处理参数识别-----------------------------*/
         public enum InputEnum
@@ -64,5 +61,7 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
         {
             throw new NotImplementedException();
         }
+
+   
     }
 }

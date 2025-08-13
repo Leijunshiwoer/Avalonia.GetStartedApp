@@ -319,7 +319,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
                                         _eventTriggerStatus[eventIndex] = false;
                                         return;
                                     }
-                                    HandleEventCallback(task.Result as EventBeckhoffThreadState);
+                                    HandleEventCallback(task.Result);
                                 }, _cts.Token);
                         }
                         else

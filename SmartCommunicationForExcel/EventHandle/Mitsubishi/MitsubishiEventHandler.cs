@@ -317,7 +317,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
                                         _eventExecuter.Err(InstanceName, null, $"事件处理异常: {task.Exception.Message}");
                                         return;
                                     }
-                                    HandleEventCallback(task.Result as EventMitsubishiThreadState);
+                                    HandleEventCallback(task.Result);
                                 }, TaskScheduler.Default);
                         }
                         else

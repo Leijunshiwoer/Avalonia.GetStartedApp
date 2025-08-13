@@ -10,7 +10,7 @@ namespace SmartCommunicationForExcel.EventHandle.Beckhoff
     public interface IBeckhoffEventExecuter
     {
         //[Obsolete("8.0之前版本被遗弃", false)]
-        object HandleEvent(object sei);//object EventIstance
+        EventBeckhoffThreadState HandleEvent(EventBeckhoffThreadState se);//object EventIstance
 
         // PlcEventParamModel HandleEventWithKey(object PlcEventParamModel);
 

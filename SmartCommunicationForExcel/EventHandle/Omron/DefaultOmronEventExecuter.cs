@@ -10,7 +10,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
     public class DefaultOmronEventExecuter : IOmronEventExecuter
     {
         /*------------------------------事件处理----------------------------------------------------*/
-        public object HandleEvent(object state)
+        public EventOmronThreadState HandleEvent(EventOmronThreadState state)
         {
             EventOmronThreadState sei = state as EventOmronThreadState;
 

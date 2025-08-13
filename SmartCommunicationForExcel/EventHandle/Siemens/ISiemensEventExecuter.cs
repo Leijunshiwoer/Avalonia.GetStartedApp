@@ -11,8 +11,9 @@ namespace SmartCommunicationForExcel.EventHandle.Siemens
     public interface ISiemensEventExecuter
     {
         //[Obsolete("8.0之前版本被遗弃", false)]
-        object HandleEvent(object sei);//object EventIstance
-
+        // object HandleEvent(object sei);//object EventIstance
+        EventSiemensThreadState HandleEvent(EventSiemensThreadState se);
+        //object EventIstance
        // PlcEventParamModel HandleEventWithKey(object PlcEventParamModel);
 
         void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<SiemensEventIO> listInput, List<SiemensEventIO> listOutput, string strError = "");

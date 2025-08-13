@@ -11,7 +11,7 @@ namespace SmartCommunicationForExcel.EventHandle.Mitsubishi
     public interface IMitsubishiEventExecuter
     {
         //[Obsolete("8.0之前版本被遗弃", false)]
-        object HandleEvent(object sei);//object EventIstance
+        EventMitsubishiThreadState HandleEvent(EventMitsubishiThreadState se);//object EventIstance
 
         //PlcEventParamModel HandleEventWithKey(object PlcEventParamModel);
 
