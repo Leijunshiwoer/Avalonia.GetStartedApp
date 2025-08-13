@@ -550,83 +550,100 @@ namespace GetStartedApp.ViewModels.PLC
         /// </summary>
         public object HandleEvent(object eventData)
         {
-            // 事件处理逻辑（按需实现）
-            EventSiemensThreadState se = eventData as EventSiemensThreadState;
+
+
+            //#region 西门子事件处理
+
+
+            //// 事件处理逻辑（按需实现）
+            //var se = eventData as EventSiemensThreadState;
+            //if (se!=null)
+            //{
+            //    PLCModel pLCModel = ObPLC.Where(it => it.FName == se.InstanceName).FirstOrDefault();
+            //    List<MyData> keyValuePairs = new List<MyData>();
+
+            //    //遍历所有PLC下发数据
+            //    for (int i = 0; i < se.SE.ListInput.Count; i++)
+            //    {
+            //        if (se.SE.ListInput[i].DTType == CDataType.DTInt)
+            //            keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int32, ValueData = se.SE.ListInput[i].GetInt32() });
+            //        if (se.SE.ListInput[i].DTType == CDataType.DTShort)
+            //            keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int16, ValueData = se.SE.ListInput[i].GetInt16() });
+            //        if (se.SE.ListInput[i].DTType == CDataType.DTString)
+            //            keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.String, ValueData = se.SE.ListInput[i].GetString() });
+            //        if (se.SE.ListInput[i].DTType == CDataType.DTFloat)
+            //            keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Float, ValueData = se.SE.ListInput[i].GetSingle() });
+            //    }
+
+            //    //添加当前工序 放在[EventClass]
+            //    keyValuePairs.Add(new MyData() { Key = "WorkStage", ValueType = MyData.MyType.String, ValueData = se.SE.EventClass });
+
+            //    PlcEventParamModel plcEventInputParamModel = new PlcEventParamModel()
+            //    {
+            //        PlcName = se.InstanceName,
+            //        PlcAddr = pLCModel.FAddr,
+            //        EventName = se.SE.EventName,
+            //        EventClass = se.SE.EventClass,
+            //        StartTime = DateTime.Now,
+            //        Params = keyValuePairs
+            //    };
+
+            //    //调用处理接口
+            //    PlcEventParamModel plcEventOutputParamModel = (PlcEventParamModel)_siemensEvent.DoEvent(plcEventInputParamModel);
+
+            //    for (int i = 0; i < se.SE.ListOutput.Count; i++)
+            //    {
+            //        if (plcEventOutputParamModel.Params != null)
+            //        {
+            //            //匹配相同项
+            //            for (int j = 0; j < plcEventOutputParamModel.Params.Count; j++)
+            //            {
+            //                //if (plcEventOutputParamModel.Params.Keys.Contains(se.SE.ListOutput[i].TagName))
+            //                if (plcEventOutputParamModel.Params.Any(it => it.Key == se.SE.ListOutput[i].TagName))
+            //                {
+            //                    //将返回值写入plc
+            //                    // var p = plcEventOutputParamModel.Params.Get(se.SE.ListOutput[i].TagName);
+            //                    var p = plcEventOutputParamModel.Params.Where(it => it.Key == se.SE.ListOutput[i].TagName).SingleOrDefault();
+            //                    if (p != null)
+            //                    {
+            //                        if (p.ValueType == MyData.MyType.Int32)
+            //                        {
+            //                            se.SE.ListOutput[i].SetInt32(Convert.ToInt32(p.ValueData));
+            //                        }
+            //                        if (p.ValueType == MyData.MyType.Int16)
+            //                        {
+            //                            se.SE.ListOutput[i].SetInt16(Convert.ToInt16(p.ValueData));
+            //                        }
+            //                        if (p.ValueType == MyData.MyType.String)
+            //                        {
+            //                            se.SE.ListOutput[i].SetString(p.ValueData.ToString());
+            //                        }
+            //                        if (p.ValueType == MyData.MyType.WString)
+            //                        {
+            //                            se.SE.ListOutput[i].SetWString(p.ValueData.ToString());
+            //                        }
+            //                        if (p.ValueType == MyData.MyType.Float)
+            //                        {
+            //                            se.SE.ListOutput[i].SetFloat(Convert.ToSingle(p.ValueData));
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+
+            //#endregion
+
+
+            #region 欧姆龙事件处理
+            var se = eventData as EventOmronThreadState;
+
             if (se!=null)
             {
-                PLCModel pLCModel = ObPLC.Where(it => it.FName == se.InstanceName).FirstOrDefault();
-                List<MyData> keyValuePairs = new List<MyData>();
 
-                //遍历所有PLC下发数据
-                for (int i = 0; i < se.SE.ListInput.Count; i++)
-                {
-                    if (se.SE.ListInput[i].DTType == CDataType.DTInt)
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int32, ValueData = se.SE.ListInput[i].GetInt32() });
-                    if (se.SE.ListInput[i].DTType == CDataType.DTShort)
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Int16, ValueData = se.SE.ListInput[i].GetInt16() });
-                    if (se.SE.ListInput[i].DTType == CDataType.DTString)
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.String, ValueData = se.SE.ListInput[i].GetString() });
-                    if (se.SE.ListInput[i].DTType == CDataType.DTFloat)
-                        keyValuePairs.Add(new MyData() { Key = se.SE.ListInput[i].TagName, ValueType = MyData.MyType.Float, ValueData = se.SE.ListInput[i].GetSingle() });
-                }
-
-                //添加当前工序 放在[EventClass]
-                keyValuePairs.Add(new MyData() { Key = "WorkStage", ValueType = MyData.MyType.String, ValueData = se.SE.EventClass });
-
-                PlcEventParamModel plcEventInputParamModel = new PlcEventParamModel()
-                {
-                    PlcName = se.InstanceName,
-                    PlcAddr = pLCModel.FAddr,
-                    EventName = se.SE.EventName,
-                    EventClass = se.SE.EventClass,
-                    StartTime = DateTime.Now,
-                    Params = keyValuePairs
-                };
-
-                //调用处理接口
-                PlcEventParamModel plcEventOutputParamModel = (PlcEventParamModel)_siemensEvent.DoEvent(plcEventInputParamModel);
-
-                for (int i = 0; i < se.SE.ListOutput.Count; i++)
-                {
-                    if (plcEventOutputParamModel.Params != null)
-                    {
-                        //匹配相同项
-                        for (int j = 0; j < plcEventOutputParamModel.Params.Count; j++)
-                        {
-                            //if (plcEventOutputParamModel.Params.Keys.Contains(se.SE.ListOutput[i].TagName))
-                            if (plcEventOutputParamModel.Params.Any(it => it.Key == se.SE.ListOutput[i].TagName))
-                            {
-                                //将返回值写入plc
-                                // var p = plcEventOutputParamModel.Params.Get(se.SE.ListOutput[i].TagName);
-                                var p = plcEventOutputParamModel.Params.Where(it => it.Key == se.SE.ListOutput[i].TagName).SingleOrDefault();
-                                if (p != null)
-                                {
-                                    if (p.ValueType == MyData.MyType.Int32)
-                                    {
-                                        se.SE.ListOutput[i].SetInt32(Convert.ToInt32(p.ValueData));
-                                    }
-                                    if (p.ValueType == MyData.MyType.Int16)
-                                    {
-                                        se.SE.ListOutput[i].SetInt16(Convert.ToInt16(p.ValueData));
-                                    }
-                                    if (p.ValueType == MyData.MyType.String)
-                                    {
-                                        se.SE.ListOutput[i].SetString(p.ValueData.ToString());
-                                    }
-                                    if (p.ValueType == MyData.MyType.WString)
-                                    {
-                                        se.SE.ListOutput[i].SetWString(p.ValueData.ToString());
-                                    }
-                                    if (p.ValueType == MyData.MyType.Float)
-                                    {
-                                        se.SE.ListOutput[i].SetFloat(Convert.ToSingle(p.ValueData));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
+            #endregion
 
             return se;
         }

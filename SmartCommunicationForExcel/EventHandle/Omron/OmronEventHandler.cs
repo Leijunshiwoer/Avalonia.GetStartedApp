@@ -296,7 +296,9 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             }
 
             // 解析触发标签的位信号（每个位对应一个事件）
-            var triggers = triggerConfig.TransBool(triggerConfig.DataValue, 0, triggerConfig.DataValue.Length);
+            //var triggers = triggerConfig.TransBool(triggerConfig.DataValue, 0, triggerConfig.DataValue.Length);
+
+            bool[] triggers = triggerConfig.GetBitArr();
 
             // 遍历所有触发位，处理激活的事件
             for (var i = 0; i < triggers.Length; i++)
@@ -515,7 +517,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             foreach (var config in configs)
             {
                 // 计算当前配置在数据中的偏移量（相对于第一个配置的地址）
-                var sourceOffset = config.MBAdr - configs[0].MBAdr;
+                var sourceOffset = (config.MBAdr - configs[0].MBAdr)*2;
                 // 计算需要复制的长度（每个配置项的长度×2，因16位寄存器对应2字节）
                 var targetLength = config.Length * 2;
 

@@ -48,7 +48,7 @@ namespace GetStartedApp
 {
     public partial class App : PrismApplication
     {
-        public AvaloniaObject MainWindow { get; private set; }
+      
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -58,12 +58,6 @@ namespace GetStartedApp
             // 注册全局异常处理事件
             RegisterGlobalExceptionHandlers();
         }
-
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-        }
-
         private static Mutex mutex;
         protected override AvaloniaObject CreateShell()
         {
@@ -78,11 +72,12 @@ namespace GetStartedApp
 
                 //检查当前用户是否为管理员
                 //直接启动应用程序
-                sell = Container.Resolve<MainWindow>();
-                var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
-                messageManagerService.Initialize(sell);
-
-                MainWindow = sell;
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    sell = Container.Resolve<MainWindow>();
+                    var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
+                    messageManagerService.Initialize(sell);
+                }
             }
             else
             {
@@ -97,22 +92,6 @@ namespace GetStartedApp
             }
             return sell;
             //return Container.Resolve<MainWindow>();
-        }
-
-        // App.xaml.cs
-        public override void OnFrameworkInitializationCompleted()
-        {
-           
-            if (base.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime classicDesktopStyleApplicationLifetime)
-            {
-                classicDesktopStyleApplicationLifetime.MainWindow = MainWindow as Window;
-            }
-            else if (base.ApplicationLifetime is ISingleViewApplicationLifetime singleViewApplicationLifetime)
-            {
-                singleViewApplicationLifetime.MainView = MainWindow as Control;
-            }
-
-            base.OnFrameworkInitializationCompleted();
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
