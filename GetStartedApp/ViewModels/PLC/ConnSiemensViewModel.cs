@@ -323,11 +323,24 @@ namespace GetStartedApp.ViewModels.PLC
             {
                 try
                 {
-                    var plcModel = ParsePLCConfigFromExcel(file.FullName);
-                    if (plcModel != null)
+                    if (file.FullName.Contains("Beckhoff"))
                     {
-                        plcModels.Add(plcModel);
+                        var plcModel = ParseBeckhoffPLCConfigFromExcel(file.FullName);
+                        if (plcModel != null)
+                        {
+                            plcModels.Add(plcModel);
+                        }
                     }
+                    else
+                    {
+                        var plcModel = ParsePLCConfigFromExcel(file.FullName);
+                        if (plcModel != null)
+                        {
+                            plcModels.Add(plcModel);
+                        }
+
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
@@ -362,6 +375,34 @@ namespace GetStartedApp.ViewModels.PLC
                 FIsConn = "未连接",
                 FColor = "Black",
                 FAddr = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + (colIndex += 4)]), // 跳过4个地址偏移字段
+
+            };
+
+            return plcModel;
+        }
+
+
+        private PLCModel? ParseBeckhoffPLCConfigFromExcel(string filePath)
+        {
+            using var package = new ExcelPackage(new FileInfo(filePath));
+            // 验证Sheet名称
+            ValidateExcelSheets(package);
+
+            // 读取CPU信息Sheet
+            var cpuSheet = package.Workbook.Worksheets[0];
+            int colIndex = 0;
+
+            // 解析单元格数据
+            var plcModel = new PLCModel
+            {
+                FFileName = Path.GetFileName(filePath),
+                FCpuType = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
+               // FPLCType = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
+                FMark = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
+                FName = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
+                FIsConn = "未连接",
+                FColor = "Black",
+                FAddr = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + (colIndex += 5)]), // 跳过4个地址偏移字段
 
             };
 

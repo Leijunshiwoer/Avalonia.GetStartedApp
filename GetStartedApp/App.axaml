@@ -40,9 +40,9 @@
     </Application.Styles>
 
     <Application.Resources>
-        <!--  指定字体文件（#号后是字体名称，必须指定，否则不生效。）  -->
+        <!--  鎸囧畾瀛椾綋鏂囦欢锛?鍙峰悗鏄瓧浣撳悕绉帮紝蹇呴』鎸囧畾锛屽惁鍒欎笉鐢熸晥銆傦級  -->
         <FontFamily x:Key="MiSans">avares://GetStartedApp/Assets/fonts/MiSans-Normal.ttf#MiSans</FontFamily>
-        <!--  指定字体文件夹（#号后是字体名称，必须指定，否则不生效。）  -->
+        <!--  鎸囧畾瀛椾綋鏂囦欢澶癸紙#鍙峰悗鏄瓧浣撳悕绉帮紝蹇呴』鎸囧畾锛屽惁鍒欎笉鐢熸晥銆傦級  -->
         <!--<FontFamily x:Key="MiSans">avares://AvaloniaApplication1/fonts#MiSans</FontFamily>-->
     </Application.Resources>
 
