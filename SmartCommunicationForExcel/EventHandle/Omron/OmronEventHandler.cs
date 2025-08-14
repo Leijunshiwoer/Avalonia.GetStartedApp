@@ -326,7 +326,7 @@ namespace SmartCommunicationForExcel.EventHandle.Omron
             {
 
                 // 检查事件是否正在处理中（防止重复处理）
-                if (_eventTriggerStatus[eventIndex])
+                if (!_eventTriggerStatus[eventIndex])
                 {
                     // 从PLC读取该事件的输入数据
                     var eventDataResult = await ReadEventDataAsync(eventInstance);
