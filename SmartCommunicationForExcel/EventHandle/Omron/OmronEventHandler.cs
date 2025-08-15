@@ -1,5 +1,4 @@
-﻿using Amib.Threading;
-using HslCommunication;
+﻿using HslCommunication;
 using HslCommunication.Profinet.Omron;
 using SmartCommunicationForExcel.Implementation.Omron;
 using System;

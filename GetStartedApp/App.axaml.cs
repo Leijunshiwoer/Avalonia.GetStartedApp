@@ -61,37 +61,51 @@ namespace GetStartedApp
         private static Mutex mutex;
         protected override AvaloniaObject CreateShell()
         {
-            MainWindow sell = null;
-            mutex = new Mutex(true, "GetStartApp");
-            if (mutex.WaitOne(0, false))
-            {
-                /**
-               * 当前用户是管理员的时候，直接启动应用程序
-               * 如果不是管理员，则使用启动对象启动程序，以确保使用管理员身份运行
-               */
+            //MainWindow sell = null;
+            //mutex = new Mutex(true, "GetStartApp");
+            //if (mutex.WaitOne(0, false))
+            //{
+            //    /**
+            //   * 当前用户是管理员的时候，直接启动应用程序
+            //   * 如果不是管理员，则使用启动对象启动程序，以确保使用管理员身份运行
+            //   */
 
-                //检查当前用户是否为管理员
-                //直接启动应用程序
-                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    sell = Container.Resolve<MainWindow>();
-                    var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
-                    messageManagerService.Initialize(sell);
-                }
+            //    //检查当前用户是否为管理员
+            //    //直接启动应用程序
+            //    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            //    {
+            //        sell = Container.Resolve<MainWindow>();
+            //        var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
+            //        messageManagerService.Initialize(sell);
+            //    }
+            //}
+            //else
+            //{
+            //    //提示用户程序已经在运行
+            //    if (MessageBox.ShowAsync("已经有一个软件运行中，请勿重复开启！", "提示", MessageBoxIcon.Warning, MessageBoxButton.OK).GetAwaiter().GetResult() == MessageBoxResult.OK)
+            //    {
+            //        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            //        {
+            //            desktop.Shutdown();
+            //        }
+            //    }
+            //}
+            //return sell;
+            ////return Container.Resolve<MainWindow>();
+            ///
+
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+               var sell = Container.Resolve<MainWindow>();
+                var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
+                messageManagerService.Initialize(sell);
+
+                return sell;
             }
             else
             {
-                //提示用户程序已经在运行
-                if (MessageBox.ShowAsync("已经有一个软件运行中，请勿重复开启！", "提示", MessageBoxIcon.Warning, MessageBoxButton.OK).GetAwaiter().GetResult() == MessageBoxResult.OK)
-                {
-                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                    {
-                        desktop.Shutdown();
-                    }
-                }
+                return Container.Resolve<MainView>();
             }
-            return sell;
-            //return Container.Resolve<MainWindow>();
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
@@ -119,6 +133,8 @@ namespace GetStartedApp
 
             // Views - Generic
             containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
+            containerRegistry.RegisterForNavigation<MainView>();
+
             containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
             containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
             containerRegistry.RegisterForNavigation<UserView, UserViewModel>();

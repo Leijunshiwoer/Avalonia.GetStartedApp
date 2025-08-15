@@ -1,5 +1,4 @@
-﻿using Amib.Threading;
-using HslCommunication;
+﻿using HslCommunication;
 using HslCommunication.Profinet.Melsec;
 using SmartCommunicationForExcel.Implementation.Mitsubishi;
 using SmartCommunicationForExcel.Model;
