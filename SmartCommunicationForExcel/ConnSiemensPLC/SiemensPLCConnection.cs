@@ -224,31 +224,47 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         {
             try
             {
-                // 读取事件区FromPC（PLC到PC）
-                var readFromResult = _siemensPLCs[plcIndex].Read<Event01AreaFromPC>();
-                if (!readFromResult.IsSuccess)
+                if (plcIndex==0)
                 {
-                    OnError?.Invoke($"{eventInfo.Name}FromPC读取失败：{readFromResult.Message}");
-                    return false;
-                }
+                    switch (eventInfo.Index)
+                    {
+                        case 0:
+                            // 读取事件区FromPC（PLC到PC）
+                            var readFromResult = _siemensPLCs[plcIndex].Read<Event01AreaFromPC>();
+                            if (!readFromResult.IsSuccess)
+                            {
+                                OnError?.Invoke($"{eventInfo.Name}FromPC读取失败：{readFromResult.Message}");
+                                return false;
+                            }
 
-                // 读取事件区ToPC（PC到PLC）
-                var readToResult = _siemensPLCs[plcIndex].Read<Event01AreaToPC>();
-                if (!readToResult.IsSuccess)
+                            // 读取事件区ToPC（PC到PLC）
+                            var readToResult = _siemensPLCs[plcIndex].Read<Event01AreaToPC>();
+                            if (!readToResult.IsSuccess)
+                            {
+                                OnError?.Invoke($"{eventInfo.Name}ToPC读取失败：{readToResult.Message}");
+                                return false;
+                            }
+
+                            // 保留dynamic类型赋值
+                            eventInfo.ObjW = readFromResult.Content;
+                            eventInfo.ObjR = readToResult.Content;
+
+                            // 动态访问SequenceID属性
+                            eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID;
+                            eventInfo.SequenceIdRead = eventInfo.ObjR.SequenceID;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else if (plcIndex==1)
                 {
-                    OnError?.Invoke($"{eventInfo.Name}ToPC读取失败：{readToResult.Message}");
-                    return false;
+
+                    // 其他PLC处理逻辑（如果有）
+                   // OnError?.Invoke($"未实现的PLC索引：{plcIndex}");
+                   
                 }
-
-                // 保留dynamic类型赋值
-                eventInfo.ObjW = readFromResult.Content;
-                eventInfo.ObjR = readToResult.Content;
-
-                // 动态访问SequenceID属性
-                eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID;
-                eventInfo.SequenceIdRead = eventInfo.ObjR.SequenceID;
-
-                return true;
+                    return true;
             }
             catch (Exception ex)
             {

@@ -18,6 +18,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         [HslDeviceAddress ("DB5000.0", 2, typeof(SiemensS7Net))]
         public short Heartbeat { get; set; }
         [HslDeviceAddress("s=PublicAreaFromPC.Command", 2, typeof(BeckhoffAdsNet))]
+       // [HslDeviceAddress("DB5000.2", 2, typeof(SiemensS7Net))]
         [HslDeviceAddress("DB5000.2", 2, typeof(SiemensS7Net))]
         public short Command { get; set; }//PC控制设备[1:Run, 2:Stop, 3:Reset]
 
@@ -25,7 +26,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         [HslDeviceAddress("DB5000.4", 2, typeof(SiemensS7Net))]
         public short RecipeNo { get; set; }//下载的配方编号 1
     }
-    public  class  PublicAreaToPC
+    public class PublicAreaToPC
     {
 
         [HslDeviceAddress("s=PublicAreaToPC.Heartbeat", 2, typeof(BeckhoffAdsNet))]
