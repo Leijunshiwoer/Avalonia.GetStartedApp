@@ -11,6 +11,8 @@ using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
 using SmartCommunicationForExcel;
+
+using SmartCommunicationForExcel.ConnSiemensPLC;
 using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
@@ -30,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ursa.Controls;
+
 
 namespace GetStartedApp.ViewModels.PLC
 {
@@ -104,7 +107,11 @@ namespace GetStartedApp.ViewModels.PLC
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             // 异步初始化PLC配置，避免阻塞UI
             _ = InitializeAsync();
+
+           
         }
+
+      
         #endregion
 
         #region 命令定义
@@ -740,6 +747,49 @@ namespace GetStartedApp.ViewModels.PLC
         public EventBeckhoffThreadState HandleEvent(EventBeckhoffThreadState se)
         {
             return se;
+        }
+        #endregion
+
+
+
+        #region 强类型beckhoff
+
+        private DelegateCommand _BeckhoffConfigCmd;
+        public DelegateCommand BeckhoffConfigCmd =>
+            _BeckhoffConfigCmd ?? (_BeckhoffConfigCmd = new DelegateCommand(ExecuteBeckhoffConfigCmd));
+
+        void ExecuteBeckhoffConfigCmd()
+        {
+            // 打开倍福配置窗口
+            var _Beckhoff = new SiemensPLCConnection(new PlcConfig() { Ip= "127.0.0.1",Port=102,Op="OP10"});
+            _Beckhoff.OnPublicDataCallback += OnPublicCallback;
+            _Beckhoff.OnEventDataCallback += OnEventCallback;
+            _Beckhoff.OnError += OnErrCallback;
+            _Beckhoff.OnInfo += OnInfo;
+         
+        }
+
+
+  
+
+        private void OnInfo(string Info)
+        {
+           
+        }
+
+        private void OnErrCallback(string errMsg)
+        {
+           
+        }
+
+        private void OnPublicCallback(string op, object objR, object objW)
+        {
+
+        }
+
+        private void OnEventCallback(string op, object obj)
+        {
+
         }
         #endregion
     }

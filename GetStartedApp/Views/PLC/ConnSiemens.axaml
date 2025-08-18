@@ -46,6 +46,14 @@
                             Value="mdi-plus" />
                 </u:IconButton.Icon>
             </u:IconButton>
+
+            <u:IconButton Command="{Binding BeckhoffConfigCmd}" Content="倍福连接">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
             <TextBlock Grid.Column="2"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Center"
