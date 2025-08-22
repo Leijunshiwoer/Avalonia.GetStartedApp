@@ -47,7 +47,21 @@
                 </u:IconButton.Icon>
             </u:IconButton>
 
-            <u:IconButton Command="{Binding BeckhoffConfigCmd}" Content="倍福连接">
+            <u:IconButton Command="{Binding BeckhoffConfigCmd}" Content="PLC强类型连接">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+            <TextBlock Grid.Column="2"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       Foreground="Blue"
+                       Text="{Binding PLCConnStatus}" />
+
+
+            <u:IconButton Command="{Binding MQTTConfigCmd}" Content="MQTT连接PLC">
                 <u:IconButton.Icon>
                     <i:Icon FontSize="24"
                             Foreground="DarkBlue"
@@ -62,6 +76,9 @@
 
 
         </u:ToolBar>
+
+
+
 
 
         <DataGrid x:Name="dgPlcs"

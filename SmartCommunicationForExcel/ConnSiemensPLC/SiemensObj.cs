@@ -12,6 +12,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
 
     #region 公共区域
 
+   
     public class PublicAreaFromPC
     {
         [HslDeviceAddress("s=PublicAreaFromPC.Heartbeat", 2,typeof(BeckhoffAdsNet))]
@@ -24,6 +25,8 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         [HslDeviceAddress("DB5000.4", 2, typeof(SiemensS7Net))]
         public short RecipeNo { get; set; }//下载的配方编号 1
     }
+
+   
     public class PublicAreaToPC
     {
 

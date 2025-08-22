@@ -7,11 +7,14 @@ using Avalonia.Threading;
 using GetStartedApp.Interface;
 using GetStartedApp.Models;
 using GetStartedApp.Utils.Node;
+using HslCommunication;
+using HslCommunication.Core.Pipe;
+using HslCommunication.MQTT;
+using HslCommunication.Profinet.Siemens;
 using NetTaste;
 using OfficeOpenXml;
 using Prism.Commands;
 using SmartCommunicationForExcel;
-
 using SmartCommunicationForExcel.ConnSiemensPLC;
 using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
@@ -29,6 +32,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Ursa.Controls;
@@ -40,7 +44,7 @@ namespace GetStartedApp.ViewModels.PLC
     /// 西门子PLC连接视图模型
     /// 负责PLC连接管理、配置加载及状态展示
     /// </summary>
-    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter,IMitsubishiEventExecuter,IBeckhoffEventExecuter
+    public class ConnSiemensViewModel : ViewModelBase, ISiemensEventExecuter, IOmronEventExecuter, IMitsubishiEventExecuter, IBeckhoffEventExecuter
     {
         #region 常量定义
         // 路径与文件相关
@@ -96,7 +100,7 @@ namespace GetStartedApp.ViewModels.PLC
         #region 构造函数
         public ConnSiemensViewModel(ISiemensEvent siemensEvent)
         {
-            _siemensEvent= siemensEvent;
+            _siemensEvent = siemensEvent;
             _smartContainer = new SmartContainer();
             // 注册事件执行器
             _smartContainer.RegisterInstance<ISiemensEventExecuter>(ConstName.SiemensRegisterName, this);
@@ -108,10 +112,10 @@ namespace GetStartedApp.ViewModels.PLC
             // 异步初始化PLC配置，避免阻塞UI
             _ = InitializeAsync();
 
-           
+
         }
 
-      
+
         #endregion
 
         #region 命令定义
@@ -200,7 +204,7 @@ namespace GetStartedApp.ViewModels.PLC
             SelectedPLC = plcModel;
             if (plcModel.FIsConn is "已连接" or "后台连接中")
             {
-                if (plcModel.FCpuType=="Siemens")
+                if (plcModel.FCpuType == "Siemens")
                 {
                     var result = _smartContainer.ShowSiemensConfig(plcModel.FName);
                     if (!result.IsSuccess)
@@ -255,7 +259,7 @@ namespace GetStartedApp.ViewModels.PLC
                 // 自动连接PLC（若启用）
                 if (_isAutoConnPLC)
                 {
-                   
+
                     await StartAutoConnectPLCs();
                 }
             }
@@ -266,7 +270,7 @@ namespace GetStartedApp.ViewModels.PLC
                     MessageBox.ShowAsync($"初始化失败：{ex.Message}");
                 });
             }
-           
+
         }
         /// <summary>
         /// 异步初始化PLC列表（从配置文件加载）
@@ -347,7 +351,7 @@ namespace GetStartedApp.ViewModels.PLC
                         }
 
                     }
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -404,7 +408,7 @@ namespace GetStartedApp.ViewModels.PLC
             {
                 FFileName = Path.GetFileName(filePath),
                 FCpuType = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
-               // FPLCType = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
+                // FPLCType = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
                 FMark = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
                 FName = GetExcelCellValue<string>(cpuSheet.Cells[_cpuInfoStartRow, _cpuInfoStartCol + colIndex++]),
                 FIsConn = "未连接",
@@ -593,7 +597,7 @@ namespace GetStartedApp.ViewModels.PLC
 
 
         #region ISiemensEventExecuter 实现
-    
+
 
         /// <summary>
         /// 订阅通用信息
@@ -626,15 +630,15 @@ namespace GetStartedApp.ViewModels.PLC
         {
             // 订阅逻辑（按需实现）
         }
-      
+
         public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<MitsubishiEventIO> listInput, List<MitsubishiEventIO> listOutput, string strError = "")
         {
-           
+
         }
 
         public void SubscribeCommonInfo(string strInstanceName, bool bSuccess, List<BeckhoffEventIO> listInput, List<BeckhoffEventIO> listOutput, string strError = "")
         {
-            
+
         }
         /// <summary>
         /// 处理事件
@@ -752,7 +756,7 @@ namespace GetStartedApp.ViewModels.PLC
 
 
 
-        #region 强类型beckhoff
+        #region 强类型
 
         private DelegateCommand _BeckhoffConfigCmd;
         public DelegateCommand BeckhoffConfigCmd =>
@@ -761,25 +765,25 @@ namespace GetStartedApp.ViewModels.PLC
         void ExecuteBeckhoffConfigCmd()
         {
             // 打开倍福配置窗口
-            var _Beckhoff = new SiemensPLCConnection(new PlcConfig() { Ip= "127.0.0.1",Port=102,Op="OP10"});
+            var _Beckhoff = new SiemensPLCConnection(new PlcConfig() { Ip = "127.0.0.1", Port = 102, Op = "OP10" });
             _Beckhoff.OnPublicDataCallback += OnPublicCallback;
             _Beckhoff.OnEventDataCallback += OnEventCallback;
             _Beckhoff.OnError += OnErrCallback;
             _Beckhoff.OnInfo += OnInfo;
-         
+
         }
 
 
-  
+
 
         private void OnInfo(string Info)
         {
-           
+
         }
 
         private void OnErrCallback(string errMsg)
         {
-           
+
         }
 
         private void OnPublicCallback(string op, object objR, object objW)
@@ -791,6 +795,62 @@ namespace GetStartedApp.ViewModels.PLC
         {
 
         }
+        #endregion
+
+
+        #region MQTT
+
+        private DelegateCommand _MQTTConfigCmd;
+        public DelegateCommand MQTTConfigCmd =>
+            _MQTTConfigCmd ?? (_MQTTConfigCmd = new DelegateCommand(ExecuteMQTTConfigCmd));
+
+        void ExecuteMQTTConfigCmd()
+        {
+            MqttClient mqtt = new MqttClient(new MqttConnectionOptions()
+            {
+                IpAddress = "127.0.0.1",     // 云服务器的ip和端口，是否需要用户名密码，取决于服务器的配置
+                Port = 1888,
+                ClientId = "kstopa"
+            });
+
+            OperateResult mqttConnect = mqtt.ConnectServer();
+            if (!mqttConnect.IsSuccess)
+            {
+                Console.WriteLine("Mqtt Connect failed: " + mqttConnect.Message);
+                Console.ReadLine();
+                return;
+            }
+
+            OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
+            mqtt.OnNetworkError += Mqtt_OnNetworkError;
+            mqtt.OnClientConnected += Mqtt_OnClientConnected;
+            mqtt.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+
+
+        }
+
+        private void Mqtt_OnClientConnected(MqttClient client)
+        {
+           
+        }
+
+        private void Mqtt_OnNetworkError(object? sender, EventArgs e)
+        {
+            var mqtt = sender as MqttClient;
+            mqtt.ConnectServer();
+
+
+        }
+
+        private void Mqtt_OnMqttMessageReceived(MqttClient client, MqttApplicationMessage message)
+        {
+            // 处理接收到的MQTT消息
+            Console.WriteLine($"Received MQTT message on topic {message.Topic}: {message.Payload}");
+
+            var str = Encoding.UTF8.GetString(message.Payload);
+        }
+
+
         #endregion
     }
 }
