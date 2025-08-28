@@ -10,6 +10,7 @@ using DryIoc.Microsoft.DependencyInjection;
 using Example;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Interface;
+using GetStartedApp.Services;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.Utils.Services;
 using GetStartedApp.ViewModels;
@@ -114,6 +115,8 @@ namespace GetStartedApp
 
             Console.WriteLine("RegisterTypes()");
             containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
+            containerRegistry.RegisterSingleton<IMqttService, MqttService>();
+
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///

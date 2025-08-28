@@ -50,7 +50,7 @@ namespace GetStartedApp.ViewModels.PLC
         // 路径与文件相关
         private const string PLC_CONFIG_PATH = @"/Assets/PLCs/";
         private const string PLC_FILE_PREFIX = "xlsx";
-
+        private MqttClient mqtt;
         // Excel配置相关
         private readonly string[] _sheetNames = { "CpuInfo", "EapConfig", "PlcConfig", "EventConfig" };
         private const int _cpuInfoStartRow = 3;
@@ -806,7 +806,7 @@ namespace GetStartedApp.ViewModels.PLC
 
         void ExecuteMQTTConfigCmd()
         {
-            MqttClient mqtt = new MqttClient(new MqttConnectionOptions()
+             mqtt = new MqttClient(new MqttConnectionOptions()
             {
                 IpAddress = "127.0.0.1",     // 云服务器的ip和端口，是否需要用户名密码，取决于服务器的配置
                 Port = 1888,
@@ -821,25 +821,21 @@ namespace GetStartedApp.ViewModels.PLC
                 return;
             }
 
-            OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
+           
             mqtt.OnNetworkError += Mqtt_OnNetworkError;
             mqtt.OnClientConnected += Mqtt_OnClientConnected;
             mqtt.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
 
-
+           OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
         }
 
         private void Mqtt_OnClientConnected(MqttClient client)
         {
-           
+            OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
         }
 
         private void Mqtt_OnNetworkError(object? sender, EventArgs e)
         {
-            var mqtt = sender as MqttClient;
-            mqtt.ConnectServer();
-
-
         }
 
         private void Mqtt_OnMqttMessageReceived(MqttClient client, MqttApplicationMessage message)
