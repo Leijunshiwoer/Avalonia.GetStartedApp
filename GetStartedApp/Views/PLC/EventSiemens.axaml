@@ -2,7 +2,9 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="clr-namespace:GetStartedApp.ViewModels.PLC;assembly=GetStartedApp"
              d:DesignHeight="450"
              d:DesignWidth="800"
@@ -10,14 +12,44 @@
              x:DataType="vm:EventSiemensViewModel"
              mc:Ignorable="d">
     <Grid RowDefinitions="auto,*">
-        <DataGrid x:Name="dg"
+        <u:ToolBar Grid.Row="0">
+            <u:IconButton Command="{Binding ConnMqttCmd}" Content="连接Mqtt服务">
+                <u:IconButton.Icon>
+                    <i:Icon FontSize="24"
+                            Foreground="DarkBlue"
+                            Value="mdi-plus" />
+                </u:IconButton.Icon>
+            </u:IconButton>
+
+            <TextBlock Grid.Column="2"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       Foreground="Blue"
+                       Text="{Binding MqttStatus}" />
+        </u:ToolBar>
+
+        <DataGrid x:Name="dgMqtt"
                   Grid.Row="1"
-                  ItemsSource="{Binding ObPlcEvnet}">
+                  ItemsSource="{Binding ObMqttMessage}">
 
             <DataGrid.Columns>
-                <!--<DataGridTextColumn Width="80"
-                                    Binding="{Binding FId}"
-                                    Header="ID" />-->
+                <DataGridTextColumn Width="200"
+                                    Binding="{Binding FTopic}"
+                                    Header="主题" />
+                <DataGridTextColumn Width="300"
+                                    Binding="{Binding FMessage}"
+                                    Header="消息" />
+
+                <DataGridTextColumn Width="180"
+                                    Binding="{Binding FRecivedTime}"
+                                    Header="请求时间" />
+
+            </DataGrid.Columns>
+        </DataGrid>
+        <!--<DataGrid x:Name="dg"
+                  Grid.Row="1"
+                  ItemsSource="{Binding ObPlcEvent}">
+            <DataGrid.Columns>
                 <DataGridTextColumn Width="120"
                                     Binding="{Binding FName}"
                                     Header="名称" />
@@ -52,6 +84,6 @@
                                     Binding="{Binding FResultMark}"
                                     Header="回复提示" />
             </DataGrid.Columns>
-        </DataGrid>
+        </DataGrid>-->
     </Grid>
 </UserControl>

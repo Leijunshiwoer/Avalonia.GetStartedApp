@@ -1,8 +1,10 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia;
+using Avalonia.Threading;
 using GetStartedApp.Interface;
 using GetStartedApp.Models;
 using GetStartedApp.Services; // Avalonia的Dispatcher命名空间
 using HslCommunication;
+using Prism.Commands;
 using SmartCommunicationForExcel;
 using SmartCommunicationForExcel.Model;
 using System;
@@ -24,7 +26,7 @@ namespace GetStartedApp.ViewModels.PLC
         private readonly ConcurrentQueue<(string topic, string payload, DateTime receiveTime)> _messageQueue = new();
         // 3. 标记队列是否正在消费（避免重复启动多个后台线程）
         private bool _isProcessingQueue;
-        public ObservableCollection<PlcEventModel> ObPlcEvnet
+        public ObservableCollection<PlcEventModel> ObPlcEvent
         {
             get { return _obPlcEvnet; }
         }
@@ -140,18 +142,39 @@ namespace GetStartedApp.ViewModels.PLC
                 FResultMark = param.Params.FirstOrDefault(it => it.Key == "Message")?.ValueData.ToString(),
             };
 
-            if (ObPlcEvnet.Count >= 100)
+            if (ObPlcEvent.Count >= 100)
             {
-                ObPlcEvnet.RemoveAt(ObPlcEvnet.Count - 1);
+                ObPlcEvent.RemoveAt(ObPlcEvent.Count - 1);
             }
 
-            ObPlcEvnet.Insert(0, newRecord);
+            ObPlcEvent.Insert(0, newRecord);
         }
         #endregion
 
         #endregion
 
 
+        private DelegateCommand _ConnMqttCmd;
+        public DelegateCommand ConnMqttCmd =>
+            _ConnMqttCmd ?? (_ConnMqttCmd = new DelegateCommand(ExecuteConnMqttCmd));
+
+        void ExecuteConnMqttCmd()
+        {
+            _ = StartClientAsync(); 
+        }
+
+        private ObservableCollection<MqttReciveModel> _ObMqttMessage=new ObservableCollection<MqttReciveModel>();
+        public ObservableCollection<MqttReciveModel> ObMqttMessage
+        {
+            get { return _ObMqttMessage; }
+            set { SetProperty(ref _ObMqttMessage, value); }
+        }
+        private string _MqttStatus;
+        public string MqttStatus
+        {
+            get { return _MqttStatus; }
+            set { SetProperty(ref _MqttStatus, value); }
+        }
         #region mqtt
         public async Task StartClientAsync()
         {
@@ -163,21 +186,31 @@ namespace GetStartedApp.ViewModels.PLC
                     _mqttService.ConnectionStatusChanged += OnConnectionStatusChanged;
                     _mqttService.MessageReceived += OnMessageReceived;
                     _mqttService.NetworkErrorOccurred += OnNetworkError;
+
+
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        // UI 操作代码
+                        MqttStatus = "已连接";
+                    });
                 }
 
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                await MessageBox.ShowAsync($"连接异常：{ex.Message}", "错误", MessageBoxIcon.Error);
             }
 
         }
 
         private void OnNetworkError(Exception exception)
         {
-            
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                MqttStatus = "连接中断";
+            });
         }
 
         private void OnMessageReceived(string topic, string payload)
@@ -212,13 +245,33 @@ namespace GetStartedApp.ViewModels.PLC
                         default:
                             break;
                     } // 模拟处理消息（如写入数据库）
+                      // 2. 创建要显示的MQTT消息记录
+                    var mqttRecord = new MqttReciveModel
+                    {
+                        FTopic = message.topic,
+                        FMessage = message.payload,
+                        FRecivedTime = message.receiveTime,
+                        // 其他属性根据你的MqttReciveModel定义补充
+                    };
 
+                    // 3. 在UI线程更新集合（Avalonia特有方式）
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        // 确保集合不超过100条，超过则移除最旧的
+                        if (ObMqttMessage.Count >= 100)
+                        {
+                            ObMqttMessage.RemoveAt(ObMqttMessage.Count - 1); // 移除最后一条（最旧）
+                        }
+
+                        // 添加新记录到最前面（最新的显示在顶部）
+                        ObMqttMessage.Insert(0, mqttRecord);
+                    });
                 }
             }
             catch (Exception ex)
             {
                 // 捕获队列处理的全局异常（不崩溃 UI）
-              await  MessageBox.ShowAsync($"队列处理异常：{ex.Message}", "错误", MessageBoxIcon.Error);
+                await MessageBox.ShowAsync($"队列处理异常：{ex.Message}", "错误", MessageBoxIcon.Error);
             }
             finally
             {

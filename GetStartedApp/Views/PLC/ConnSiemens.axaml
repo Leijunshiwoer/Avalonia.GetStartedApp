@@ -76,11 +76,6 @@
 
 
         </u:ToolBar>
-
-
-
-
-
         <DataGrid x:Name="dgPlcs"
                   Grid.Row="1"
                   ItemsSource="{Binding ObPLC}"
