@@ -4,6 +4,7 @@ using GetStartedApp.Interface;
 using GetStartedApp.Models;
 using GetStartedApp.Services; // Avalonia的Dispatcher命名空间
 using HslCommunication;
+using Newtonsoft.Json;
 using Prism.Commands;
 using SmartCommunicationForExcel;
 using SmartCommunicationForExcel.Model;
@@ -180,7 +181,7 @@ namespace GetStartedApp.ViewModels.PLC
         {
             try
             {
-                var res = await _mqttService.ConnectAsync("127.0.0.1", 1888, "kstopa");
+                var res = await _mqttService.ConnectAsync("192.168.115.208", 1888, "kstopa");
                 if (res.IsSuccess)
                 {
                     _mqttService.ConnectionStatusChanged += OnConnectionStatusChanged;
@@ -242,30 +243,49 @@ namespace GetStartedApp.ViewModels.PLC
                 {
                     switch (message.topic)
                     {
+                        case "devices/event01R/telemetry":
+                            // 处理上行消息
+
+                          var a=  JsonConvert.DeserializeObject<Event01R>(message.payload);
+
+                            var w = new Event01W()
+                            {
+                                event01W_sequnceId = a.event01R_sequnceId
+                            };
+
+                          await  _mqttService.PublishAsync("devices/PLC01/rpc/request/write/kstopa", JsonConvert.SerializeObject(w));
+                            break;
                         default:
                             break;
                     } // 模拟处理消息（如写入数据库）
                       // 2. 创建要显示的MQTT消息记录
-                    var mqttRecord = new MqttReciveModel
-                    {
-                        FTopic = message.topic,
-                        FMessage = message.payload,
-                        FRecivedTime = message.receiveTime,
-                        // 其他属性根据你的MqttReciveModel定义补充
-                    };
+                    //var mqttRecord = new MqttReciveModel
+                    //{
+                    //    FTopic = message.topic,
+                    //    FMessage = message.payload,
+                    //    FRecivedTime = message.receiveTime,
+                    //    // 其他属性根据你的MqttReciveModel定义补充
+                    //};
 
-                    // 3. 在UI线程更新集合（Avalonia特有方式）
-                    await Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        // 确保集合不超过100条，超过则移除最旧的
-                        if (ObMqttMessage.Count >= 100)
-                        {
-                            ObMqttMessage.RemoveAt(ObMqttMessage.Count - 1); // 移除最后一条（最旧）
-                        }
+                    //// 3. 在UI线程更新集合（Avalonia特有方式）
+                    //await Dispatcher.UIThread.InvokeAsync(() =>
+                    //{
+                    //    // 确保集合不超过100条，超过则移除最旧的
+                    //    if (ObMqttMessage.Count >= 100)
+                    //    {
+                    //        ObMqttMessage.RemoveAt(ObMqttMessage.Count - 1); // 移除最后一条（最旧）
+                    //    }
 
-                        // 添加新记录到最前面（最新的显示在顶部）
-                        ObMqttMessage.Insert(0, mqttRecord);
-                    });
+                    //    // 添加新记录到最前面（最新的显示在顶部）
+                    //    ObMqttMessage.Insert(0, mqttRecord);
+                    //});
+
+
+
+                    // await  _mqttService.PublishAsync("","");
+
+
+                    //Task.Delay(100).Wait(); // 模拟一些处理时间
                 }
             }
             catch (Exception ex)

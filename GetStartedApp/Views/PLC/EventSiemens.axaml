@@ -33,10 +33,10 @@
                   ItemsSource="{Binding ObMqttMessage}">
 
             <DataGrid.Columns>
-                <DataGridTextColumn Width="200"
+                <DataGridTextColumn Width="300"
                                     Binding="{Binding FTopic}"
                                     Header="主题" />
-                <DataGridTextColumn Width="300"
+                <DataGridTextColumn Width="500"
                                     Binding="{Binding FMessage}"
                                     Header="消息" />
 
