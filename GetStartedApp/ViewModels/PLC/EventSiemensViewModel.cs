@@ -225,7 +225,13 @@ namespace GetStartedApp.ViewModels.PLC
 
         private void OnConnectionStatusChanged(OperateResult result)
         {
-           
+            if (result.Message== "Reconnected to MQTT server successfully")
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    MqttStatus = "已连接";
+                });
+            }
         }
 
 

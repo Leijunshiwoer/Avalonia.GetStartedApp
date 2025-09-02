@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using HslCommunication;
 using HslCommunication.MQTT;
@@ -8,40 +9,50 @@ namespace GetStartedApp.Services
 {
     public class MqttService : IMqttService, IDisposable
     {
-        // 1. 线程安全单例（Lazy<T> 自带线程安全，默认 LazyThreadSafetyMode.ExecutionAndPublication）
+        // 线程安全单例
         private static readonly Lazy<MqttService> _instance = new Lazy<MqttService>(() => new MqttService());
 
-        // MQTT 客户端实例（异步操作核心对象）
+        // MQTT 客户端实例
         private MqttClient _mqttClient;
 
-        // 连接状态（线程安全访问，使用 volatile 防止指令重排序）
+        // 连接状态和参数
         private volatile bool _isConnected;
+        private string _lastIpAddress = "127.0.0.1";
+        private int _lastPort = 1888;
+        private string _lastClientId = "kstopa";
 
-        // 事件定义（供外部订阅，如 ViewModel）
+        // 重连相关字段
+        private readonly object _reconnectLock = new object();
+        private bool _isReconnecting;
+        private int _reconnectDelay = 5000; // 初始重连延迟5秒
+        private const int _maxReconnectDelay = 60000; // 最大重连延迟60秒
+        private CancellationTokenSource _reconnectCts;
+
+        // 事件定义
         public event Action<OperateResult> ConnectionStatusChanged;
-        /// <summary>
-        /// 
-        /// </summary>
         public event Action<string, string> MessageReceived;
         public event Action<Exception> NetworkErrorOccurred;
 
-        // 2. 连接状态对外暴露（线程安全）
+        // 连接状态对外暴露
         public bool IsConnected => _isConnected;
 
-        // 3. 构造函数：支持单例（无参）和依赖注入（带参，如后续扩展 DbHelper）
-       
-        // 供依赖注入容器使用的构造函数（若需注入其他服务，如日志、数据库）
-        public MqttService(/* 可添加依赖参数，如 ILogger<MqttService> logger */) { }
+        // 构造函数
+        public MqttService() { }
 
-        // 4. 单例访问点（对外提供唯一实例）
+        // 单例访问点
         public static MqttService Instance => _instance.Value;
 
-        // 5. 异步连接 MQTT 服务器（核心异步方法，返回操作结果）
+        // 异步连接 MQTT 服务器
         public async Task<OperateResult> ConnectAsync(
             string ipAddress = "127.0.0.1",
             int port = 1888,
             string clientId = "kstopa")
         {
+            // 保存连接参数，用于重连
+            _lastIpAddress = ipAddress;
+            _lastPort = port;
+            _lastClientId = clientId;
+
             // 先判断连接状态，避免重复连接
             if (_isConnected)
             {
@@ -52,50 +63,55 @@ namespace GetStartedApp.Services
 
             try
             {
-                // 初始化 MQTT 连接参数（异步操作前先初始化对象，避免线程安全问题）
+                // 初始化重连令牌源
+                _reconnectCts = new CancellationTokenSource();
+
+                // 初始化 MQTT 连接参数
                 var connectionOptions = new MqttConnectionOptions
                 {
                     IpAddress = ipAddress,
                     Port = port,
                     ClientId = clientId,
-                    // 可扩展：若服务器需要认证，添加用户名密码（异步操作不影响）
+                    // 可扩展：添加用户名密码
                     // UserName = "your-username",
                     // Password = "your-password"
                 };
 
-                // 实例化 MQTT 客户端（HslCommunication 的 MqttClient 支持异步操作）
+                // 实例化 MQTT 客户端
                 _mqttClient = new MqttClient(connectionOptions);
 
-                // 注册异步事件处理（关键：事件处理方法为 async void）
+                // 注册事件处理
                 _mqttClient.OnNetworkError += Mqtt_OnNetworkError;
                 _mqttClient.OnClientConnected += Mqtt_OnClientConnected;
                 _mqttClient.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
 
-                // 核心异步操作：连接服务器（Hsl 的 ConnectServerAsync 是真正的异步 IO 操作）
+                // 连接服务器
                 OperateResult connectResult = await _mqttClient.ConnectServerAsync();
 
-                // 更新连接状态（volatile 保证线程可见性）
+                // 更新连接状态
                 _isConnected = connectResult.IsSuccess;
 
-                // 触发连接状态事件（通知外部，如 ViewModel）
+                // 触发连接状态事件
                 ConnectionStatusChanged?.Invoke(connectResult);
 
                 return connectResult;
             }
             catch (Exception ex)
             {
-                // 捕获所有异常，封装为操作结果返回
                 var errorResult = new OperateResult($"Connect failed: {ex.Message}");
                 ConnectionStatusChanged?.Invoke(errorResult);
-                NetworkErrorOccurred?.Invoke(ex); // 触发错误事件，供外部记录日志
+                NetworkErrorOccurred?.Invoke(ex);
+
+                // 启动重连机制
+                StartReconnect();
+
                 return errorResult;
             }
         }
 
-        // 6. 异步订阅主题（支持多主题批量订阅）
+        // 异步订阅主题
         public async Task<OperateResult> SubscribeAsync(params string[] topics)
         {
-            // 校验前置条件：连接状态 + 客户端实例
             if (!_isConnected || _mqttClient == null)
             {
                 var result = new OperateResult("Subscribe failed: Not connected to MQTT server");
@@ -105,7 +121,6 @@ namespace GetStartedApp.Services
 
             try
             {
-                // 异步订阅（Hsl 的 SubscribeMessageAsync 为异步方法）
                 OperateResult subscribeResult = await _mqttClient.SubscribeMessageAsync(topics);
                 return subscribeResult;
             }
@@ -117,13 +132,12 @@ namespace GetStartedApp.Services
             }
         }
 
-        // 7. 异步发布消息（支持自定义 QoS 等级，默认 QoS0）
+        // 异步发布消息
         public async Task<OperateResult> PublishAsync(
             string topic,
             string payload,
             MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce)
         {
-            // 校验前置条件
             if (!_isConnected || _mqttClient == null)
             {
                 var result = new OperateResult("Publish failed: Not connected to MQTT server");
@@ -133,16 +147,14 @@ namespace GetStartedApp.Services
 
             try
             {
-                // 构建 MQTT 消息（Payload 转为字节数组）
                 var mqttMessage = new MqttApplicationMessage
                 {
                     Topic = topic,
                     Payload = Encoding.UTF8.GetBytes(payload),
                     QualityOfServiceLevel = qos,
-                    Retain = false // 是否保留消息，根据业务需求设置
+                    Retain = false
                 };
 
-                // 异步发布（Hsl 的 PublishMessageAsync 为异步方法）
                 OperateResult publishResult = await _mqttClient.PublishMessageAsync(mqttMessage);
                 return publishResult;
             }
@@ -154,14 +166,16 @@ namespace GetStartedApp.Services
             }
         }
 
-        // 8. 异步断开连接（释放资源，支持 IDisposable）
+        // 异步断开连接
         public async Task DisconnectAsync()
         {
+            // 取消重连
+            CancelReconnect();
+
             if (_isConnected && _mqttClient != null)
             {
                 try
                 {
-                    // 异步关闭连接（Hsl 的 ConnectCloseAsync 为异步方法，避免同步阻塞）
                     await _mqttClient.ConnectCloseAsync();
                 }
                 catch (Exception ex)
@@ -170,33 +184,143 @@ namespace GetStartedApp.Services
                 }
                 finally
                 {
-                    // 无论是否成功，都更新状态并取消事件订阅
                     _isConnected = false;
-                    UnsubscribeEvents(); // 取消事件订阅，避免内存泄漏
+                    UnsubscribeEvents();
                     ConnectionStatusChanged?.Invoke(new OperateResult("Disconnected from MQTT server"));
                 }
             }
         }
 
-        // 9. 网络错误事件处理（async void 符合事件规范，内部无 await 可简化为 void）
-        private void Mqtt_OnNetworkError(object? sender, EventArgs e)
+        // 启动重连机制
+        private void StartReconnect()
         {
-            _isConnected = false;
-            var error = new Exception("MQTT network error occurred (e.g., disconnected, timeout)");
-            NetworkErrorOccurred?.Invoke(error);
-            ConnectionStatusChanged?.Invoke(new OperateResult("Network error: Disconnected from server"));
+            // 确保同时只有一个重连操作在进行
+            lock (_reconnectLock)
+            {
+                if (_isReconnecting || _isConnected || _reconnectCts?.IsCancellationRequested == true)
+                    return;
+
+                _isReconnecting = true;
+                _ = PerformReconnectAsync(_reconnectCts.Token);
+            }
         }
 
-        // 10. 客户端连接成功事件处理（async void：事件处理允许异步，内部 await 订阅操作）
+        // 执行重连操作
+        private async Task PerformReconnectAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && !_isConnected)
+                {
+                    ConnectionStatusChanged?.Invoke(new OperateResult($"Attempting to reconnect in {_reconnectDelay / 1000} seconds..."));
+
+                    // 等待重连延迟或取消信号
+                    await Task.Delay(_reconnectDelay, cancellationToken);
+
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    try
+                    {
+                        // 尝试重新连接
+                        ConnectionStatusChanged?.Invoke(new OperateResult("Reconnecting to MQTT server..."));
+
+                        // 先清理之前的客户端
+                        if (_mqttClient != null)
+                        {
+                            UnsubscribeEvents();
+                            _mqttClient.Dispose();
+                        }
+
+                        // 创建新的连接参数和客户端
+                        var connectionOptions = new MqttConnectionOptions
+                        {
+                            IpAddress = _lastIpAddress,
+                            Port = _lastPort,
+                            ClientId = _lastClientId,
+                            // 用户名密码和之前保持一致
+                        };
+
+                        _mqttClient = new MqttClient(connectionOptions);
+
+                        // 重新注册事件
+                        _mqttClient.OnNetworkError += Mqtt_OnNetworkError;
+                        _mqttClient.OnClientConnected += Mqtt_OnClientConnected;
+                        _mqttClient.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+
+                        // 尝试连接
+                        var result = await _mqttClient.ConnectServerAsync();
+
+                        if (result.IsSuccess)
+                        {
+                            // 连接成功，重置重连延迟
+                            _reconnectDelay = 5000;
+                            _isConnected = true;
+                            ConnectionStatusChanged?.Invoke(new OperateResult("Reconnected to MQTT server successfully"));
+
+                            // 重新订阅之前的主题
+                            await SubscribeAsync("devices/+/#");
+                            break;
+                        }
+                        else
+                        {
+                            ConnectionStatusChanged?.Invoke(new OperateResult($"Reconnection failed: {result.Message}"));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        NetworkErrorOccurred?.Invoke(new Exception($"Reconnection error: {ex.Message}"));
+                    }
+
+                    // 指数退避算法：重连失败后延迟加倍，但不超过最大值
+                    _reconnectDelay = Math.Min(_reconnectDelay * 2, _maxReconnectDelay);
+                }
+            }
+            finally
+            {
+                _isReconnecting = false;
+            }
+        }
+
+        // 取消重连
+        private void CancelReconnect()
+        {
+            lock (_reconnectLock)
+            {
+                if (_reconnectCts != null && !_reconnectCts.IsCancellationRequested)
+                {
+                    _reconnectCts.Cancel();
+                    _reconnectCts.Dispose();
+                    _reconnectCts = null;
+                }
+                _isReconnecting = false;
+            }
+        }
+
+        // 网络错误事件处理
+        private void Mqtt_OnNetworkError(object? sender, EventArgs e)
+        {
+            if (_isConnected) // 只在连接状态下处理网络错误
+            {
+                _isConnected = false;
+                var error = new Exception("MQTT network error occurred (e.g., disconnected, timeout)");
+                NetworkErrorOccurred?.Invoke(error);
+                ConnectionStatusChanged?.Invoke(new OperateResult("Network error: Disconnected from server"));
+
+                // 启动重连
+                StartReconnect();
+            }
+        }
+
+        // 客户端连接成功事件处理
         private async void Mqtt_OnClientConnected(MqttClient client)
         {
             _isConnected = true;
             ConnectionStatusChanged?.Invoke(new OperateResult("Connected to MQTT server successfully"));
 
-            // 异步订阅主题（连接成功后自动订阅，避免同步阻塞）
             try
             {
-                await SubscribeAsync("devices/+/#"); // 批量订阅可传多个主题
+                await SubscribeAsync("devices/+/#");
             }
             catch (Exception ex)
             {
@@ -204,20 +328,14 @@ namespace GetStartedApp.Services
             }
         }
 
-        // 11. 消息接收事件处理（同步处理，若后续需数据库操作，需转为异步后台执行）
+        // 消息接收事件处理
         private void Mqtt_OnMqttMessageReceived(MqttClient client, MqttApplicationMessage message)
         {
             try
             {
-                // 同步解析消息（轻量操作，若解析复杂需改为 async）
                 string topic = message.Topic;
                 string payload = Encoding.UTF8.GetString(message.Payload);
-
-                // 触发消息接收事件（通知外部，如 ViewModel 处理或异步存库）
                 MessageReceived?.Invoke(topic, payload);
-
-                // 【扩展】若需异步存数据库，此处需用 Task.Run 或注入异步服务
-                // _ = SaveMessageToDbAsync(topic, payload); // 用 _ 忽略 Task，避免阻塞
             }
             catch (Exception ex)
             {
@@ -225,7 +343,7 @@ namespace GetStartedApp.Services
             }
         }
 
-        // 12. 取消事件订阅（避免内存泄漏，在断开连接或释放时调用）
+        // 取消事件订阅
         private void UnsubscribeEvents()
         {
             if (_mqttClient == null) return;
@@ -235,18 +353,18 @@ namespace GetStartedApp.Services
             _mqttClient.OnMqttMessageReceived -= Mqtt_OnMqttMessageReceived;
         }
 
-        // 13. IDisposable 实现（释放 MQTT 客户端资源，避免内存泄漏）
+        // IDisposable 实现
         public void Dispose()
         {
-            // 异步断开连接（此处用 Wait 是因为 Dispose 是同步方法，需确保资源释放）
-            _ = DisconnectAsync().ConfigureAwait(false); // 不捕获上下文，避免死锁
+            // 取消重连
+            CancelReconnect();
+
+            // 断开连接
+            _ = DisconnectAsync().ConfigureAwait(false);
 
             // 释放客户端实例
             _mqttClient?.Dispose();
             _mqttClient = null;
         }
     }
-
-
-    
 }
