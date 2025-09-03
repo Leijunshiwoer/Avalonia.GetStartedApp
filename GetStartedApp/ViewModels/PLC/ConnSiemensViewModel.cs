@@ -765,36 +765,38 @@ namespace GetStartedApp.ViewModels.PLC
         void ExecuteBeckhoffConfigCmd()
         {
             // 打开倍福配置窗口
-            var _Beckhoff = new SiemensPLCConnection(new PlcConfig() { Ip = "127.0.0.1", Port = 102, Op = "OP10" });
-            _Beckhoff.OnPublicDataCallback += OnPublicCallback;
-            _Beckhoff.OnEventDataCallback += OnEventCallback;
-            _Beckhoff.OnError += OnErrCallback;
-            _Beckhoff.OnInfo += OnInfo;
+            var _plc = new SiemensPLCConnection(new PlcConfig() { Ip = "127.0.0.1", Port = 102, Op = "OP10" });
+            _plc.OnPublicDataCallback += OnPublicCallback;
+            _plc.OnEventDataCallback += OnEventCallback;
+            _plc.OnError += OnErrCallback;
+            _plc.OnInfo += OnInfo;
 
         }
 
 
-
-
-        private void OnInfo(string Info)
+        private void OnErrCallback(string obj)
         {
 
         }
 
-        private void OnErrCallback(string errMsg)
+        private void OnInfo(string obj)
         {
 
         }
 
-        private void OnPublicCallback(string op, object objR, object objW)
+        private void OnEventCallback(string arg1, EventInfo info)
         {
 
         }
 
-        private void OnEventCallback(string op, object obj)
+        private void OnPublicCallback(string arg1, PublicAreaToPC pC1, PublicAreaFromPC pC2)
         {
 
         }
+
+
+
+
         #endregion
 
 

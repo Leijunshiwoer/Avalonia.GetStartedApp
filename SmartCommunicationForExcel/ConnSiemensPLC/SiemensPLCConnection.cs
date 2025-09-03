@@ -10,261 +10,441 @@ using System.Threading.Tasks;
 
 namespace SmartCommunicationForExcel.ConnSiemensPLC
 {
+    /// <summary>
+    /// 西门子PLC异步通信类（支持自动重连）
+    /// </summary>
     public class SiemensPLCConnection : IDisposable
     {
-        #region 常量与配置
-        private const int READ_INTERVAL_MS = 10;
-        private const string AUTHORIZATION_CODE = "AA10EE5AF72513F0CD1C766EBFDA0835";
+        #region 常量配置（可根据实际需求调整）
+        private const int READ_INTERVAL_MS = 10;                  // 数据读取间隔（毫秒）
+        private const string AUTHORIZATION_CODE = "AA10EE5AF72513F0CD1C766EBFDA0835"; // HSL授权码
+        private const int INITIAL_RECONNECT_DELAY_MS = 1000;      // 初始重连延迟（毫秒）
+        private const int MAX_RECONNECT_DELAY_MS = 30000;         // 最大重连延迟（30秒）
+        private const int RECONNECT_CHECK_INTERVAL = 5;           // 重连检查频率（每5次读取循环）
+        private const int PLC_CONNECT_TIMEOUT_MS = 5000;          // PLC连接超时（5秒）
         #endregion
 
         #region 字段与属性
-        private readonly SiemensS7Net[] _siemensPLCs;
-        private readonly Thread _dataReadThread;
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-        private readonly ConcurrentQueue<EventInfo> _eventQueue = new ConcurrentQueue<EventInfo>();
-        private readonly SmartThreadPool _smartThreadPool;
-        private readonly PlcInfo[] _plcInfos;
-        private bool _isDisposed = false;
+        private readonly SiemensS7Net[] _siemensPLCs;             // PLC通信实例数组
+        private readonly PlcInfo[] _plcInfos;                     // PLC配置与状态信息
+        private readonly SmartThreadPool _smartThreadPool;        // 事件处理线程池
+        private readonly ConcurrentQueue<EventInfo> _eventQueue;  // 事件队列
+        private readonly CancellationTokenSource _cts;           // 取消令牌源
+        private Task _dataReadTask;                               // 异步读取任务
+        private int _reconnectAttemptCount;                       // 重连尝试计数器
+        private bool _isDisposed;                                 // 资源释放标记
         #endregion
 
-        #region 事件定义
-        public delegate void ErrorHandler(string errMsg);
-        public event ErrorHandler OnError;
+        #region 事件定义（供外部订阅状态）
+        /// <summary>
+        /// 错误事件（异常信息）
+        /// </summary>
+        public event Action<string> OnError;
 
-        public delegate void InfoHandler(string info);
-        public event InfoHandler OnInfo;
+        /// <summary>
+        /// 信息事件（连接/重连状态）
+        /// </summary>
+        public event Action<string> OnInfo;
 
-        public delegate void PublicDataCallback(string op, object readData, object writeData);
-        public event PublicDataCallback OnPublicDataCallback;
+        /// <summary>
+        /// 公共区数据回调（读取/写入数据）
+        /// </summary>
+        public event Action<string, PublicAreaToPC, PublicAreaFromPC> OnPublicDataCallback;
 
-        public delegate void EventDataCallback(string op, object eventData);
-        public event EventDataCallback OnEventDataCallback;
+        /// <summary>
+        /// 事件数据回调（事件触发数据）
+        /// </summary>
+        public event Action<string, EventInfo> OnEventDataCallback;
         #endregion
 
         #region 构造函数与初始化
+        /// <summary>
+        /// 初始化PLC通信实例
+        /// </summary>
+        /// <param name="config">PLC配置信息</param>
         public SiemensPLCConnection(PlcConfig config)
         {
+            // 验证配置有效性
+            ValidateConfig(config);
+
+            // 初始化基础组件
+            _cts = new CancellationTokenSource();
+            _eventQueue = new ConcurrentQueue<EventInfo>();
+            _reconnectAttemptCount = 0;
+            _isDisposed = false;
+
+            // 初始化PLC信息与通信实例
             _plcInfos = InitializePlcInfo(config);
             _siemensPLCs = InitializePLCConnections();
+
+            // 初始化线程池（限制线程数量避免资源耗尽）
             _smartThreadPool = CreateSmartThreadPool();
-            _dataReadThread = new Thread(StartDataReadingLoop) { IsBackground = true };
 
-            Start();
+            // 异步启动通信（避免构造函数阻塞）
+            _ = StartAsync();
         }
 
-        private PlcInfo[] InitializePlcInfo(PlcConfig config)
+        /// <summary>
+        /// 验证PLC配置
+        /// </summary>
+        private void ValidateConfig(PlcConfig config)
         {
-            return new[] { new PlcInfo
-            {
-                Op = config.Op,
-                Ip = config.Ip,
-                Port = config.Port,
-                IsConnected = false,
-                PublicInfo = new PublicInfo
-                {
-                    ReadLength = 0,
-                    WriteLength = 0
-                },
-                Events = new List<EventInfo>
-                {
-                    new EventInfo
-                    {
-                        Index = 0,
-                        Name = "测试事件01",
-                        TriggerCompleted = false,
-                        SequenceIdRead = -1,
-                        SequenceIdWrite = -1
-                    }
-                }
-            }};
+            if (config == null)
+                throw new ArgumentNullException(nameof(config), "PLC配置不能为空");
+            if (string.IsNullOrWhiteSpace(config.Ip))
+                throw new ArgumentException("PLC IP地址不能为空", nameof(config.Ip));
+            if (config.Port <= 0 || config.Port > 65535)
+                throw new ArgumentException("PLC端口号无效（1-65535）", nameof(config.Port));
         }
 
+      
+
+        /// <summary>
+        /// 初始化PLC通信实例（S1500）
+        /// </summary>
         private SiemensS7Net[] InitializePLCConnections()
         {
-            return new[] { new SiemensS7Net(SiemensPLCS.S1500)
+            return new[]
             {
-                IpAddress = _plcInfos[0].Ip,
-                Port = _plcInfos[0].Port
-            }};
+                new SiemensS7Net(SiemensPLCS.S1500)
+                {
+                    IpAddress = _plcInfos[0].Ip,
+                    Port = _plcInfos[0].Port,
+                    ConnectTimeOut = PLC_CONNECT_TIMEOUT_MS,
+                }
+            };
         }
 
+        /// <summary>
+        /// 创建智能线程池（事件处理专用）
+        /// </summary>
         private SmartThreadPool CreateSmartThreadPool()
         {
-            var stpStartInfo = new STPStartInfo
+            var stpConfig = new STPStartInfo
             {
                 CallToPostExecute = CallToPostExecute.Always,
-                FillStateWithArgs = true
+                FillStateWithArgs = true,
+                MaxWorkerThreads = 100,    // 最大工作线程（根据事件数量调整）
+                MinWorkerThreads = 1,    // 最小工作线程
+                IdleTimeout = 30000,     // 线程空闲超时（30秒）
+              
             };
-            return new SmartThreadPool(stpStartInfo);
-        }
-
-        public void Start()
-        {
-            try
-            {
-                Authorization.SetAuthorizationCode(AUTHORIZATION_CODE);
-                var connectResult = _siemensPLCs[0].ConnectServer();
-                if (!connectResult.IsSuccess)
-                {
-                    OnError?.Invoke($"PLC连接失败：{connectResult.Message}");
-                    return;
-                }
-
-                _plcInfos[0].IsConnected = true;
-                _dataReadThread.Start();
-                OnInfo?.Invoke("PLC通信已启动");
-            }
-            catch (Exception ex)
-            {
-                OnError?.Invoke($"启动失败：{ex.Message}");
-            }
+            return new SmartThreadPool(stpConfig);
         }
         #endregion
 
-        #region 数据读取与处理循环
-        private void StartDataReadingLoop()
+        #region 核心通信逻辑（异步+重连）
+        /// <summary>
+        /// 异步启动PLC通信
+        /// </summary>
+        public async Task StartAsync()
         {
+            try
+            {
+                // 激活HSL授权
+                Authorization.SetAuthorizationCode(AUTHORIZATION_CODE);
+
+                // 异步连接PLC
+                var connectResult = await _siemensPLCs[0].ConnectServerAsync();
+                if (!connectResult.IsSuccess)
+                {
+                    OnError?.Invoke($"PLC初始连接失败：{connectResult.Message}（IP：{_plcInfos[0].Ip}）");
+                    return;
+                }
+
+                // 连接成功初始化状态
+                _plcInfos[0].IsConnected = true;
+                _reconnectAttemptCount = 0;
+                OnInfo?.Invoke($"PLC初始连接成功（IP：{_plcInfos[0].Ip}，端口：{_plcInfos[0].Port}）");
+
+                // 启动异步读取循环（后台任务）
+                _dataReadTask = Task.Run(ExecuteDataReadingLoopAsync, _cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                OnInfo?.Invoke("PLC启动操作已取消");
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke($"PLC启动异常：{ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 异步数据读取循环（核心逻辑）
+        /// </summary>
+        private async Task ExecuteDataReadingLoopAsync()
+        {
+            int readCycleCounter = 0; // 循环计数器（控制重连检查频率）
+
             while (!_cts.Token.IsCancellationRequested)
             {
                 try
                 {
+                    // 检查连接状态：断开则触发重连
                     if (!_plcInfos[0].IsConnected)
                     {
-                        Thread.Sleep(READ_INTERVAL_MS);
-                        continue;
+                        readCycleCounter++;
+                        // 每N次循环检查一次重连（避免频繁尝试）
+                        if (readCycleCounter % RECONNECT_CHECK_INTERVAL == 0)
+                        {
+                            await AttemptReconnectAsync(plcIndex: 0);
+                            readCycleCounter = 0;
+                        }
+                    }
+                    else
+                    {
+                        // 连接正常：处理公共区数据+事件触发
+                        await ProcessPublicAreaDataAsync(plcIndex: 0);
+                        ProcessEventTriggers(plcIndex: 0);
                     }
 
-                    ProcessPublicAreaData(0);
-                    ProcessEventTriggers(0);
+                    // 非阻塞等待（支持取消）
+                    await Task.Delay(READ_INTERVAL_MS, _cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    OnInfo?.Invoke("PLC数据读取循环已取消");
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    OnError?.Invoke($"读取循环异常：{ex.Message}");
+                    OnError?.Invoke($"PLC读取循环异常：{ex.Message}");
+                    _plcInfos[0].IsConnected = false; // 标记为断开，触发重连
                 }
-
-                _cts.Token.WaitHandle.WaitOne(READ_INTERVAL_MS);
             }
         }
 
-        private void ProcessPublicAreaData(int plcIndex)
+        /// <summary>
+        /// PLC自动重连（指数退避策略）
+        /// </summary>
+        /// <param name="plcIndex">PLC索引</param>
+        private async Task AttemptReconnectAsync(int plcIndex)
         {
-            // 读取公共区（ToPC）
-            var readResult = _siemensPLCs[plcIndex].Read<PublicAreaToPC>();
-            if (!readResult.IsSuccess)
-            {
-                OnError?.Invoke($"{_plcInfos[plcIndex].Op}公共区读取失败：{readResult.Message}");
-                return;
-            }
-            _plcInfos[plcIndex].PublicInfo.ReadData = readResult.Content;
+            if (_cts.Token.IsCancellationRequested) return;
 
-            // 首次读取初始化写入区（FromPC）
-            if (_plcInfos[plcIndex].PublicInfo.WriteData == null)
+            var plcInfo = _plcInfos[plcIndex];
+            var plcClient = _siemensPLCs[plcIndex];
+
+            // 计算重连延迟（指数退避：1s → 2s → 4s → ... → 30s）
+            int reconnectDelay = (int)Math.Min(
+                INITIAL_RECONNECT_DELAY_MS * Math.Pow(2, _reconnectAttemptCount),
+                MAX_RECONNECT_DELAY_MS);
+
+            OnInfo?.Invoke($"PLC重连尝试（{_reconnectAttemptCount + 1}次）：IP={plcInfo.Ip}，延迟{reconnectDelay}ms");
+
+            try
             {
-                var initWriteResult = _siemensPLCs[plcIndex].Read<PublicAreaFromPC>();
-                if (!initWriteResult.IsSuccess)
+                // 等待重连延迟（支持取消）
+                await Task.Delay(reconnectDelay, _cts.Token);
+
+                // 关闭现有连接（避免连接泄漏）
+               
+                    plcClient.ConnectClose();
+
+                // 异步重连
+                var reconnectResult = await plcClient.ConnectServerAsync();
+                if (reconnectResult.IsSuccess)
                 {
-                    OnError?.Invoke($"{_plcInfos[plcIndex].Op}初始化写入区失败：{initWriteResult.Message}");
+                    plcInfo.IsConnected = true;
+                    _reconnectAttemptCount = 0; // 重连成功重置计数器
+                    OnInfo?.Invoke($"PLC重连成功：IP={plcInfo.Ip}，端口={plcInfo.Port}");
+                }
+                else
+                {
+                    _reconnectAttemptCount++;
+                    OnError?.Invoke($"PLC重连失败（{_reconnectAttemptCount}次）：{reconnectResult.Message}");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                OnInfo?.Invoke($"PLC重连操作已取消（IP：{plcInfo.Ip}）");
+            }
+            catch (Exception ex)
+            {
+                _reconnectAttemptCount++;
+                OnError?.Invoke($"PLC重连异常（{_reconnectAttemptCount}次）：{ex.Message}");
+            }
+        }
+        #endregion
+
+        #region 数据处理逻辑（公共区+事件）
+        /// <summary>
+        /// 异步处理公共区数据（读取+写入）
+        /// </summary>
+        private async Task ProcessPublicAreaDataAsync(int plcIndex)
+        {
+            var plcInfo = _plcInfos[plcIndex];
+            var plcClient = _siemensPLCs[plcIndex];
+            var publicInfo = plcInfo.PublicInfo;
+
+            try
+            {
+                // 1. 读取公共区（PLC→PC：PublicAreaToPC）
+                var readResult = await plcClient.ReadAsync<PublicAreaToPC>();
+                if (!readResult.IsSuccess)
+                {
+                    OnError?.Invoke($"公共区读取失败（{plcInfo.Op}）：{readResult.Message}");
+                    plcInfo.IsConnected = false;
                     return;
                 }
-                _plcInfos[plcIndex].PublicInfo.WriteData = initWriteResult.Content;
+                publicInfo.ReadData = readResult.Content;
+
+                // 2. 首次读取初始化写入区（PC→PLC：PublicAreaFromPC）
+                if (publicInfo.WriteData == null)
+                {
+                    var initWriteResult = await plcClient.ReadAsync<PublicAreaFromPC>();
+                    if (!initWriteResult.IsSuccess)
+                    {
+                        OnError?.Invoke($"写入区初始化失败（{plcInfo.Op}）：{initWriteResult.Message}");
+                        plcInfo.IsConnected = false;
+                        return;
+                    }
+                    publicInfo.WriteData = initWriteResult.Content;
+                    OnInfo?.Invoke($"写入区初始化成功（{plcInfo.Op}）");
+                }
+
+                // 3. 触发外部数据回调
+                OnPublicDataCallback?.Invoke(plcInfo.Op, publicInfo.ReadData, publicInfo.WriteData);
+
+                // 4. 写入公共区数据（PC→PLC）
+                var writeResult = await plcClient.WriteAsync(publicInfo.WriteData);
+                if (!writeResult.IsSuccess)
+                {
+                    OnError?.Invoke($"公共区写入失败（{plcInfo.Op}）：{writeResult.Message}");
+                    plcInfo.IsConnected = false;
+                }
             }
-
-            // 触发公共区回调
-            OnPublicDataCallback?.Invoke(
-                _plcInfos[plcIndex].Op,
-                _plcInfos[plcIndex].PublicInfo.ReadData,
-                _plcInfos[plcIndex].PublicInfo.WriteData);
-
-            // 写入公共区数据
-            var writeResult = _siemensPLCs[plcIndex].Write(_plcInfos[plcIndex].PublicInfo.WriteData);
-            if (!writeResult.IsSuccess)
+            catch (OperationCanceledException)
             {
-                OnError?.Invoke($"{_plcInfos[plcIndex].Op}公共区写入失败：{writeResult.Message}");
+                // 取消操作不抛出错误
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke($"公共区处理异常（{plcInfo.Op}）：{ex.Message}");
+                plcInfo.IsConnected = false;
             }
         }
 
+        /// <summary>
+        /// 处理事件触发（检查触发状态+异步处理）
+        /// </summary>
         private void ProcessEventTriggers(int plcIndex)
         {
             var plcInfo = _plcInfos[plcIndex];
-            var eventTrigger = plcInfo.PublicInfo.ReadData?.EventsTrigger;
-            if (eventTrigger == null) return;
+            var publicData = plcInfo.PublicInfo.ReadData;
 
-            for (int i = 0; i < plcInfo.Events.Count; i++)
-            {
-                if (eventTrigger[i] && !plcInfo.Events[i].TriggerCompleted)
-                {
-                    ProcessEvent(plcIndex, i);
-                }
-            }
-        }
-
-        private void ProcessEvent(int plcIndex, int eventIndex)
-        {
-            var plcInfo = _plcInfos[plcIndex];
-            var eventInfo = plcInfo.Events[eventIndex];
-
-            // 读取事件区数据（保留dynamic类型处理）
-            var readSuccess = ReadEventData(plcIndex, eventInfo);
-            if (!readSuccess) return;
-
-            // 检查SequenceID是否匹配（使用dynamic访问属性）
-            if (eventInfo.SequenceIdWrite == eventInfo.SequenceIdRead)
-            {
-                OnInfo?.Invoke($"{eventInfo.Name}事件SequenceID相等：{eventInfo.SequenceIdRead}");
+            // 检查公共区事件触发数据是否有效
+            if (publicData == null || publicData.EventsTrigger == null)
                 return;
-            }
 
-            // 提交到线程池处理
-            eventInfo.TriggerCompleted = true;
-            _smartThreadPool.QueueWorkItem(ProcessEventCallback, eventInfo, OnEventProcessed);
-        }
-
-        // 读取事件区数据（保留dynamic类型）
-        private bool ReadEventData(int plcIndex, EventInfo eventInfo)
-        {
             try
             {
-                if (plcIndex==0)
+                // 遍历所有事件检查触发状态
+                for (int i = 0; i < plcInfo.Events.Count; i++)
                 {
-                    switch (eventInfo.Index)
+                    var eventInfo = plcInfo.Events[i];
+                    // 事件触发且未处理完成
+                    if (i < publicData.EventsTrigger.Length
+                        && publicData.EventsTrigger[i]
+                        && !eventInfo.TriggerCompleted)
                     {
-                        case 0:
-                            // 读取事件区FromPC（PLC到PC）
-                            var readFromResult = _siemensPLCs[plcIndex].Read<Event01AreaFromPC>();
-                            if (!readFromResult.IsSuccess)
-                            {
-                                OnError?.Invoke($"{eventInfo.Name}FromPC读取失败：{readFromResult.Message}");
-                                return false;
-                            }
-
-                            // 读取事件区ToPC（PC到PLC）
-                            var readToResult = _siemensPLCs[plcIndex].Read<Event01AreaToPC>();
-                            if (!readToResult.IsSuccess)
-                            {
-                                OnError?.Invoke($"{eventInfo.Name}ToPC读取失败：{readToResult.Message}");
-                                return false;
-                            }
-
-                            // 保留dynamic类型赋值
-                            eventInfo.ObjW = readFromResult.Content;
-                            eventInfo.ObjR = readToResult.Content;
-
-                            // 动态访问SequenceID属性
-                            eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID;
-                            eventInfo.SequenceIdRead = eventInfo.ObjR.SequenceID;
-                            break;
-                        default:
-                            break;
+                        _ = ProcessSingleEventAsync(plcIndex, eventInfo); // 异步处理（不阻塞）
                     }
                 }
-                else if (plcIndex==1)
-                {
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke($"事件触发处理异常（{plcInfo.Op}）：{ex.Message}");
+            }
+        }
 
-                    // 其他PLC处理逻辑（如果有）
-                   // OnError?.Invoke($"未实现的PLC索引：{plcIndex}");
-                   
+        /// <summary>
+        /// 异步处理单个事件（读取数据+线程池回调）
+        /// </summary>
+        private async Task ProcessSingleEventAsync(int plcIndex, EventInfo eventInfo)
+        {
+            var plcInfo = _plcInfos[plcIndex];
+
+            try
+            {
+                // 1. 异步读取事件区数据
+                bool readSuccess = await ReadEventAreaDataAsync(plcIndex, eventInfo);
+                if (!readSuccess)
+                {
+                    OnError?.Invoke($"事件数据读取失败（{eventInfo.Name}）");
+                    return;
                 }
-                    return true;
+
+                // 2. 检查SequenceID（避免重复处理）
+                if (eventInfo.SequenceIdWrite == eventInfo.SequenceIdRead)
+                {
+                    OnInfo?.Invoke($"事件SequenceID重复（{eventInfo.Name}）：{eventInfo.SequenceIdRead}");
+                    return;
+                }
+
+                // 3. 标记为处理中，提交到线程池处理
+                eventInfo.TriggerCompleted = true;
+                _smartThreadPool.QueueWorkItem(
+                     ProcessEventCallback,
+                     eventInfo,
+                    OnEventProcessed);
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke($"事件处理异常（{eventInfo.Name}）：{ex.Message}");
+                plcInfo.IsConnected = false;
+            }
+        }
+
+        /// <summary>
+        /// 异步读取事件区数据（支持多事件类型）
+        /// </summary>
+        private async Task<bool> ReadEventAreaDataAsync(int plcIndex, EventInfo eventInfo)
+        {
+            var plcClient = _siemensPLCs[plcIndex];
+
+            try
+            {
+                switch (eventInfo.Index)
+                {
+                    case 0: // 事件01：对应Event01Area类型
+                        // 读取PLC→PC数据（Event01AreaFromPC）
+                        var fromPcResult = await plcClient.ReadAsync<Event01AreaFromPC>();
+                        if (!fromPcResult.IsSuccess)
+                        {
+                            OnError?.Invoke($"{eventInfo.Name}FromPC读取失败：{fromPcResult.Message}");
+                            return false;
+                        }
+
+                        // 读取PC→PLC数据（Event01AreaToPC）
+                        var toPcResult = await plcClient.ReadAsync<Event01AreaToPC>();
+                        if (!toPcResult.IsSuccess)
+                        {
+                            OnError?.Invoke($"{eventInfo.Name}ToPC读取失败：{toPcResult.Message}");
+                            return false;
+                        }
+
+                        // 存储读取结果
+                        eventInfo.ObjW = fromPcResult.Content;
+                        eventInfo.ObjR = toPcResult.Content;
+
+                        // 更新SequenceID
+                        eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID;
+                        eventInfo.SequenceIdRead = eventInfo.ObjR.SequenceID;
+                        break;
+
+                    // 可以添加更多事件类型处理
+                    default:
+                        OnError?.Invoke($"未实现的事件索引：{eventInfo.Index}");
+                        return false;
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
             }
             catch (Exception ex)
             {
@@ -274,91 +454,193 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         }
         #endregion
 
-        #region 事件回调处理
+        #region 事件回调与结果处理
+        /// <summary>
+        /// 事件处理回调（在线程池中执行）
+        /// </summary>
         private object ProcessEventCallback(object state)
         {
-            var eventInfo = state as EventInfo;
-            OnEventDataCallback?.Invoke(_plcInfos[0].Op, eventInfo);
-            return eventInfo;
+            try
+            {
+                var eventInfo = state as EventInfo;
+                if (eventInfo == null)
+                {
+                    OnError?.Invoke("事件回调：无效的事件信息");
+                    return null;
+                }
+
+                // 触发外部事件回调
+                OnEventDataCallback?.Invoke(_plcInfos[0].Op, eventInfo);
+                return eventInfo;
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke($"事件回调处理异常：{ex.Message}");
+                return null;
+            }
         }
 
+        /// <summary>
+        /// 事件处理完成后执行（写回PLC结果）
+        /// </summary>
         private void OnEventProcessed(IWorkItemResult result)
         {
             if (result.Result is EventInfo eventInfo)
             {
-                WriteEventResultToPLC(eventInfo, 0);
+                _ = WriteEventResultAsync(eventInfo, 0);
             }
         }
 
-        private void WriteEventResultToPLC(EventInfo eventInfo, int plcIndex)
+        /// <summary>
+        /// 异步写回事件处理结果到PLC
+        /// </summary>
+        private async Task WriteEventResultAsync(EventInfo eventInfo, int plcIndex)
         {
             try
             {
-                // 动态访问和修改属性
-                eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID = eventInfo.ObjR.SequenceID;
-                var writeResult = _siemensPLCs[plcIndex].Write(eventInfo.ObjW);
-
-                if (!writeResult.IsSuccess)
+                if (!_plcInfos[plcIndex].IsConnected)
                 {
-                    OnError?.Invoke($"{eventInfo.Name}写入失败：{writeResult.Message}");
+                    OnInfo?.Invoke($"{eventInfo.Name}写回跳过：PLC未连接");
                     return;
                 }
 
+                // 更新SequenceID（标记为已处理）
+                eventInfo.SequenceIdWrite = eventInfo.ObjW.SequenceID = eventInfo.ObjR.SequenceID;
+
+                // 异步写回处理结果
+                var writeResult = await _siemensPLCs[plcIndex].WriteAsync(eventInfo.ObjW);
+                if (!writeResult.IsSuccess)
+                {
+                    OnError?.Invoke($"{eventInfo.Name}写回失败：{writeResult.Message}");
+                    _plcInfos[plcIndex].IsConnected = false;
+                    return;
+                }
+
+                // 重置事件状态，允许下次触发
                 eventInfo.TriggerCompleted = false;
                 OnInfo?.Invoke($"{eventInfo.Name}处理完成，已写回PLC");
+            }
+            catch (OperationCanceledException)
+            {
+                // 取消操作不抛出错误
             }
             catch (Exception ex)
             {
                 OnError?.Invoke($"{eventInfo.Name}写回异常：{ex.Message}");
+                _plcInfos[plcIndex].IsConnected = false;
             }
         }
         #endregion
 
         #region 资源释放
+        /// <summary>
+        /// 释放资源
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// 释放资源（实现IDisposable模式）
+        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (_isDisposed) return;
 
             if (disposing)
             {
+                // 释放托管资源
                 _cts.Cancel();
-                _dataReadThread?.Join();
+                if (_dataReadTask != null)
+                {
+                    try { _dataReadTask.Wait(1000); }
+                    catch (AggregateException) { }
+                }
                 _smartThreadPool?.Shutdown();
                 _cts.Dispose();
             }
 
+            // 释放非托管资源
             if (_siemensPLCs != null)
             {
                 foreach (var plc in _siemensPLCs)
                 {
-                    plc.ConnectClose();
+                        plc.ConnectClose();
                 }
             }
 
             _isDisposed = true;
+            OnInfo?.Invoke("PLC通信资源已释放");
         }
 
+        /// <summary>
+        /// 析构函数
+        /// </summary>
         ~SiemensPLCConnection()
         {
             Dispose(false);
         }
         #endregion
+
+
+        #region 初始化PLC信息（状态+配置）
+        /// <summary>
+        /// 初始化PLC信息（状态+配置）
+        /// </summary>
+        private PlcInfo[] InitializePlcInfo(PlcConfig config)
+        {
+            return new[]
+            {
+                new PlcInfo
+                {
+                    Op = config.Op ?? "PLC_01",
+                    Ip = config.Ip,
+                    Port = config.Port,
+                    IsConnected = false,
+                    PublicInfo = new PublicInfo
+                    {
+                        ReadLength = 0,
+                        WriteLength = 0,
+                        ReadData = null,
+                        WriteData = null,
+                        WriteBuffer = null
+                    },
+                    Events = new List<EventInfo>
+                    {
+                        new EventInfo
+                        {
+                            Index = 0,
+                            Name = "测试事件01",
+                            TriggerCompleted = false,
+                            SequenceIdRead = -1,
+                            SequenceIdWrite = -1,
+                            ObjR = null,
+                            ObjW = null
+                        }
+                    }
+                }
+            };
+        }
+        #endregion
+
     }
 
-    #region 辅助类与配置
+    #region 辅助类定义
+    /// <summary>
+    /// PLC配置信息
+    /// </summary>
     public class PlcConfig
     {
-        public string Op { get; set; }
-        public string Ip { get; set; }
-        public int Port { get; set; }
+        public string Op { get; set; }      // PLC操作名称
+        public string Ip { get; set; }      // IP地址
+        public int Port { get; set; }       // 端口号
     }
 
+    /// <summary>
+    /// PLC信息（包含状态和配置）
+    /// </summary>
     public class PlcInfo
     {
         public string Op { get; set; }
@@ -369,28 +651,33 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         public List<EventInfo> Events { get; set; }
     }
 
+    /// <summary>
+    /// 公共区信息
+    /// </summary>
     public class PublicInfo
     {
         public ushort ReadLength { get; set; }
         public ushort WriteLength { get; set; }
         public byte[] WriteBuffer { get; set; }
-        public PublicAreaToPC ReadData { get; set; }
-        public PublicAreaFromPC WriteData { get; set; }
+        public PublicAreaToPC ReadData { get; set; }    // PLC→PC数据
+        public PublicAreaFromPC WriteData { get; set; } // PC→PLC数据
     }
 
-    // 保留dynamic类型的EventInfo
+    /// <summary>
+    /// 事件信息
+    /// </summary>
     public class EventInfo
     {
-        public int Index { get; set; }
-        public string Name { get; set; }
-        public bool TriggerCompleted { get; set; }
-        public int SequenceIdRead { get; set; }
-        public int SequenceIdWrite { get; set; }
-        public dynamic ObjR { get; set; }  // 保留dynamic
-        public dynamic ObjW { get; set; }  // 保留dynamic
+        public int Index { get; set; }                  // 事件索引
+        public string Name { get; set; }                // 事件名称
+        public bool TriggerCompleted { get; set; }      // 触发完成标记
+        public int SequenceIdRead { get; set; }         // 读取序列ID
+        public int SequenceIdWrite { get; set; }        // 写入序列ID
+        public dynamic ObjR { get; set; }               // PLC→PC数据对象
+        public dynamic ObjW { get; set; }               // PC→PLC数据对象
     }
-    #endregion
 
-    // PLC数据区模型类
+    // 以下为PLC数据区类型定义（根据实际项目调整）
   
+    #endregion
 }
