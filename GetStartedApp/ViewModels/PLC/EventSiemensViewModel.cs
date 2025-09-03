@@ -2,12 +2,12 @@
 using Avalonia.Threading;
 using GetStartedApp.Interface;
 using GetStartedApp.Models;
-using GetStartedApp.Services; // Avalonia的Dispatcher命名空间
 using HslCommunication;
 using Newtonsoft.Json;
 using Prism.Commands;
 using SmartCommunicationForExcel;
 using SmartCommunicationForExcel.Model;
+using SmartCommunicationForExcel.MQTTClient;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -44,7 +44,7 @@ namespace GetStartedApp.ViewModels.PLC
         {
             siemensEvent.Instance(this);
              _mqttService = mqttService;
-            //_ = StartClientAsync();
+            _ = StartClientAsync();
         }
 
         #region PLC事件操作

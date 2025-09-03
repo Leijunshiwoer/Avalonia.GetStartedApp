@@ -20,6 +20,8 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         private const string AUTHORIZATION_CODE = "4672fd9a-4743-4a08-ad2f-5cd3374e496d"; // HSL授权码
         private const int INITIAL_RECONNECT_DELAY_MS = 1000;      // 初始重连延迟（毫秒）
         private const int MAX_RECONNECT_DELAY_MS = 30000;         // 最大重连延迟（30秒）
+        private const double BACKOFF_MULTIPLIER = 2.0;            // 退避乘数
+        private const int RECONNECT_JITTER_MS = 1000;             // 重连随机抖动范围
         private const int RECONNECT_CHECK_INTERVAL = 5;           // 重连检查频率（每5次读取循环）
         private const int PLC_CONNECT_TIMEOUT_MS = 5000;          // PLC连接超时（5秒）
         #endregion
@@ -27,12 +29,11 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         #region 字段与属性
         private readonly SiemensS7Net[] _siemensPLCs;             // PLC通信实例数组
         private readonly PlcInfo[] _plcInfos;                     // PLC配置与状态信息
-        private Task[] _dataReadTasks;                               // 异步读取任务
+        private Task[] _dataReadTasks;                            // 异步读取任务
         private readonly SmartThreadPool _smartThreadPool;        // 事件处理线程池
-        private readonly ConcurrentQueue<EventInfo> _eventQueue01;  // 事件队列
-        private readonly ConcurrentQueue<EventInfo> _eventQueue02;  // 事件队列
-
-
+        private readonly ConcurrentQueue<EventInfo> _eventQueue01; // 事件队列
+        private readonly ConcurrentQueue<EventInfo> _eventQueue02; // 事件队列
+        private readonly Random _reconnectRandom = new Random();   // 重连随机数生成器
         #endregion
 
         #region 事件定义（供外部订阅状态）
@@ -77,12 +78,9 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
             _eventQueue02 = new ConcurrentQueue<EventInfo>();
             _dataReadTasks =
             [
-                new(async () =>await ExecuteDataReadingLoop01Async()),
-                new(async () =>await ExecuteDataReadingLoop02Async()),
-
-
+                new(async () => await ExecuteDataReadingLoop01Async()),
+                new(async () => await ExecuteDataReadingLoop02Async())
             ];
-
         }
 
         /// <summary>
@@ -117,9 +115,8 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 CallToPostExecute = CallToPostExecute.Always,
                 FillStateWithArgs = true,
                 MaxWorkerThreads = 100,    // 最大工作线程（根据事件数量调整）
-                MinWorkerThreads = 1,    // 最小工作线程
-                IdleTimeout = 30000,     // 线程空闲超时（30秒）
-
+                MinWorkerThreads = 1,      // 最小工作线程
+                IdleTimeout = 30000,       // 线程空闲超时（30秒）
             };
             return new SmartThreadPool(stpConfig);
         }
@@ -131,9 +128,11 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         /// </summary>
         public async Task<bool> StartAsync(int idx)
         {
-           
             try
             {
+                // 初始化重连延迟
+                _plcInfos[idx].CurrentReconnectDelay = INITIAL_RECONNECT_DELAY_MS;
+
                 // 异步连接PLC
                 var connectResult = await _siemensPLCs[idx].ConnectServerAsync();
                 if (!connectResult.IsSuccess)
@@ -141,6 +140,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                     OnError?.Invoke($"PLC初始连接失败：{connectResult.Message}（IP：{_plcInfos[idx].Ip}）");
                     return false;
                 }
+
                 // 连接成功初始化状态
                 _plcInfos[idx].IsConnected = true;
                 OnInfo?.Invoke($"PLC初始连接成功（IP：{_plcInfos[idx].Ip}，端口：{_plcInfos[idx].Port}）");
@@ -159,8 +159,12 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 OnError?.Invoke($"PLC启动异常：{ex.Message}");
                 return false;
             }
+        }
 
-          
+        public async Task<bool> StopAsync(int idx)
+        {
+            var connectResult = await _siemensPLCs[idx].ConnectCloseAsync();
+            return connectResult.IsSuccess;
         }
 
         /// <summary>
@@ -168,8 +172,6 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         /// </summary>
         private async Task ExecuteDataReadingLoop01Async()
         {
-            int readCycleCounter = 0; // 循环计数器（控制重连检查频率）
-
             while (true)
             {
                 try
@@ -177,19 +179,12 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                     // 检查连接状态：断开则触发重连
                     if (!_plcInfos[0].IsConnected)
                     {
-                        readCycleCounter++;
-                        // 每N次循环检查一次重连（避免频繁尝试）
-                        if (readCycleCounter % RECONNECT_CHECK_INTERVAL == 0)
-                        {
-                            await AttemptReconnectAsync(plcIndex: 0);
-                            readCycleCounter = 0;
-                        }
+                        await AttemptReconnectAsync(plcIndex: 0);
                     }
                     else
                     {
                         // 连接正常：处理公共区数据+事件触发
-                        await ProcessPublicAreaDataAsync( 0);
-
+                        await ProcessPublicAreaDataAsync(0);
                     }
 
                     // 非阻塞等待（支持取消）
@@ -207,7 +202,6 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 }
             }
         }
-
 
         private async Task ExecuteDataReadingLoop02Async()
         {
@@ -249,23 +243,26 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 }
             }
         }
+
         /// <summary>
         /// PLC自动重连（指数退避策略）
         /// </summary>
         /// <param name="plcIndex">PLC索引</param>
         private async Task AttemptReconnectAsync(int plcIndex)
         {
-
             var plcInfo = _plcInfos[plcIndex];
             var plcClient = _siemensPLCs[plcIndex];
+            int currentDelay = plcInfo.CurrentReconnectDelay;
 
             try
             {
-                // 等待重连延迟（支持取消）
-                await Task.Delay(10000);
+                // 输出重连信息
+                OnInfo?.Invoke($"PLC准备重连：IP={plcInfo.Ip}，当前延迟={currentDelay}ms");
+
+                // 等待重连延迟（带随机抖动）
+                await Task.Delay(currentDelay);
 
                 // 关闭现有连接（避免连接泄漏）
-
                 plcClient.ConnectClose();
 
                 // 异步重连
@@ -273,23 +270,44 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 if (reconnectResult.IsSuccess)
                 {
                     plcInfo.IsConnected = true;
-
+                    // 连接成功，重置重连延迟
+                    plcInfo.CurrentReconnectDelay = INITIAL_RECONNECT_DELAY_MS;
                     OnInfo?.Invoke($"PLC重连成功：IP={plcInfo.Ip}，端口={plcInfo.Port}");
                 }
                 else
                 {
-                    OnError?.Invoke($"PLC重连失败：{reconnectResult.Message}");
+                    // 连接失败，计算下次重连延迟（指数退避+随机抖动）
+                    CalculateNextReconnectDelay(plcIndex);
+                    OnError?.Invoke($"PLC重连失败：{reconnectResult.Message}，下次延迟={plcInfo.CurrentReconnectDelay}ms");
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                OnInfo?.Invoke($"PLC重连操作已取消（IP：{plcInfo.Ip}）");
             }
             catch (Exception ex)
             {
-
-                OnError?.Invoke($"PLC重连异常：{ex.Message}");
+                // 重连异常，计算下次重连延迟
+                CalculateNextReconnectDelay(plcIndex);
+                OnError?.Invoke($"PLC重连异常：{ex.Message}，下次延迟={plcInfo.CurrentReconnectDelay}ms");
             }
+        }
+
+        /// <summary>
+        /// 计算下次重连延迟（指数退避+随机抖动）
+        /// </summary>
+        private void CalculateNextReconnectDelay(int plcIndex)
+        {
+            var plcInfo = _plcInfos[plcIndex];
+
+            // 指数退避：当前延迟 * 乘数，但不超过最大值
+            int nextDelay = (int)(plcInfo.CurrentReconnectDelay * BACKOFF_MULTIPLIER);
+            nextDelay = Math.Min(nextDelay, MAX_RECONNECT_DELAY_MS);
+
+            // 添加随机抖动，避免多设备同时重连导致网络拥塞
+            if (RECONNECT_JITTER_MS > 0)
+            {
+                nextDelay += _reconnectRandom.Next(-RECONNECT_JITTER_MS, RECONNECT_JITTER_MS + 1);
+                nextDelay = Math.Max(nextDelay, 100);  // 确保延迟不会过小
+            }
+
+            plcInfo.CurrentReconnectDelay = nextDelay;
         }
         #endregion
 
@@ -451,9 +469,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                     plcInfo.IsConnected = false;
                 }
             }
-
         }
-
 
         /// <summary>
         /// 异步处理单个事件（读取数据+线程池回调）
@@ -599,8 +615,6 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
             }
         }
 
-
-
         /// <summary>
         /// 事件处理回调（在线程池中执行）
         /// </summary>
@@ -636,6 +650,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                 _ = WriteEventResultAsync(eventInfo, 1);
             }
         }
+
         /// <summary>
         /// 异步写回事件处理结果到PLC
         /// </summary>
@@ -714,7 +729,6 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         }
         #endregion
 
-
         #region 初始化PLC信息（状态+配置）
         /// <summary>
         /// 初始化PLC信息（状态+配置）
@@ -722,7 +736,6 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         private PlcInfo[] InitializePlcInfo(PlcConfig[] configs)
         {
             return new[]
-
             {
                 new PlcInfo
                 {
@@ -730,6 +743,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                     Ip = configs[0].Ip,
                     Port = configs[0].Port,
                     IsConnected = false,
+                    CurrentReconnectDelay = INITIAL_RECONNECT_DELAY_MS,
                     PublicInfo = new PublicInfo
                     {
                         ReadLength = 0,
@@ -752,13 +766,13 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                         }
                     }
                 },
-
                 new PlcInfo
                 {
                     Op = configs[1].Op ?? "PLC_02",
                     Ip = configs[1].Ip,
                     Port = configs[1].Port,
                     IsConnected = false,
+                    CurrentReconnectDelay = INITIAL_RECONNECT_DELAY_MS,
                     PublicInfo = new PublicInfo
                     {
                         ReadLength = 0,
@@ -781,11 +795,9 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
                         }
                     }
                 }
-
             };
         }
         #endregion
-
     }
 
     #region 辅助类定义
@@ -808,6 +820,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
         public string Ip { get; set; }
         public int Port { get; set; }
         public bool IsConnected { get; set; }
+        public int CurrentReconnectDelay { get; set; } // 当前重连延迟（毫秒）
         public PublicInfo PublicInfo { get; set; }
         public List<EventInfo> Events { get; set; }
     }
@@ -839,6 +852,5 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
     }
 
     // 以下为PLC数据区类型定义（根据实际项目调整）
-
     #endregion
 }

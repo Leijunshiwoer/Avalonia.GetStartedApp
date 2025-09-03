@@ -3,7 +3,7 @@ using HslCommunication.MQTT;
 using System;
 using System.Threading.Tasks;
 
-namespace GetStartedApp.Services
+namespace SmartCommunicationForExcel.MQTTClient
 {
     // 配套接口（依赖注入核心，面向接口编程）
     public interface IMqttService

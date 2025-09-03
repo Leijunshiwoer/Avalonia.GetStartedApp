@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using HslCommunication;
 using HslCommunication.MQTT;
 
-namespace GetStartedApp.Services
+namespace SmartCommunicationForExcel.MQTTClient
 {
     public class MqttService : IMqttService, IDisposable
     {
