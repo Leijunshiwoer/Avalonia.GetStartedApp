@@ -16,10 +16,7 @@ namespace SmartCommunicationForExcel.SiemensS7PLC
         public int TotalNo { get; set; }//8
         public float Yield { get; set; }//12
 
-        [S7StringAttribute(S7StringType.S7WString, 8)]
-        //  public PlcKeepDataString[] SysDataString { get; set; } = Enumerable.Range(0, 16).Select(_ => new PlcKeepDataString()).ToArray();
-        public string SysDataWString { get; set; }//60
-
+    
         [S7StringAttribute(S7StringType.S7String, 20)]
         //  public PlcKeepDataString[] SysDataString { get; set; } = Enumerable.Range(0, 16).Select(_ => new PlcKeepDataString()).ToArray();
         public string[] SysDataString { get; set; } = new string[2];//16 下一个 16+20+2= 38
