@@ -5,6 +5,7 @@ using SmartCommunicationForExcel.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
     {
         #region 常量配置（可根据实际需求调整）
         private const int READ_INTERVAL_MS = 10;                  // 数据读取间隔（毫秒）
-        private const string AUTHORIZATION_CODE = "4672fd9a-4743-4a08-ad2f-5cd3374e496d"; // HSL授权码
+     
         private const int INITIAL_RECONNECT_DELAY_MS = 1000;      // 初始重连延迟（毫秒）
         private const int MAX_RECONNECT_DELAY_MS = 30000;         // 最大重连延迟（30秒）
         private const double BACKOFF_MULTIPLIER = 2.0;            // 退避乘数
@@ -73,7 +74,7 @@ namespace SmartCommunicationForExcel.ConnSiemensPLC
             _smartThreadPool = CreateSmartThreadPool();
 
             // 激活HSL授权
-            Authorization.SetAuthorizationCode(AUTHORIZATION_CODE);
+            Authorization.SetAuthorizationCode(ConfigurationManager.AppSettings["AuthorizationCode"]);
             _eventQueue01 = new ConcurrentQueue<EventInfo>();
             _eventQueue02 = new ConcurrentQueue<EventInfo>();
             _dataReadTasks =
