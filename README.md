@@ -33,11 +33,12 @@ Avalonia.GetStartedApp 是一款基于 Avalonia UI 框架开发的跨平台工�
 
 ```
 Avalonia.GetStartedApp/
-├── GetStartedApp.Browser/   # Web端项目
-├── GetStartedApp.Desktop/   # 桌面端项目
-├── GetStartedApp.Shared/    # 共享代码库
-├── GetStartedApp.Tests/     # 单元测试项目
-└── GetStartedApp.sln        # 解决方案文件
+├── GetStartedApp           # 主应用模块（UI、ViewModel、业务逻辑）
+├── GetStartedApp.Desktop   # 桌面应用入口
+├── GetStartedApp.Browser   # Web浏览器应用入口
+├── GetStartedApp.SqlSugar  # 数据访问层
+├── GetStartedApp.Core      # 核心工具类
+└── SmartCommunicationForExcel # 工业通信组件
 ```
 
 ## 应用场景
