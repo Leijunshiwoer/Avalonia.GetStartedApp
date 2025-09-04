@@ -26,6 +26,7 @@ using SmartCommunicationForExcel.Implementation.Mitsubishi;
 using SmartCommunicationForExcel.Implementation.Omron;
 using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Model;
+using SmartCommunicationForExcel.SiemensS7PLC;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -112,7 +113,18 @@ namespace GetStartedApp.ViewModels.PLC
             // 异步初始化PLC配置，避免阻塞UI
             _ = InitializeAsync();
 
+          _= S7ConnAsync();
+        }
 
+        private async Task S7ConnAsync()
+        {
+            // 为每个PLC创建一个独立的任务并并行执行
+            var tasks = S7Connection.Plcs.Select(plc =>
+                Task.Run(() => S7Connection.ReadPlcAsync(plc))
+            );
+
+            // 等待所有PLC任务完成（实际上它们会一直运行）
+            await Task.WhenAll(tasks);
         }
 
 
