@@ -235,7 +235,8 @@ namespace GetStartedApp.ViewModels.PLC
         }
 
 
-
+        private bool _isFirst=true;
+        private ushort _id;
         private async void ProcessMessageQueueAsync()
         {
             // 避免重复启动消费线程（如果已在处理，直接返回）
@@ -253,13 +254,26 @@ namespace GetStartedApp.ViewModels.PLC
                             // 处理上行消息
 
                           var a=  JsonConvert.DeserializeObject<Event01R>(message.payload);
-
-                            var w = new Event01W()
+                            if (_isFirst)
                             {
-                                event01W_sequnceId = a.event01R_sequnceId
-                            };
+                                _id = a.event01R_sequnceId;
+                                var w = new Event01W()
+                                {
+                                    event01W_sequnceId = a.event01R_sequnceId
+                                };
+                                _isFirst = false;
+                                await _mqttService.PublishAsync("devices/PLC01/rpc/request/write/kstopa", JsonConvert.SerializeObject(w));
+                            }
+                            else
+                            {
+                                var w = new Event01W()
+                                {
+                                    event01W_sequnceId = ++_id
+                                };
+                                await _mqttService.PublishAsync("devices/PLC01/rpc/request/write/kstopa", JsonConvert.SerializeObject(w));
+                            }
 
-                          await  _mqttService.PublishAsync("devices/PLC01/rpc/request/write/kstopa", JsonConvert.SerializeObject(w));
+                              
                             break;
                         default:
                             break;
