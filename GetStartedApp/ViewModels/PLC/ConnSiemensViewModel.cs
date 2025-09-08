@@ -113,7 +113,7 @@ namespace GetStartedApp.ViewModels.PLC
             // 异步初始化PLC配置，避免阻塞UI
             _ = InitializeAsync();
 
-         // _= S7ConnAsync();
+          _= S7ConnAsync();
         }
 
         private async Task S7ConnAsync()

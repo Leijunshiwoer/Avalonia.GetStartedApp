@@ -170,6 +170,7 @@ namespace SmartCommunicationForExcel.SiemensS7PLC
 
                         // 正常读取后等待，可被取消
                         await Task.Delay(readInterval);
+
                     }
                     catch (Exception ex)
                     {
@@ -212,8 +213,6 @@ namespace SmartCommunicationForExcel.SiemensS7PLC
                 plcConfig.IsConnected = false;
             }
         }
-
-       
 
       
     }

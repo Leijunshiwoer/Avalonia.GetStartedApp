@@ -1,4 +1,5 @@
-﻿using S7.Net.Types;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using S7.Net.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,40 +8,38 @@ using System.Threading.Tasks;
 
 namespace SmartCommunicationForExcel.SiemensS7PLC
 {
-    public class PlcKeepData
+    public partial class PlcKeepData: ObservableObject
     {
+        [ObservableProperty] private int _okNo;            // OK产量
+        [ObservableProperty] private int _ngNo;            // NG产量4
+        [ObservableProperty] private float _yield;         // 良率8
+        [ObservableProperty] private int _totalNO;         // 总产品12
 
-        
-        public int OkNo { get; set; }//0
-        public int NgNo { get; set; }//4
-        public int TotalNo { get; set; }//8
-        public float Yield { get; set; }//12
+        [ObservableProperty]
+        [property: S7StringAttribute(S7StringType.S7String, 20)]
+        private string[] _sysDataString  = new string[2]; //16  38
 
-    
-        [S7StringAttribute(S7StringType.S7String, 20)]
-        //  public PlcKeepDataString[] SysDataString { get; set; } = Enumerable.Range(0, 16).Select(_ => new PlcKeepDataString()).ToArray();
-        public string[] SysDataString { get; set; } = new string[2];//16 下一个 16+20+2= 38
+        [ObservableProperty]
+        [property: S7StringAttribute(S7StringType.S7WString, 60)]//60
+        private string _sysDataWString;
 
-      
-        public PlcKeepDataSub[] StDatas { get; set; } = Enumerable.Range(0, 5).Select(_ => new PlcKeepDataSub()).ToArray();//36
-
-       
-
+        [ObservableProperty]
+        private PlcKeepDataSub[] _stDatas  = Enumerable.Range(0, 5).Select(_ => new PlcKeepDataSub()).ToArray();//36
     }
 
 
-    public partial class PlcKeepDataSub
+    public partial class PlcKeepDataSub: ObservableObject
     {
-        public short TotalNGNO { get; set; }                    // 累计NG      //2  
-        public short[] HmiSetUnit { get; set; } = new short[16];    // 人机Uint变量预留 //32       
-        public float[] HmiSetReal { get; set; } = new float[16];   // 人机Real变量预留   //32     
-        public int[] HmiSetDint { get; set; } = new int[16];    // 人机Dint变量预留  //64
+        [ObservableProperty] private short _totalNGNO;                    // 累计NG        
+        [ObservableProperty] private short[] _hmiSetUnit = new short[16]; // 人机Uint变量预留        
+        [ObservableProperty] private float[] _hmiSetReal = new float[16]; // 人机Real变量预留        
+        [ObservableProperty] private int[] _hmiSetDint = new int[16];     // 人机Dint变量预留
     }
 
-    public partial class PlcKeepDataString
+    public partial class PlcKeepDataString: ObservableObject
     {
-        public byte Sys_DefineLength { get; set; }              // 定义长度
-        public byte Sys_TrueLength { get; set; }                  // 实际长度
-        public byte[] Sys_DataString { get; set; } = new byte[30]; // 字符串
+        [ObservableProperty] private byte _sysDefineLength;              // 定义长度
+        [ObservableProperty] private byte _sysTrueLength;                  // 实际长度
+        [ObservableProperty] private byte[] _sysDataString = new byte[30]; // 字符串
     }
 }

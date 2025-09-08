@@ -44,7 +44,7 @@ namespace GetStartedApp.ViewModels.PLC
         {
             siemensEvent.Instance(this);
              _mqttService = mqttService;
-            _ = StartClientAsync();
+           // _ = StartClientAsync();
         }
 
         #region PLC事件操作
