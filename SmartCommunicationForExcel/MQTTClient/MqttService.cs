@@ -20,6 +20,7 @@ namespace SmartCommunicationForExcel.MQTTClient
         private string _lastIpAddress = "127.0.0.1";
         private int _lastPort = 1888;
         private string _lastClientId = "kstopa";
+        private string[] _subscribedTopics = new[] { "devices/+/#" }; // 保存需要订阅的主题
 
         // 重连相关字段
         private readonly object _reconnectLock = new object();
@@ -27,11 +28,13 @@ namespace SmartCommunicationForExcel.MQTTClient
         private int _reconnectDelay = 5000; // 初始重连延迟5秒
         private const int _maxReconnectDelay = 60000; // 最大重连延迟60秒
         private CancellationTokenSource _reconnectCts;
+        private const int _connectTimeout = 10000; // 连接超时时间10秒
 
         // 事件定义
         public event Action<OperateResult> ConnectionStatusChanged;
         public event Action<string, string> MessageReceived;
         public event Action<Exception> NetworkErrorOccurred;
+        public event Action<string> DebugMessage; // 新增调试消息事件
 
         // 连接状态对外暴露
         public bool IsConnected => _isConnected;
@@ -46,12 +49,17 @@ namespace SmartCommunicationForExcel.MQTTClient
         public async Task<OperateResult> ConnectAsync(
             string ipAddress = "127.0.0.1",
             int port = 1888,
-            string clientId = "kstopa")
+            string clientId = "kstopa",
+            string[] topics = null)
         {
             // 保存连接参数，用于重连
             _lastIpAddress = ipAddress;
             _lastPort = port;
             _lastClientId = clientId;
+
+            // 如果提供了订阅主题，则更新
+            if (topics != null && topics.Length > 0)
+                _subscribedTopics = topics;
 
             // 先判断连接状态，避免重复连接
             if (_isConnected)
@@ -64,6 +72,7 @@ namespace SmartCommunicationForExcel.MQTTClient
             try
             {
                 // 初始化重连令牌源
+                CancelReconnect(); // 确保先取消任何现有重连
                 _reconnectCts = new CancellationTokenSource();
 
                 // 初始化 MQTT 连接参数
@@ -72,6 +81,7 @@ namespace SmartCommunicationForExcel.MQTTClient
                     IpAddress = ipAddress,
                     Port = port,
                     ClientId = clientId,
+                    ConnectTimeout = _connectTimeout
                     // 可扩展：添加用户名密码
                     // UserName = "your-username",
                     // Password = "your-password"
@@ -81,18 +91,34 @@ namespace SmartCommunicationForExcel.MQTTClient
                 _mqttClient = new MqttClient(connectionOptions);
 
                 // 注册事件处理
-                _mqttClient.OnNetworkError += Mqtt_OnNetworkError;
-                _mqttClient.OnClientConnected += Mqtt_OnClientConnected;
-                _mqttClient.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+                RegisterEvents();
 
-                // 连接服务器
-                OperateResult connectResult = await _mqttClient.ConnectServerAsync();
+                DebugMessage?.Invoke($"Connecting to MQTT server at {ipAddress}:{port} with client ID {clientId}");
+
+                // 连接服务器，带超时处理
+                var connectTask = _mqttClient.ConnectServerAsync();
+                var timeoutTask = Task.Delay(_connectTimeout);
+                var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+
+                if (completedTask == timeoutTask)
+                {
+                    // 连接超时
+                    throw new TimeoutException("Connection to MQTT server timed out");
+                }
+
+                OperateResult connectResult = connectTask.Result;
 
                 // 更新连接状态
                 _isConnected = connectResult.IsSuccess;
 
                 // 触发连接状态事件
                 ConnectionStatusChanged?.Invoke(connectResult);
+
+                if (!connectResult.IsSuccess)
+                {
+                    DebugMessage?.Invoke($"Connection failed: {connectResult.Message}");
+                    StartReconnect(); // 连接失败时立即启动重连
+                }
 
                 return connectResult;
             }
@@ -101,6 +127,7 @@ namespace SmartCommunicationForExcel.MQTTClient
                 var errorResult = new OperateResult($"Connect failed: {ex.Message}");
                 ConnectionStatusChanged?.Invoke(errorResult);
                 NetworkErrorOccurred?.Invoke(ex);
+                DebugMessage?.Invoke($"Connection error: {ex.Message}");
 
                 // 启动重连机制
                 StartReconnect();
@@ -112,6 +139,15 @@ namespace SmartCommunicationForExcel.MQTTClient
         // 异步订阅主题
         public async Task<OperateResult> SubscribeAsync(params string[] topics)
         {
+            if (topics == null || topics.Length == 0)
+            {
+                var result = new OperateResult("Subscribe failed: No topics specified");
+                return result;
+            }
+
+            // 保存订阅的主题，用于重连后自动订阅
+            _subscribedTopics = topics;
+
             if (!_isConnected || _mqttClient == null)
             {
                 var result = new OperateResult("Subscribe failed: Not connected to MQTT server");
@@ -121,6 +157,7 @@ namespace SmartCommunicationForExcel.MQTTClient
 
             try
             {
+                DebugMessage?.Invoke($"Subscribing to topics: {string.Join(", ", topics)}");
                 OperateResult subscribeResult = await _mqttClient.SubscribeMessageAsync(topics);
                 return subscribeResult;
             }
@@ -128,6 +165,7 @@ namespace SmartCommunicationForExcel.MQTTClient
             {
                 var errorResult = new OperateResult($"Subscribe failed: {ex.Message}");
                 NetworkErrorOccurred?.Invoke(ex);
+                DebugMessage?.Invoke($"Subscribe error: {ex.Message}");
                 return errorResult;
             }
         }
@@ -176,11 +214,13 @@ namespace SmartCommunicationForExcel.MQTTClient
             {
                 try
                 {
+                    DebugMessage?.Invoke("Disconnecting from MQTT server");
                     await _mqttClient.ConnectCloseAsync();
                 }
                 catch (Exception ex)
                 {
                     NetworkErrorOccurred?.Invoke(ex);
+                    DebugMessage?.Invoke($"Disconnect error: {ex.Message}");
                 }
                 finally
                 {
@@ -201,6 +241,7 @@ namespace SmartCommunicationForExcel.MQTTClient
                     return;
 
                 _isReconnecting = true;
+                DebugMessage?.Invoke("Starting reconnection process");
                 _ = PerformReconnectAsync(_reconnectCts.Token);
             }
         }
@@ -212,10 +253,21 @@ namespace SmartCommunicationForExcel.MQTTClient
             {
                 while (!cancellationToken.IsCancellationRequested && !_isConnected)
                 {
-                    ConnectionStatusChanged?.Invoke(new OperateResult($"Attempting to reconnect in {_reconnectDelay / 1000} seconds..."));
+                    int delaySeconds = _reconnectDelay / 1000;
+                    ConnectionStatusChanged?.Invoke(new OperateResult($"Attempting to reconnect in {delaySeconds} seconds..."));
+                    DebugMessage?.Invoke($"Next reconnection attempt in {delaySeconds} seconds");
 
                     // 等待重连延迟或取消信号
-                    await Task.Delay(_reconnectDelay, cancellationToken);
+                    try
+                    {
+                        await Task.Delay(_reconnectDelay, cancellationToken);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // 预期的取消异常，直接退出循环
+                        DebugMessage?.Invoke("Reconnection process cancelled");
+                        break;
+                    }
 
                     if (cancellationToken.IsCancellationRequested)
                         break;
@@ -224,6 +276,7 @@ namespace SmartCommunicationForExcel.MQTTClient
                     {
                         // 尝试重新连接
                         ConnectionStatusChanged?.Invoke(new OperateResult("Reconnecting to MQTT server..."));
+                        DebugMessage?.Invoke($"Reconnecting to {_lastIpAddress}:{_lastPort}");
 
                         // 先清理之前的客户端
                         if (_mqttClient != null)
@@ -238,18 +291,24 @@ namespace SmartCommunicationForExcel.MQTTClient
                             IpAddress = _lastIpAddress,
                             Port = _lastPort,
                             ClientId = _lastClientId,
+                            ConnectTimeout = _connectTimeout
                             // 用户名密码和之前保持一致
                         };
 
                         _mqttClient = new MqttClient(connectionOptions);
+                        RegisterEvents();
 
-                        // 重新注册事件
-                        _mqttClient.OnNetworkError += Mqtt_OnNetworkError;
-                        _mqttClient.OnClientConnected += Mqtt_OnClientConnected;
-                        _mqttClient.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+                        // 带超时的连接尝试
+                        var connectTask = _mqttClient.ConnectServerAsync();
+                        var timeoutTask = Task.Delay(_connectTimeout);
+                        var completedTask = await Task.WhenAny(connectTask, timeoutTask);
 
-                        // 尝试连接
-                        var result = await _mqttClient.ConnectServerAsync();
+                        if (completedTask == timeoutTask)
+                        {
+                            throw new TimeoutException("Reconnection attempt timed out");
+                        }
+
+                        var result = connectTask.Result;
 
                         if (result.IsSuccess)
                         {
@@ -257,28 +316,39 @@ namespace SmartCommunicationForExcel.MQTTClient
                             _reconnectDelay = 5000;
                             _isConnected = true;
                             ConnectionStatusChanged?.Invoke(new OperateResult("Reconnected to MQTT server successfully"));
+                            DebugMessage?.Invoke("Successfully reconnected to MQTT server");
 
                             // 重新订阅之前的主题
-                            await SubscribeAsync("devices/+/#");
+                            await SubscribeAsync(_subscribedTopics);
                             break;
                         }
                         else
                         {
                             ConnectionStatusChanged?.Invoke(new OperateResult($"Reconnection failed: {result.Message}"));
+                            DebugMessage?.Invoke($"Reconnection failed: {result.Message}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        NetworkErrorOccurred?.Invoke(new Exception($"Reconnection error: {ex.Message}"));
+                        var errorMsg = $"Reconnection error: {ex.Message}";
+                        NetworkErrorOccurred?.Invoke(new Exception(errorMsg));
+                        DebugMessage?.Invoke(errorMsg);
                     }
 
                     // 指数退避算法：重连失败后延迟加倍，但不超过最大值
                     _reconnectDelay = Math.Min(_reconnectDelay * 2, _maxReconnectDelay);
+                    DebugMessage?.Invoke($"Increasing reconnection delay to {_reconnectDelay / 1000} seconds");
                 }
+            }
+            catch (Exception ex)
+            {
+                DebugMessage?.Invoke($"Unexpected error in reconnection loop: {ex.Message}");
+                NetworkErrorOccurred?.Invoke(ex);
             }
             finally
             {
                 _isReconnecting = false;
+                DebugMessage?.Invoke("Exiting reconnection loop");
             }
         }
 
@@ -292,9 +362,26 @@ namespace SmartCommunicationForExcel.MQTTClient
                     _reconnectCts.Cancel();
                     _reconnectCts.Dispose();
                     _reconnectCts = null;
+                    DebugMessage?.Invoke("Reconnection cancelled");
                 }
                 _isReconnecting = false;
             }
+        }
+
+        // 注册事件处理程序
+        private void RegisterEvents()
+        {
+            if (_mqttClient == null) return;
+
+            // 先取消订阅，避免重复订阅
+            UnsubscribeEvents();
+
+            // 重新订阅事件
+            _mqttClient.OnNetworkError += Mqtt_OnNetworkError;
+            _mqttClient.OnClientConnected += Mqtt_OnClientConnected;
+            _mqttClient.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+
+         
         }
 
         // 网络错误事件处理
@@ -306,6 +393,7 @@ namespace SmartCommunicationForExcel.MQTTClient
                 var error = new Exception("MQTT network error occurred (e.g., disconnected, timeout)");
                 NetworkErrorOccurred?.Invoke(error);
                 ConnectionStatusChanged?.Invoke(new OperateResult("Network error: Disconnected from server"));
+                DebugMessage?.Invoke("Network error detected, initiating reconnection");
 
                 // 启动重连
                 StartReconnect();
@@ -317,14 +405,16 @@ namespace SmartCommunicationForExcel.MQTTClient
         {
             _isConnected = true;
             ConnectionStatusChanged?.Invoke(new OperateResult("Connected to MQTT server successfully"));
+            DebugMessage?.Invoke("Client connected event received");
 
             try
             {
-                await SubscribeAsync("devices/+/#");
+                await SubscribeAsync(_subscribedTopics);
             }
             catch (Exception ex)
             {
                 NetworkErrorOccurred?.Invoke(new Exception($"Auto-subscribe failed: {ex.Message}"));
+                DebugMessage?.Invoke($"Auto-subscribe error: {ex.Message}");
             }
         }
 
@@ -363,8 +453,12 @@ namespace SmartCommunicationForExcel.MQTTClient
             _ = DisconnectAsync().ConfigureAwait(false);
 
             // 释放客户端实例
-            _mqttClient?.Dispose();
-            _mqttClient = null;
+            if (_mqttClient != null)
+            {
+                UnsubscribeEvents();
+                _mqttClient.Dispose();
+                _mqttClient = null;
+            }
         }
     }
 }

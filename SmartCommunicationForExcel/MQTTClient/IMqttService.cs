@@ -13,7 +13,11 @@ namespace SmartCommunicationForExcel.MQTTClient
         event Action<string, string> MessageReceived;
         event Action<Exception> NetworkErrorOccurred;
 
-        Task<OperateResult> ConnectAsync(string ipAddress = "127.0.0.1", int port = 1888, string clientId = "kstopa");
+        Task<OperateResult> ConnectAsync(
+             string ipAddress = "127.0.0.1",
+             int port = 1888,
+             string clientId = "kstopa",
+             string[] topics = null);
         Task<OperateResult> SubscribeAsync(params string[] topics);
         Task<OperateResult> PublishAsync(string topic, string payload, MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce);
         Task DisconnectAsync();
