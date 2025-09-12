@@ -31,6 +31,7 @@
 		<PackageReference Include="S7netplus" Version="0.20.0" />
 		<PackageReference Include="SmartThreadPool.dll" Version="2.3.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.8" />
+		<PackageReference Include="TouchSocket.Mqtt" Version="4.0.0-beta.25" />
 		<PackageReference Include="Unity" Version="5.11.10" />
 	</ItemGroup>
 

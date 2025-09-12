@@ -115,7 +115,7 @@ namespace GetStartedApp
 
             Console.WriteLine("RegisterTypes()");
             containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
-            containerRegistry.RegisterSingleton<IMqttService, MqttService>();
+            containerRegistry.RegisterSingleton<IMqttClientService, MqttClientService>();
 
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();

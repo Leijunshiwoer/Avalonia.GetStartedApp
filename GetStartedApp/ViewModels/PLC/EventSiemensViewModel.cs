@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using TouchSocket.Mqtt;
 using Ursa.Controls;
 
 namespace GetStartedApp.ViewModels.PLC
@@ -22,7 +23,7 @@ namespace GetStartedApp.ViewModels.PLC
     {
         // 直接初始化集合，确保始终使用同一个实例
         private readonly ObservableCollection<PlcEventModel> _obPlcEvnet = new ObservableCollection<PlcEventModel>();
-        private readonly IMqttService _mqttService;
+        private readonly IMqttClientService _mqttService;
         // 2. 线程安全的消息队列（存储待入库的 MQTT 消息）
         private readonly ConcurrentQueue<(string topic, string payload, DateTime receiveTime)> _messageQueue = new();
         // 3. 标记队列是否正在消费（避免重复启动多个后台线程）
@@ -40,11 +41,11 @@ namespace GetStartedApp.ViewModels.PLC
             set { SetProperty(ref m_plcEvent, value); }
         }
 
-        public EventSiemensViewModel(ISiemensEvent siemensEvent,IMqttService mqttService)
+        public EventSiemensViewModel(ISiemensEvent siemensEvent,IMqttClientService mqttService)
         {
             siemensEvent.Instance(this);
              _mqttService = mqttService;
-           // _ = StartClientAsync();
+           _ = StartClientAsync();
         }
 
         #region PLC事件操作
@@ -181,12 +182,13 @@ namespace GetStartedApp.ViewModels.PLC
         {
             try
             {
-                var res = await _mqttService.ConnectAsync("192.168.115.208", 1888, "kstopa");
-                if (res.IsSuccess)
+                await _mqttService.InitClientAsync("192.168.115.208:1883", "kstopa");
+                await _mqttService.ConnectAsync();
+                if (_mqttService.IsConnected)
                 {
                     _mqttService.ConnectionStatusChanged += OnConnectionStatusChanged;
                     _mqttService.MessageReceived += OnMessageReceived;
-                    _mqttService.NetworkErrorOccurred += OnNetworkError;
+                    //_mqttService.NetworkErrorOccurred += OnNetworkError;
 
 
                     Dispatcher.UIThread.Post(() =>
@@ -205,34 +207,49 @@ namespace GetStartedApp.ViewModels.PLC
 
         }
 
-        private void OnNetworkError(Exception exception)
+        private void OnMessageReceived(MqttArrivedMessage message)
         {
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                MqttStatus = "连接中断";
-            });
-        }
-
-        private void OnMessageReceived(string topic, string payload)
-        {
-            var receiveTime = DateTime.Now;
+                var receiveTime = DateTime.Now;
+           var payload = System.Text.Encoding.UTF8.GetString(message.Payload.ToArray());
             // 入队（ConcurrentQueue 线程安全，O(1) 操作，不阻塞 UI）
-            _messageQueue.Enqueue((topic, payload, receiveTime));
-            // 启动后台消费队列（确保只启动一个线程）
-            ProcessMessageQueueAsync();
+            _messageQueue.Enqueue((message.TopicName, payload, receiveTime));
+               // 启动后台消费队列（确保只启动一个线程）
+                ProcessMessageQueueAsync();
         }
 
-        private void OnConnectionStatusChanged(OperateResult result)
+        private void OnConnectionStatusChanged(string obj)
         {
-            if (result.Message== "Reconnected to MQTT server successfully")
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    MqttStatus = "已连接";
-                });
-            }
+            
         }
+
+        //private void OnNetworkError(Exception exception)
+        //{
+
+        //    Dispatcher.UIThread.Post(() =>
+        //    {
+        //        MqttStatus = "连接中断";
+        //    });
+        //}
+
+        //private void OnMessageReceived(string topic, string payload)
+        //{
+        //    var receiveTime = DateTime.Now;
+        //    // 入队（ConcurrentQueue 线程安全，O(1) 操作，不阻塞 UI）
+        //    _messageQueue.Enqueue((topic, payload, receiveTime));
+        //    // 启动后台消费队列（确保只启动一个线程）
+        //    ProcessMessageQueueAsync();
+        //}
+
+        //private void OnConnectionStatusChanged(OperateResult result)
+        //{
+        //    if (result.Message== "Reconnected to MQTT server successfully")
+        //    {
+        //        Dispatcher.UIThread.Post(() =>
+        //        {
+        //            MqttStatus = "已连接";
+        //        });
+        //    }
+        //}
 
 
         private bool _isFirst=true;
