@@ -20,6 +20,7 @@ using GetStartedApp.ViewModels.ProductVersion;
 using GetStartedApp.ViewModels.ProgramPack;
 using GetStartedApp.ViewModels.Route;
 using GetStartedApp.Views;
+using IKMqttClient;
 using Microsoft.Extensions.DependencyInjection;
 using Prism.Container.DryIoc;
 using Prism.Dialogs;
@@ -116,7 +117,7 @@ namespace GetStartedApp
             Console.WriteLine("RegisterTypes()");
             containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
             containerRegistry.RegisterSingleton<IMqttClientService, MqttClientService>();
-
+            containerRegistry.RegisterSingleton<MqttClientHelper>();
             // Services
             //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
             ///

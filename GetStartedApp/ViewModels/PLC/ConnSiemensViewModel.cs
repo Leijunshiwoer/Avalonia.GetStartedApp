@@ -7,12 +7,16 @@ using Avalonia.Threading;
 using GetStartedApp.Interface;
 using GetStartedApp.Models;
 using GetStartedApp.Utils.Node;
+using GetStartedApp.Utils.Services;
 using HslCommunication;
 using HslCommunication.Core.Pipe;
 using HslCommunication.MQTT;
 using HslCommunication.Profinet.Siemens;
+using IKMqttClient;
 using NetTaste;
+using Newtonsoft.Json;
 using OfficeOpenXml;
+using PluginInterface.IoTKstopa;
 using Prism.Commands;
 using SmartCommunicationForExcel;
 using SmartCommunicationForExcel.ConnSiemensPLC;
@@ -28,14 +32,17 @@ using SmartCommunicationForExcel.Implementation.Siemens;
 using SmartCommunicationForExcel.Model;
 using SmartCommunicationForExcel.SiemensS7PLC;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TouchSocket.Sockets;
 using Ursa.Controls;
 
 
@@ -52,6 +59,7 @@ namespace GetStartedApp.ViewModels.PLC
         private const string PLC_CONFIG_PATH = @"/Assets/PLCs/";
         private const string PLC_FILE_PREFIX = "xlsx";
         private MqttClient mqtt;
+        private MqttClientHelper _mqttClient;
         // Excel配置相关
         private readonly string[] _sheetNames = { "CpuInfo", "EapConfig", "PlcConfig", "EventConfig" };
         private const int _cpuInfoStartRow = 3;
@@ -64,6 +72,7 @@ namespace GetStartedApp.ViewModels.PLC
         private readonly ManualResetEvent _autoConnResetEvent = new ManualResetEvent(false);
         private bool _isAutoConnPLC = false;
         private int _autoConnInterval = 2000; // 自动重连间隔(ms)
+        private readonly IMessageManagerService _messageManagerService;
         #endregion
 
         #region 公共属性
@@ -99,8 +108,9 @@ namespace GetStartedApp.ViewModels.PLC
         #endregion
 
         #region 构造函数
-        public ConnSiemensViewModel(ISiemensEvent siemensEvent)
+        public ConnSiemensViewModel(ISiemensEvent siemensEvent, MqttClientHelper mqttClient, IMessageManagerService messageManagerService)
         {
+            _messageManagerService = messageManagerService;
             _siemensEvent = siemensEvent;
             _smartContainer = new SmartContainer();
             // 注册事件执行器
@@ -112,8 +122,10 @@ namespace GetStartedApp.ViewModels.PLC
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             // 异步初始化PLC配置，避免阻塞UI
             _ = InitializeAsync();
+            _mqttClient = mqttClient;
+            //_= S7ConnAsync();
 
-          //_= S7ConnAsync();
+            Task.Run(async()=>await ProcessMessageQueueAsync());
         }
 
         private async Task S7ConnAsync()
@@ -126,8 +138,6 @@ namespace GetStartedApp.ViewModels.PLC
             // 等待所有PLC任务完成（实际上它们会一直运行）
             await Task.WhenAll(tasks);
         }
-
-
         #endregion
 
         #region 命令定义
@@ -607,7 +617,6 @@ namespace GetStartedApp.ViewModels.PLC
         }
         #endregion
 
-
         #region ISiemensEventExecuter 实现
 
 
@@ -766,8 +775,6 @@ namespace GetStartedApp.ViewModels.PLC
         }
         #endregion
 
-
-
         #region 强类型
 
         private DelegateCommand _BeckhoffConfigCmd;
@@ -820,7 +827,6 @@ namespace GetStartedApp.ViewModels.PLC
 
         #endregion
 
-
         #region MQTT
 
         private DelegateCommand _MQTTConfigCmd;
@@ -829,45 +835,156 @@ namespace GetStartedApp.ViewModels.PLC
 
         void ExecuteMQTTConfigCmd()
         {
-             mqtt = new MqttClient(new MqttConnectionOptions()
-            {
-                IpAddress = "127.0.0.1",     // 云服务器的ip和端口，是否需要用户名密码，取决于服务器的配置
-                Port = 1888,
-                ClientId = "kstopa"
-            });
+            //  mqtt = new MqttClient(new MqttConnectionOptions()
+            // {
+            //     IpAddress = "127.0.0.1",     // 云服务器的ip和端口，是否需要用户名密码，取决于服务器的配置
+            //     Port = 1888,
+            //     ClientId = "kstopa"
+            // });
 
-            OperateResult mqttConnect = mqtt.ConnectServer();
-            if (!mqttConnect.IsSuccess)
+            // OperateResult mqttConnect = mqtt.ConnectServer();
+            // if (!mqttConnect.IsSuccess)
+            // {
+            //     Console.WriteLine("Mqtt Connect failed: " + mqttConnect.Message);
+            //     Console.ReadLine();
+            //     return;
+            // }
+
+
+            // mqtt.OnNetworkError += Mqtt_OnNetworkError;
+            // mqtt.OnClientConnected += Mqtt_OnClientConnected;
+            // mqtt.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+
+            //OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
+
+            _mqttClient.StartClientAsync("qifeng", "192.168.115.208", 1888).Await();
+            _mqttClient.OnEvent += _client_OnEvent;
+            _mqttClient.OnConnectionStatusChanged += _client_OnConnectionStatusChanged;
+            _mqttClient.OnResponse += _client_OnResponse;
+            _mqttClient.OnError += _client_OnError;
+            _mqttClient.OnTelemetry += _client_OnTelemetry;
+        }
+
+        private void _client_OnTelemetry(object? sender, IKTelemetry e)
+        {
+            if (e.DeviceName == "TestPLC")
             {
-                Console.WriteLine("Mqtt Connect failed: " + mqttConnect.Message);
-                Console.ReadLine();
-                return;
+                if (e.TelemetryData.Alias == "公共区读")
+                {
+
+                }
             }
+        }
 
+        private void _client_OnError(object? sender, string e)
+        {
+
+        }
+
+        private void _client_OnResponse(object? sender, IKRpcResponse e)
+        {
+
+        }
+
+        private void _client_OnConnectionStatusChanged(object? sender, bool e)
+        {
+            if (e)
+            {
+                //连接成功
+            }
+        }
+
+
+        private readonly ConcurrentQueue<IKEvent> _messageQueue1 = new ConcurrentQueue<IKEvent>();
+        private readonly ConcurrentQueue<IKEvent> _messageQueue2 = new ConcurrentQueue<IKEvent>();
+        private readonly ConcurrentQueue<IKEvent> _messageQueue3 = new ConcurrentQueue<IKEvent>();
+        private void _client_OnEvent(object? sender, IKEvent e)
+        {
+            if (e.DeviceName == "TestPLC")
+            {
+                _messageQueue1.Enqueue(e);
+              
+            }
+            else if (e.DeviceName == "")
+            {
+                _messageQueue2.Enqueue(e);
+            }
+            else if (e.DeviceName == "")
+            {
+                _messageQueue3.Enqueue(e);
+            }
+        }
+
+       
+        private async Task ProcessMessageQueueAsync()
+        {
            
-            mqtt.OnNetworkError += Mqtt_OnNetworkError;
-            mqtt.OnClientConnected += Mqtt_OnClientConnected;
-            mqtt.OnMqttMessageReceived += Mqtt_OnMqttMessageReceived;
+            try
+            {
+                while (true)
+                {
 
-           OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
+                    if (_messageQueue1.TryDequeue(out var kEvent))
+                    {
+                        switch (kEvent.EventData.Alias)
+                        {
+                            case "er02":
+
+                                var r = MqttClientHelper.DictionaryToObjectConverter<EventRClass>(kEvent.EventData.Params);
+
+                                var request = new IKRpcRequest()
+                                {
+                                    DeviceName = kEvent.DeviceName,
+                                    RequestData = new IKRpcData()
+                                    {
+                                        RequestId = Guid.NewGuid().ToString(),
+                                        Method = MqttClientHelper.WriteCache,
+                                        Cache = "cw02",
+                                        Alias="ew02",
+                                        Params = MqttClientHelper.ConvertObjectToDictionary<EventWClass>(new EventWClass() {
+                                        
+                                       
+                                        })
+                                    }
+
+                                };
+                                await _mqttClient.PublishRequestWriteAsync(request);
+                                break;
+
+
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        await Task.Delay(10);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+              Debug.WriteLine(ex.Message);
+            }
+           
         }
+        //private void Mqtt_OnClientConnected(MqttClient client)
+        //{
+        //    OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
+        //}
 
-        private void Mqtt_OnClientConnected(MqttClient client)
-        {
-            OperateResult send = mqtt.SubscribeMessage(new string[] { "devices/+/#" });
-        }
+        //private void Mqtt_OnNetworkError(object? sender, EventArgs e)
+        //{
+        //}
 
-        private void Mqtt_OnNetworkError(object? sender, EventArgs e)
-        {
-        }
+        //private void Mqtt_OnMqttMessageReceived(MqttClient client, MqttApplicationMessage message)
+        //{
+        //    // 处理接收到的MQTT消息
+        //    Console.WriteLine($"Received MQTT message on topic {message.Topic}: {message.Payload}");
 
-        private void Mqtt_OnMqttMessageReceived(MqttClient client, MqttApplicationMessage message)
-        {
-            // 处理接收到的MQTT消息
-            Console.WriteLine($"Received MQTT message on topic {message.Topic}: {message.Payload}");
-
-            var str = Encoding.UTF8.GetString(message.Payload);
-        }
+        //    var str = Encoding.UTF8.GetString(message.Payload);
+        //}
 
 
         #endregion

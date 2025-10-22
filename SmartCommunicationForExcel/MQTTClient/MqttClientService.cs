@@ -44,7 +44,7 @@ public class MqttClientService: IMqttClientService
                options.ProtocolName = "MQTT";
                options.Version = MqttProtocolVersion.V311;
                options.KeepAlive = 60;
-               options.CleanSession = true;
+               options.CleanSession = false;
            })
            .ConfigurePlugins(a =>
            {
@@ -140,7 +140,7 @@ public class MqttClientService: IMqttClientService
         var subscribeRequests = new List<SubscribeRequest>();
         for(int i=0;i<topics.Length;i++)
         {
-            subscribeRequests.Add(new SubscribeRequest(topics[i], QosLevel.AtLeastOnce));
+            subscribeRequests.Add(new SubscribeRequest(topics[i], QosLevel.ExactlyOnce));
         }
         var message = new MqttSubscribeMessage(subscribeRequests.ToArray());
         await _client.SubscribeAsync(message);
@@ -154,7 +154,7 @@ public class MqttClientService: IMqttClientService
             throw new InvalidOperationException("客户端未连接，无法发布消息");
         }
 
-        var message = new MqttPublishMessage(topic, false, QosLevel.AtLeastOnce,Encoding.UTF8.GetBytes(payload));
+        var message = new MqttPublishMessage(topic, false, QosLevel.ExactlyOnce, Encoding.UTF8.GetBytes(payload));
      
         await _client.PublishAsync(message);
     }

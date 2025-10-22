@@ -24,6 +24,7 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="EPPlus" Version="8.0.8" />
 		<PackageReference Include="HslCommunication" Version="12.3.3" />
+		<PackageReference Include="IKMqttClient" Version="1.0.1" />
 		<PackageReference Include="Karambolo.Extensions.Logging.File" Version="3.6.3" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.8" />

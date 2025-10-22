@@ -81,7 +81,8 @@ namespace SmartCommunicationForExcel.MQTTClient
                     IpAddress = ipAddress,
                     Port = port,
                     ClientId = clientId,
-                    ConnectTimeout = _connectTimeout
+                    ConnectTimeout = _connectTimeout,
+                    CleanSession = false
                     // 可扩展：添加用户名密码
                     // UserName = "your-username",
                     // Password = "your-password"
