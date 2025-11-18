@@ -10,6 +10,9 @@ using DryIoc.Microsoft.DependencyInjection;
 using Example;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Interface;
+using GetStartedApp.RestSharp;
+using GetStartedApp.RestSharp.IServices;
+using GetStartedApp.RestSharp.Services;
 using GetStartedApp.SqlSugar.Extensions;
 using GetStartedApp.Utils.Services;
 using GetStartedApp.ViewModels;
@@ -36,6 +39,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -85,9 +89,20 @@ namespace GetStartedApp
                 containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
                 containerRegistry.RegisterSingleton<IMqttClientService, MqttClientService>();
                 containerRegistry.RegisterSingleton<MqttClientHelper>();
+
+                containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
+                if (Debugger.IsAttached)
+                {
+                    containerRegistry.GetContainer().RegisterInstance(@"http://localhost:9527/", serviceKey: "webUrl");
+                }
+                else
+                {
+                   // containerRegistry.GetContainer().RegisterInstance(@"http://192.168.0.230:10010/", serviceKey: "webUrl");
+                }
                 // Services
                 //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
-                ///
+                containerRegistry.Register<ISysMenuClientService,SysMenuClientService>();
+                
                 // 注册 Serilog.ILogger 到容器（单例模式）
                 containerRegistry.RegisterSingleton<ILogger>(() => Log.Logger);
                 containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
@@ -127,7 +142,7 @@ namespace GetStartedApp
             var serviceCollection = new ServiceCollection();
 
             // SqlSugar
-            SqlSugarConfigure(serviceCollection);
+           // SqlSugarConfigure(serviceCollection);
 
             return new DryIocContainerExtension(new Container(CreateContainerRules())
                .WithDependencyInjectionAdapter(serviceCollection)
@@ -144,62 +159,62 @@ namespace GetStartedApp
                                 .WithFactorySelector(Rules.SelectLastRegisteredFactory());
         }
 
-        private void SqlSugarConfigure(IServiceCollection services)
-        {
-            #region 配置sqlsuagr
+        //private void SqlSugarConfigure(IServiceCollection services)
+        //{
+        //    #region 配置sqlsuagr
 
-            var connectConfigList = new List<ConnectionConfig>();
-            var connectionString = string.Empty;
-            //数据库序号从0开始,默认数据库为0
-            //如果是设计模式下，则使用默认的连接字符串
-            connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
+        //    var connectConfigList = new List<ConnectionConfig>();
+        //    var connectionString = string.Empty;
+        //    //数据库序号从0开始,默认数据库为0
+        //    //如果是设计模式下，则使用默认的连接字符串
+        //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
 
-            //if (Design.IsDesignMode)
-            //{
-            //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
-            //}
-            //else
-            //{
-            //    connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
-            //}
-            //默认数据库
-            connectConfigList.Add(new ConnectionConfig
-            {
-                ConnectionString = connectionString,
-                DbType = DbType.MySql,
-                IsAutoCloseConnection = true
-            });
-            services.AddSqlSugar(connectConfigList.ToArray()
-                , db =>
-                {
-                    //db.Aop.OnLogExecuting = (sql, pars) =>
-                    //{
-                    //    if (sql.StartsWith("SELECT"))
-                    //    {
-                    //        Console.ForegroundColor = ConsoleColor.Green;
-                    //    }
-                    //    if (sql.StartsWith("UPDATE") || sql.StartsWith("INSERT"))
-                    //    {
-                    //        Console.ForegroundColor = ConsoleColor.White;
-                    //    }
-                    //    if (sql.StartsWith("DELETE"))
-                    //    {
-                    //        Console.ForegroundColor = ConsoleColor.Blue;
-                    //    }
-                    //    //App.PrintToMiniProfiler("SqlSugar", "Info", sql + "\r\n" + db.Utilities.SerializeObject(pars.ToDictionary(it => it.ParameterName, it => it.Value)));
-                    //    Console.WriteLine(sql + "\r\n\r\n" + SqlProfiler.ParameterFormat(sql, pars));
-                    //};
+        //    //if (Design.IsDesignMode)
+        //    //{
+        //    //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
+        //    //}
+        //    //else
+        //    //{
+        //    //    connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+        //    //}
+        //    //默认数据库
+        //    connectConfigList.Add(new ConnectionConfig
+        //    {
+        //        ConnectionString = connectionString,
+        //        DbType = DbType.MySql,
+        //        IsAutoCloseConnection = true
+        //    });
+        //    services.AddSqlSugar(connectConfigList.ToArray()
+        //        , db =>
+        //        {
+        //            //db.Aop.OnLogExecuting = (sql, pars) =>
+        //            //{
+        //            //    if (sql.StartsWith("SELECT"))
+        //            //    {
+        //            //        Console.ForegroundColor = ConsoleColor.Green;
+        //            //    }
+        //            //    if (sql.StartsWith("UPDATE") || sql.StartsWith("INSERT"))
+        //            //    {
+        //            //        Console.ForegroundColor = ConsoleColor.White;
+        //            //    }
+        //            //    if (sql.StartsWith("DELETE"))
+        //            //    {
+        //            //        Console.ForegroundColor = ConsoleColor.Blue;
+        //            //    }
+        //            //    //App.PrintToMiniProfiler("SqlSugar", "Info", sql + "\r\n" + db.Utilities.SerializeObject(pars.ToDictionary(it => it.ParameterName, it => it.Value)));
+        //            //    Console.WriteLine(sql + "\r\n\r\n" + SqlProfiler.ParameterFormat(sql, pars));
+        //            //};
 
 
-                    ////执行超时时间
-                    // db.Ado.CommandTimeOut = 30;
+        //            ////执行超时时间
+        //            // db.Ado.CommandTimeOut = 30;
 
-                    // 配置加删除全局过滤器
-                    db.GlobalFilter();
-                });
+        //            // 配置加删除全局过滤器
+        //            db.GlobalFilter();
+        //        });
 
-            #endregion
-        }
+        //    #endregion
+        //}
 
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
         {

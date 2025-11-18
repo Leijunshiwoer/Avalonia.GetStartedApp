@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using GetStartedApp.Models;
+using GetStartedApp.RestSharp.IServices;
+using GetStartedApp.RestSharp.Services;
 using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.SqlSugar.Services;
 using GetStartedApp.SqlSugar.Tables;
@@ -17,12 +19,13 @@ namespace GetStartedApp.ViewModels;
 public class SideMenuViewModel : ViewModelBase
 {
     private readonly IRegionManager _regionManager;
-    private readonly ISysMenuService _menuService;
+    private readonly ISysMenuClientService _sysMenuClientService;
+
     public IRelayCommand NavigationCommand { get; }
-    public SideMenuViewModel(IRegionManager regionManager, ISysMenuService menuService)
+    public SideMenuViewModel(IRegionManager regionManager,ISysMenuClientService sysMenuClientService)
     {
         _regionManager = regionManager;
-        _menuService = menuService;
+        _sysMenuClientService = sysMenuClientService;
         NavigationCommand = new RelayCommand(OnNavigate);
         _ = LoadMenuAsync();
     }
@@ -50,11 +53,12 @@ public class SideMenuViewModel : ViewModelBase
 
     private async Task LoadMenuAsync()
     {
-        var sysMenus = await _menuService.GetMenuTreeAsync();
-        MenuItems = new ObservableCollection<MenuItem>(sysMenus.Select(ToMenuItem));
+        var MenusDto = await _sysMenuClientService.GetMenuTreeAsync();
+        var list = MenusDto.Data;
+        MenuItems = new ObservableCollection<MenuItem>(list.Select(ToMenuItem));
     }
 
-    private MenuItem ToMenuItem(SysMenu sysMenu)
+    private MenuItem ToMenuItem(MenuDto sysMenu)
     {
         return new MenuItem
         {

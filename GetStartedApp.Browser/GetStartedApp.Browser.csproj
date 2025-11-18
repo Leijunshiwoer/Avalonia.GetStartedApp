@@ -13,4 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="..\GetStartedApp\GetStartedApp.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\fonts\" />
+  </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
 		xmlns:prism="http://prismlibrary.com/"
 		xmlns:views="clr-namespace:GetStartedApp.Views"
 		xmlns:vm="using:GetStartedApp.ViewModels"
-		Title="{Binding Title}"
+		Title="佰奥产线管理系统"
 		d:DesignHeight="450"
 		d:DesignWidth="800"
 		prism:ViewModelLocator.AutoWireViewModel="True"

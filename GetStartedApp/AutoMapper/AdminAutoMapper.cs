@@ -15,6 +15,7 @@ namespace GetStartedApp.AutoMapper
         {
             CreateMap<SysUser, UserDto>().ReverseMap();
             CreateMap<SysRole, RoleDto>().ReverseMap();
+            CreateMap<SysMenu, MenuDto>().ReverseMap();
             CreateMap<Base_Version_Primary_Config, VersionPrimaryDto>().ReverseMap();
             CreateMap<Base_Version_Second_Config, VersionSecondDto>() .ReverseMap();
             CreateMap<Base_Version_Attribute_Config, AttributeDto>().ReverseMap();
