@@ -13,20 +13,22 @@ namespace GetStartedApp.Utils.Services
 {
     public class MessageManagerService : IMessageManagerService
     {
-        private Window? _mainWindow;
         private WindowToastManager? _toastManager;
         private WindowNotificationManager? _notificationManager;
 
-
         public void Initialize(Window mainWindow)
         {
-            _mainWindow = mainWindow;
             var topLevel=TopLevel.GetTopLevel(mainWindow);
-
             _toastManager = new WindowToastManager(topLevel) { MaxItems = 3 };
-
             _notificationManager = new WindowNotificationManager(topLevel) { MaxItems = 3 };
         }
+        public void Initialize(UserControl control)
+        {
+            var topLevel = TopLevel.GetTopLevel(control);
+            _toastManager = new WindowToastManager(topLevel) { MaxItems = 3 };
+            _notificationManager = new WindowNotificationManager(topLevel) { MaxItems = 3 };
+        }
+
 
         public void Show(string message)
         {

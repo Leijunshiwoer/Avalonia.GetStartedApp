@@ -1,10 +1,48 @@
 <UserControl x:Class="GetStartedApp.Views.MainView"
-             xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             d:DesignHeight="450"
-             d:DesignWidth="800"
-             mc:Ignorable="d">
-    Welcome to Avalonia!
+			 xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 d:DesignHeight="450"
+			 d:DesignWidth="800"
+			 xmlns:views="clr-namespace:GetStartedApp.Views"
+			 xmlns:vm="using:GetStartedApp.ViewModels"
+			 xmlns:core="clr-namespace:GetStartedApp"
+			 xmlns:prism="http://prismlibrary.com/"
+			 x:CompileBindings="True"
+			 x:DataType="vm:MainViewModel"
+			 mc:Ignorable="d">
+	<Grid ColumnDefinitions="auto,*">
+		<!--  Menu  -->
+		<Panel Grid.Column="0" Background="White">
+			<!--
+			The SidebarView is not using a region on purpose, so it shows in designer mode
+			-->
+			<views:SideMenuView />
+			<!--<ContentControl prism:RegionManager.RegionName="{x:Static core:RegionNames.SidebarRegion}" />-->
+		</Panel>
+		<Panel Grid.Column="1">
+			<Grid RowDefinitions="auto,*,auto">
+				<!--  Top Bar  -->
+				<!--<ContentControl Grid.Row="0" prism:RegionManager.RegionName="{x:Static core:RegionNames.TopBarRegion}" />-->
+				<!--  Main Content  -->
+				<ContentControl Grid.Row="1" prism:RegionManager.RegionName="{x:Static core:RegionNames.ContentRegion}" />
+				<!--  Footer  -->
+				<Panel Grid.Row="2" Background="LightSteelBlue">
+					<StackPanel Margin="5"
+								Orientation="Horizontal"
+								Spacing="5">
+						<TextBlock FontWeight="Bold" Text="User Name: " />
+						<TextBlock FontStyle="Italic" Text="PrismAvalonia!" />
+
+						<TextBlock FontWeight="Bold" Text="Status:" />
+						<TextBlock Text="Disconnected" />
+
+						<TextBlock FontWeight="Bold" Text="Connection Id: " />
+						<TextBlock FontStyle="Italic" Text="0x07CC" />
+					</StackPanel>
+				</Panel>
+			</Grid>
+		</Panel>
+	</Grid>
 </UserControl>

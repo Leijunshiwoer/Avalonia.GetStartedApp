@@ -32,7 +32,6 @@ public class SideMenuViewModel : ViewModelBase
     {
         get { return _SelectedMenuItem; }
         set { SetProperty(ref _SelectedMenuItem, value); }
-
     }
 
     private ObservableCollection<MenuItem> _MenuItems;
@@ -68,5 +67,3 @@ public class SideMenuViewModel : ViewModelBase
     }
 
 }
-
-

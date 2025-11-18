@@ -151,7 +151,7 @@
                               x:DataType="local:MyConfig"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="60"
+                            <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
                                                 Header="序号" />
                             <DataGridTextColumn Width="300"
@@ -209,7 +209,7 @@
                               x:DataType="local:MyConfig"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="60"
+                            <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
                                                 Header="序号" />
                             <DataGridTextColumn Width="300"
@@ -289,7 +289,7 @@
                               x:DataType="local:MyConfig"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="60"
+                            <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
                                                 Header="序号" />
                             <DataGridTextColumn Width="300"
@@ -336,7 +336,7 @@
                               x:DataType="local:MyConfig"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="60"
+                            <DataGridTextColumn Width="80"
                                                 Binding="{Binding No}"
                                                 Header="序号" />
                             <DataGridTextColumn Width="300"

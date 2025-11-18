@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.TextFormatting;
@@ -222,13 +223,13 @@ namespace GetStartedApp.ViewModels.PLC
         private void OnMonitorPLC(object parameter)
         {
             if (parameter is not PLCModel plcModel) return;
-
+            var desktop = App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
             SelectedPLC = plcModel;
             if (plcModel.FIsConn is "已连接" or "后台连接中")
             {
                 if (plcModel.FCpuType == "Siemens")
                 {
-                    var result = _smartContainer.ShowSiemensConfig(plcModel.FName);
+                    var result = _smartContainer.ShowSiemensConfig(desktop.MainWindow, plcModel.FName);
                     if (!result.IsSuccess)
                     {
                         // 可添加监控窗口打开失败的处理
@@ -236,7 +237,7 @@ namespace GetStartedApp.ViewModels.PLC
                 }
                 else if (plcModel.FCpuType == "Omron")
                 {
-                    var result = _smartContainer.ShowOmronConfig(plcModel.FName);
+                    var result = _smartContainer.ShowOmronConfig(desktop.MainWindow,plcModel.FName);
                     if (!result.IsSuccess)
                     {
                         // 可添加监控窗口打开失败的处理
@@ -244,7 +245,7 @@ namespace GetStartedApp.ViewModels.PLC
                 }
                 else if (plcModel.FCpuType == "Mitsubishi")
                 {
-                    var result = _smartContainer.ShowMitsubishiConfig(plcModel.FName);
+                    var result = _smartContainer.ShowMitsubishiConfig(desktop.MainWindow,plcModel.FName);
                     if (!result.IsSuccess)
                     {
                         // 可添加监控窗口打开失败的处理
@@ -252,7 +253,7 @@ namespace GetStartedApp.ViewModels.PLC
                 }
                 else if (plcModel.FCpuType == "Beckhoff")
                 {
-                    var result = _smartContainer.ShowBeckhoffConfig(plcModel.FName);
+                    var result = _smartContainer.ShowBeckhoffConfig(desktop.MainWindow,plcModel.FName);
                     if (!result.IsSuccess)
                     {
                         // 可添加监控窗口打开失败的处理
@@ -262,6 +263,10 @@ namespace GetStartedApp.ViewModels.PLC
                 {
                     MessageBox.ShowAsync("不支持的PLC类型");
                 }
+
+            }
+            else
+            {
 
             }
         }

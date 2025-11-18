@@ -17,21 +17,21 @@
 
 	<ItemGroup>
 		<!-- Avalonia 核心依赖 -->
-		<PackageReference Include="Avalonia" Version="11.3.3" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.3" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.3" />
+		<PackageReference Include="Avalonia" Version="11.3.8" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.8" />
 		<PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="EPPlus" Version="8.0.8" />
-		<PackageReference Include="HslCommunication" Version="12.3.3" />
+		<PackageReference Include="EPPlus" Version="8.2.1" />
+		<PackageReference Include="HslCommunication" Version="12.5.2" />
 		<PackageReference Include="IKMqttClient" Version="1.0.1" />
 		<PackageReference Include="Karambolo.Extensions.Logging.File" Version="3.6.3" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.8" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="S7netplus" Version="0.20.0" />
 		<PackageReference Include="SmartThreadPool.dll" Version="2.3.0" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.8" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.0" />
 		<PackageReference Include="TouchSocket.Mqtt" Version="4.0.0-beta.25" />
 		<PackageReference Include="Unity" Version="5.11.10" />
 	</ItemGroup>

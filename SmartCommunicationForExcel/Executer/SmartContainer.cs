@@ -1,5 +1,6 @@
 ﻿
 using Avalonia;
+using Avalonia.Controls;
 using SmartCommunicationForExcel.EventHandle.Beckhoff;
 using SmartCommunicationForExcel.EventHandle.Mitsubishi;
 using SmartCommunicationForExcel.EventHandle.Omron;
@@ -108,7 +109,7 @@ namespace SmartCommunicationForExcel.Executer
         #endregion
 
         #region 配置窗口管理（修复类型转换问题）
-        public ResultState ShowSiemensConfig(string instanceName = "")
+        public ResultState ShowSiemensConfig(Window window,string instanceName = "")
         {
             var result = new ResultState { IsSuccess = true };
 
@@ -118,7 +119,7 @@ namespace SmartCommunicationForExcel.Executer
                 {
                     _smartSiemensConfigForm = new SmartConfigForExcel.SmartSiemensConfigForExcelForm();
                     _smartSiemensConfigForm.SetModel(config);
-                    _smartSiemensConfigForm.Show();
+                    _smartSiemensConfigForm.ShowDialog(window);
                     return result;
                 }
                 else
@@ -135,7 +136,7 @@ namespace SmartCommunicationForExcel.Executer
             return result;
         }
 
-        public ResultState ShowOmronConfig(string instanceName = "")
+        public ResultState ShowOmronConfig(Window window,string instanceName = "")
         {
             var result = new ResultState { IsSuccess = true };
 
@@ -145,7 +146,7 @@ namespace SmartCommunicationForExcel.Executer
                 {
                     _smartOmronConfigForm = new SmartConfigForExcel.SmartOmronConfigForExcelForm();
                     _smartOmronConfigForm.SetModel(config);
-                    _smartOmronConfigForm.Show();
+                    _smartOmronConfigForm.ShowDialog(window);
                     return result;
                 }
                 else
@@ -164,7 +165,7 @@ namespace SmartCommunicationForExcel.Executer
             return result;
         }
 
-        public ResultState ShowMitsubishiConfig(string instanceName = "")
+        public ResultState ShowMitsubishiConfig(Window window,string instanceName = "")
         {
             var result = new ResultState { IsSuccess = true };
 
@@ -174,7 +175,7 @@ namespace SmartCommunicationForExcel.Executer
                 {
                     _smartMitsubishiConfigForm = new SmartConfigForExcel.SmartMitsubishiConfigForExcelForm();
                     _smartMitsubishiConfigForm.SetModel(config);
-                    _smartMitsubishiConfigForm.Show();
+                    _smartMitsubishiConfigForm.ShowDialog(window);
                 }
                 else
                 {
@@ -192,7 +193,7 @@ namespace SmartCommunicationForExcel.Executer
             return result;
         }
 
-        public ResultState ShowBeckhoffConfig(string instanceName = "")
+        public ResultState ShowBeckhoffConfig(Window window,string instanceName = "")
         {
             var result = new ResultState { IsSuccess = true };
 
@@ -202,7 +203,7 @@ namespace SmartCommunicationForExcel.Executer
                 {
                     _smartBeckhoffConfigForm = new SmartConfigForExcel.SmartBeckhoffConfigForExcelForm();
                     _smartBeckhoffConfigForm.SetModel(config);
-                    _smartBeckhoffConfigForm.Show();
+                    _smartBeckhoffConfigForm.ShowDialog(window);
                 }
                 else
                 {

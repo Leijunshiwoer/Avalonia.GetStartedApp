@@ -13,6 +13,7 @@ namespace GetStartedApp.Utils.Services
         void Show(string message);
 
         void Initialize(Window mainWindow);
+       void Initialize(UserControl control);
         void Show(string message, NotificationType type);
     }
 }

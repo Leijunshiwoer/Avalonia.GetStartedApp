@@ -50,105 +50,75 @@ namespace GetStartedApp
 {
     public partial class App : PrismApplication
     {
-      
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
             base.Initialize();  // Required to initialize Prism.Avalonia - DO NOT REMOVE
-
             InitializeLogging();
             // 注册全局异常处理事件
             RegisterGlobalExceptionHandlers();
         }
-        private static Mutex mutex;
         protected override AvaloniaObject CreateShell()
         {
-            //MainWindow sell = null;
-            //mutex = new Mutex(true, "GetStartApp");
-            //if (mutex.WaitOne(0, false))
-            //{
-            //    /**
-            //   * 当前用户是管理员的时候，直接启动应用程序
-            //   * 如果不是管理员，则使用启动对象启动程序，以确保使用管理员身份运行
-            //   */
-
-            //    //检查当前用户是否为管理员
-            //    //直接启动应用程序
-            //    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            //    {
-            //        sell = Container.Resolve<MainWindow>();
-            //        var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
-            //        messageManagerService.Initialize(sell);
-            //    }
-            //}
-            //else
-            //{
-            //    //提示用户程序已经在运行
-            //    if (MessageBox.ShowAsync("已经有一个软件运行中，请勿重复开启！", "提示", MessageBoxIcon.Warning, MessageBoxButton.OK).GetAwaiter().GetResult() == MessageBoxResult.OK)
-            //    {
-            //        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            //        {
-            //            desktop.Shutdown();
-            //        }
-            //    }
-            //}
-            //return sell;
-            ////return Container.Resolve<MainWindow>();
-            ///
-
+            var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-               var sell = Container.Resolve<MainWindow>();
-                var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
+                var sell = Container.Resolve<MainWindow>();
                 messageManagerService.Initialize(sell);
-
                 return sell;
             }
             else
             {
-                return Container.Resolve<MainView>();
+                var sell = Container.Resolve<MainView>();
+                messageManagerService.Initialize(sell);
+                return sell;
             }
+
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             // Add Services and ViewModel registrations here
+            try
+            {
+                Console.WriteLine("RegisterTypes()");
+                containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
+                containerRegistry.RegisterSingleton<IMqttClientService, MqttClientService>();
+                containerRegistry.RegisterSingleton<MqttClientHelper>();
+                // Services
+                //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
+                ///
+                // 注册 Serilog.ILogger 到容器（单例模式）
+                containerRegistry.RegisterSingleton<ILogger>(() => Log.Logger);
+                containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
+                containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
+                containerRegistry.RegisterInstance<ISiemensEvent>(new SiemensEvent());
+                // Dialogs
+                //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
+                //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
+                containerRegistry.RegisterDialog<SetUserDlg, SetUserDlgViewModel>();
+                containerRegistry.RegisterDialog<SetVersionPrimaryDlg, SetVersionPrimaryDlgViewModel>();
+                containerRegistry.RegisterDialog<SetVersionSecondDlg, SetVersionSecondDlgViewModel>();
 
-            Console.WriteLine("RegisterTypes()");
-            containerRegistry.RegisterSingleton<IMessageManagerService, MessageManagerService>();
-            containerRegistry.RegisterSingleton<IMqttClientService, MqttClientService>();
-            containerRegistry.RegisterSingleton<MqttClientHelper>();
-            // Services
-            //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
-            ///
-            // 注册 Serilog.ILogger 到容器（单例模式）
-            containerRegistry.RegisterSingleton<Serilog.ILogger>(() => Log.Logger);
-
-            containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
-
-            containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
-            containerRegistry.RegisterInstance<ISiemensEvent>(new SiemensEvent());
-            // Dialogs
-            //// containerRegistry.RegisterDialog<MessageBoxView, MessageBoxViewModel>();
-            //// containerRegistry.RegisterDialogWindow<CustomDialogWindow>(nameof(CustomDialogWindow));
-            containerRegistry.RegisterDialog<SetUserDlg, SetUserDlgViewModel>();
-            containerRegistry.RegisterDialog<SetVersionPrimaryDlg, SetVersionPrimaryDlgViewModel>();
-            containerRegistry.RegisterDialog<SetVersionSecondDlg, SetVersionSecondDlgViewModel>();
-
-            // Views - Generic
-            containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
-            containerRegistry.RegisterForNavigation<MainView>();
-
-            containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
-            containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
-            containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
-            containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
-            containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
-            containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
-            containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
-            containerRegistry.RegisterForNavigation <ConnSiemens, ConnSiemensViewModel>();
-            containerRegistry.RegisterForNavigation<EventSiemens, EventSiemensViewModel>();
-            containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>("ProcessRoute");
+                // Views - Generic
+                containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
+                containerRegistry.RegisterForNavigation<MainView, MainViewModel>();
+                containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
+                containerRegistry.RegisterForNavigation<DashboardView, DashboardViewModel>();
+                containerRegistry.RegisterForNavigation<UserView, UserViewModel>();
+                containerRegistry.RegisterForNavigation<ProductVersion, ProductVersionViewModel>();
+                containerRegistry.RegisterForNavigation<VersionAttribute, VersionAttributeViewModel>();
+                containerRegistry.RegisterForNavigation<ProgramPackView, ProgramPackViewModel>();
+                containerRegistry.RegisterForNavigation<Recipe, RecipeViewModel>();
+                containerRegistry.RegisterForNavigation<ConnSiemens, ConnSiemensViewModel>();
+                containerRegistry.RegisterForNavigation<EventSiemens, EventSiemensViewModel>();
+                containerRegistry.RegisterForNavigation<ProcessRouteView, ProcessRouteViewModel>("ProcessRoute");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        
         }
 
 
@@ -164,6 +134,16 @@ namespace GetStartedApp
               );
         }
 
+        protected override Rules CreateContainerRules()
+        {
+            return Rules.Default.WithConcreteTypeDynamicRegistrations(reuse: Reuse.Transient)
+                                .With(Made.Of(FactoryMethod.ConstructorWithResolvableArguments))
+                                .WithFuncAndLazyWithoutRegistration()
+                                .WithTrackingDisposableTransients()
+                                //.WithoutFastExpressionCompiler()
+                                .WithFactorySelector(Rules.SelectLastRegisteredFactory());
+        }
+
         private void SqlSugarConfigure(IServiceCollection services)
         {
             #region 配置sqlsuagr
@@ -172,14 +152,16 @@ namespace GetStartedApp
             var connectionString = string.Empty;
             //数据库序号从0开始,默认数据库为0
             //如果是设计模式下，则使用默认的连接字符串
-            if (Design.IsDesignMode)
-            {
-                connectionString = "Data Source=localhost;Initial Catalog=F2210001;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
-            }
-            else
-            {
-                connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
-            }
+            connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
+
+            //if (Design.IsDesignMode)
+            //{
+            //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
+            //}
+            //else
+            //{
+            //    connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+            //}
             //默认数据库
             connectConfigList.Add(new ConnectionConfig
             {
@@ -238,7 +220,7 @@ namespace GetStartedApp
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             // 如果使用了Task，还可以处理Task的未观察异常
-            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         }
 
         /// <summary>
