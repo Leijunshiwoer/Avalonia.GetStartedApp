@@ -11,18 +11,20 @@ namespace GetStartedApp.ViewModels
     public class MainViewModel:ViewModelBase
     {
         private readonly IRegionManager _regionManager;
-        private readonly IMessageManagerService _messageManagerService;
+       // private readonly IMessageManagerService _messageManagerService;
 
-        public MainViewModel(IRegionManager regionManager, IMessageManagerService messageManagerService)
+        public MainViewModel(IRegionManager regionManager 
+            //IMessageManagerService messageManagerService
+            )
         {
 
             _regionManager = regionManager;
-            _messageManagerService = messageManagerService;
+           // _messageManagerService = messageManagerService;
           
             //初始化操作
             _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(DashboardView));
-            _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(ConnSiemens));
-            _regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(EventSiemens));
+            //_regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(ConnSiemens));
+            //_regionManager.RegisterViewWithRegion(RegionNames.ContentRegion, typeof(EventSiemens));
 
         }
     }

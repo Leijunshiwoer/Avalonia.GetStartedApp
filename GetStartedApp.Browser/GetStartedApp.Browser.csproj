@@ -5,6 +5,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
    
   </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\Fonts\MiSans-Normal.ttf" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Browser" Version="11.3.8" />
@@ -12,9 +15,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GetStartedApp\GetStartedApp.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\fonts\" />
   </ItemGroup>
 </Project>

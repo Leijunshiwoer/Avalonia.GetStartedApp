@@ -22,7 +22,7 @@
           ColumnDefinitions="Auto"
           RowDefinitions="Auto, Auto, *">
         <StackPanel Grid.Row="1">
-            <ToggleSwitch Name="collapse" Theme="{StaticResource SimpleToggleSwitch}" />
+           <!-- <ToggleSwitch Name="collapse" Theme="{StaticResource SimpleToggleSwitch}" />-->
             <!--<TextBlock HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Text="{Binding SelectedMenuItem.Header}" />-->
@@ -37,7 +37,7 @@
                        ExpandWidth="300"
                        HeaderBinding="{Binding Header}"
                        IconBinding="{Binding IconIndex}"
-                       IsHorizontalCollapsed="{Binding #collapse.IsChecked, Mode=OneWay}"
+                      
                        ItemsSource="{Binding MenuItems}"
                        SelectedItem="{Binding SelectedMenuItem}"
                        SubMenuBinding="{Binding Children}">
