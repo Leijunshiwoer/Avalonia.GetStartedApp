@@ -15,6 +15,7 @@ namespace GetStartedApp.SqlSugar.IServices
         int InsertReturnIdentityRecipeSTParameter(Product_Recipe_ST_Parameter_Config recipe_ST_Parameter_Config);
         void InitRecipe(int count, int SecondId);
         Product_Recipe_ST_Parameter_Config GetSTParameter(int op, int st, int count);
+        Product_Recipe_ST_Config GetSTs(int op, int count);
         List<Product_Recipe_Config> GetRecipeBySecondId(int secondId);
         void UpdateRecipes(List<Product_Recipe_Config> recipes);
         List<Product_Recipe_Config> GetRecipeByRecipeNo(int recipeNo);

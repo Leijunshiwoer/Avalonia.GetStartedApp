@@ -59,7 +59,7 @@ namespace GetStartedApp
             AvaloniaXamlLoader.Load(this);
             base.Initialize();  // Required to initialize Prism.Avalonia - DO NOT REMOVE
             InitializeLogging();
-            // ×¢²áÈ«¾ÖÒì³£´¦ÀíÊÂ¼ş
+            // ×¢ï¿½ï¿½È«ï¿½ï¿½ï¿½ì³£ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½
             RegisterGlobalExceptionHandlers();
         }
         protected override AvaloniaObject CreateShell()
@@ -67,9 +67,37 @@ namespace GetStartedApp
             var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                var sell = Container.Resolve<MainWindow>();
-                messageManagerService.Initialize(sell);
-                return sell;
+                // åˆ›å»ºä¸»çª—å£ä½†ä¸ç«‹å³æ˜¾ç¤º
+                var mainWindow = Container.Resolve<MainWindow>();
+                messageManagerService.Initialize(mainWindow);
+                
+                // æ˜¾ç¤ºç™»å½•çª—å£
+                var loginWindow = Container.Resolve<Views.LoginView>();
+                
+                // ç™»å½•æˆåŠŸåæ˜¾ç¤ºä¸»çª—å£å¹¶å…³é—­ç™»å½•çª—å£
+                if (loginWindow.DataContext is ViewModels.LoginViewModel loginViewModel)
+                {
+                    loginViewModel.LoginSuccess += () =>
+                    {
+                        mainWindow.Show();
+                        loginWindow.Close();
+                    };
+                }
+                
+                // ç›‘å¬ç™»å½•çª—å£å…³é—­äº‹ä»¶ï¼Œå¦‚æœæœªç™»å½•å°±å…³é—­ï¼Œåˆ™é€€å‡ºåº”ç”¨
+                loginWindow.Closing += (sender, e) =>
+                {
+                    // å¦‚æœä¸»çª—å£è¿˜æ²¡æ˜¾ç¤ºï¼Œè¯´æ˜ç”¨æˆ·å…³é—­äº†ç™»å½•çª—å£ï¼Œé€€å‡ºåº”ç”¨
+                    if (!mainWindow.IsVisible)
+                    {
+                        desktop.Shutdown();
+                    }
+                };
+                
+                loginWindow.Show();
+                
+                // è¿”å›ä¸»çª—å£ä½œä¸ºShellï¼ˆä½†åˆå§‹ä¸æ˜¾ç¤ºï¼‰
+                return mainWindow;
             }
             else
             {
@@ -102,8 +130,9 @@ namespace GetStartedApp
                 // Services
                 //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
                 containerRegistry.Register<ISysMenuClientService,SysMenuClientService>();
+                containerRegistry.Register<GetStartedApp.RestSharp.IServices.ISysUserClientService, GetStartedApp.RestSharp.Services.SysUserClientService>();
                 
-                // ×¢²á Serilog.ILogger µ½ÈİÆ÷£¨µ¥ÀıÄ£Ê½£©
+                // ×¢ï¿½ï¿½ Serilog.ILogger ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½
                 containerRegistry.RegisterSingleton<ILogger>(() => Log.Logger);
                 containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
                 containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
@@ -116,6 +145,7 @@ namespace GetStartedApp
                 containerRegistry.RegisterDialog<SetVersionSecondDlg, SetVersionSecondDlgViewModel>();
 
                 // Views - Generic
+                containerRegistry.Register<Views.LoginView>();
                 containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
                 containerRegistry.RegisterForNavigation<MainView, MainViewModel>();
                 containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
@@ -161,12 +191,12 @@ namespace GetStartedApp
 
         //private void SqlSugarConfigure(IServiceCollection services)
         //{
-        //    #region ÅäÖÃsqlsuagr
+        //    #region ï¿½ï¿½ï¿½ï¿½sqlsuagr
 
         //    var connectConfigList = new List<ConnectionConfig>();
         //    var connectionString = string.Empty;
-        //    //Êı¾İ¿âĞòºÅ´Ó0¿ªÊ¼,Ä¬ÈÏÊı¾İ¿âÎª0
-        //    //Èç¹ûÊÇÉè¼ÆÄ£Ê½ÏÂ£¬ÔòÊ¹ÓÃÄ¬ÈÏµÄÁ¬½Ó×Ö·û´®
+        //    //ï¿½ï¿½ï¿½İ¿ï¿½ï¿½ï¿½Å´ï¿½0ï¿½ï¿½Ê¼,Ä¬ï¿½ï¿½ï¿½ï¿½ï¿½İ¿ï¿½Îª0
+        //    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Â£ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Ä¬ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
         //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
 
         //    //if (Design.IsDesignMode)
@@ -177,7 +207,7 @@ namespace GetStartedApp
         //    //{
         //    //    connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
         //    //}
-        //    //Ä¬ÈÏÊı¾İ¿â
+        //    //Ä¬ï¿½ï¿½ï¿½ï¿½ï¿½İ¿ï¿½
         //    connectConfigList.Add(new ConnectionConfig
         //    {
         //        ConnectionString = connectionString,
@@ -206,10 +236,10 @@ namespace GetStartedApp
         //            //};
 
 
-        //            ////Ö´ĞĞ³¬Ê±Ê±¼ä
+        //            ////Ö´ï¿½Ğ³ï¿½Ê±Ê±ï¿½ï¿½
         //            // db.Ado.CommandTimeOut = 30;
 
-        //            // ÅäÖÃ¼ÓÉ¾³ıÈ«¾Ö¹ıÂËÆ÷
+        //            // ï¿½ï¿½ï¿½Ã¼ï¿½É¾ï¿½ï¿½È«ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½
         //            db.GlobalFilter();
         //        });
 
@@ -224,98 +254,98 @@ namespace GetStartedApp
 
 
         /// <summary>
-        /// ×¢²áÈ«¾ÖÒì³£´¦Àí³ÌĞò
+        /// ×¢ï¿½ï¿½È«ï¿½ï¿½ï¿½ì³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void RegisterGlobalExceptionHandlers()
         {
-            // ´¦ÀíUIÏß³ÌÎ´²¶»ñµÄÒì³£
+            // ï¿½ï¿½ï¿½ï¿½UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£
             Dispatcher.UIThread.UnhandledException += Dispatcher_UnhandledException;
 
-            // ´¦Àí·ÇUIÏß³ÌÎ´²¶»ñµÄÒì³£
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            // Èç¹ûÊ¹ÓÃÁËTask£¬»¹¿ÉÒÔ´¦ÀíTaskµÄÎ´¹Û²ìÒì³£
+            // ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½Taskï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½Taskï¿½ï¿½Î´ï¿½Û²ï¿½ï¿½ì³£
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         }
 
         /// <summary>
-        /// ´¦ÀíUIÏß³ÌÎ´²¶»ñµÄÒì³£
+        /// ï¿½ï¿½ï¿½ï¿½UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£
         /// </summary>
         private void Dispatcher_UnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            HandleException(e.Exception, "UIÏß³ÌÎ´´¦ÀíÒì³£");
+            HandleException(e.Exception, "UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ì³£");
 
-            // ÉèÖÃe.Handled = true±íÊ¾Òì³£ÒÑ´¦Àí£¬Ó¦ÓÃ³ÌĞò¿ÉÒÔ¼ÌĞøÔËĞĞ
+            // ï¿½ï¿½ï¿½ï¿½e.Handled = trueï¿½ï¿½Ê¾ï¿½ì³£ï¿½Ñ´ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             e.Handled = true;
         }
 
         /// <summary>
-        /// ´¦Àí·ÇUIÏß³ÌÎ´²¶»ñµÄÒì³£
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£
         /// </summary>
         private void CurrentDomain_UnhandledException(object? sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
             {
-                HandleException(ex, "·ÇUIÏß³ÌÎ´´¦ÀíÒì³£");
+                HandleException(ex, "ï¿½ï¿½UIï¿½ß³ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ì³£");
             }
 
-            // ¶ÔÓÚÑÏÖØÒì³££¬e.IsTerminating¿ÉÄÜÎªtrue£¬±íÊ¾Ó¦ÓÃ³ÌĞò¼´½«ÖÕÖ¹
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£ï¿½ï¿½e.IsTerminatingï¿½ï¿½ï¿½ï¿½Îªtrueï¿½ï¿½ï¿½ï¿½Ê¾Ó¦ï¿½Ã³ï¿½ï¿½ò¼´½ï¿½ï¿½ï¿½Ö¹
         }
 
         /// <summary>
-        /// ´¦ÀíTaskÎ´¹Û²ìµ½µÄÒì³£
+        /// ï¿½ï¿½ï¿½ï¿½TaskÎ´ï¿½Û²ìµ½ï¿½ï¿½ï¿½ì³£
         /// </summary>
         private void TaskScheduler_UnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
         {
-            HandleException(e.Exception, "TaskÎ´¹Û²ìµ½µÄÒì³£");
+            HandleException(e.Exception, "TaskÎ´ï¿½Û²ìµ½ï¿½ï¿½ï¿½ì³£");
 
-            // ±ê¼ÇÒì³£ÎªÒÑ¹Û²ì
+            // ï¿½ï¿½ï¿½ï¿½ì³£Îªï¿½Ñ¹Û²ï¿½
             e.SetObserved();
         }
 
         /// <summary>
-        /// Í³Ò»µÄÒì³£´¦ÀíÂß¼­
+        /// Í³Ò»ï¿½ï¿½ï¿½ì³£ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
         /// </summary>
         private void HandleException(Exception ex, string exceptionType)
         {
-            // Ê¹ÓÃSerilog¼ÇÂ¼Òì³£
-            Log.Error(ex, $"{exceptionType}£º{ex.Message}");
+            // Ê¹ï¿½ï¿½Serilogï¿½ï¿½Â¼ï¿½ì³£
+            Log.Error(ex, $"{exceptionType}ï¿½ï¿½{ex.Message}");
 
-            // ¿ÉÑ¡£ºÏòÓÃ»§ÏÔÊ¾ÓÑºÃĞÅÏ¢
+            // ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ê¾ï¿½Ñºï¿½ï¿½ï¿½Ï¢
             //Dispatcher.UIThread.Post(async () =>
             //{
             //    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             //    {
-            //        await MessageBox.ShowAsync("Ó¦ÓÃ³ÌĞò·¢Éú´íÎó£¬Çë²é¿´ÈÕÖ¾»ñÈ¡ÏêÏ¸ĞÅÏ¢¡£", "´íÎó", MessageBoxIcon.Error, MessageBoxButton.OK);
+            //        await MessageBox.ShowAsync("Ó¦ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é¿´ï¿½ï¿½Ö¾ï¿½ï¿½È¡ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½", "ï¿½ï¿½ï¿½ï¿½", MessageBoxIcon.Error, MessageBoxButton.OK);
             //    }
             //});
         }
 
         private static void InitializeLogging()
         {
-            // ÈÕÖ¾ÎÄ¼ş¼ĞÂ·¾¶£ºµ±Ç°³ÌĞòÄ¿Â¼ÏÂµÄ"log"ÎÄ¼ş¼Ğ
+            // ï¿½ï¿½Ö¾ï¿½Ä¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Âµï¿½"log"ï¿½Ä¼ï¿½ï¿½ï¿½
             var logDirectory = Path.Combine(AppContext.BaseDirectory, "log");
-            // È·±£ÎÄ¼ş¼Ğ´æÔÚ
+            // È·ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
             if (!Directory.Exists(logDirectory))
             {
                 Directory.CreateDirectory(logDirectory);
             }
 
-            // °´ÌìÉú³ÉÈÕÖ¾ÎÄ¼ş£¨¸ñÊ½£ºlog\20240722.txt£©
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½log\20240722.txtï¿½ï¿½
             var logFilePath = Path.Combine(logDirectory, "log.txt");
 
-            // ÅäÖÃSerilog
+            // ï¿½ï¿½ï¿½ï¿½Serilog
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug() // ×îĞ¡ÈÕÖ¾¼¶±ğ
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // ºöÂÔMicrosoft¿âµÄµÍ¼¶±ğÈÕÖ¾
-                .Enrich.FromLogContext() // ´ÓÉÏÏÂÎÄ enrichment
-                .WriteTo.Console() // Í¬Ê±Êä³öµ½¿ØÖÆÌ¨£¨¿ÉÑ¡£©
+                .MinimumLevel.Debug() // ï¿½ï¿½Ğ¡ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // ï¿½ï¿½ï¿½ï¿½Microsoftï¿½ï¿½ÄµÍ¼ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾
+                .Enrich.FromLogContext() // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ enrichment
+                .WriteTo.Console() // Í¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½
                 .WriteTo.File(
                     path: logFilePath,
-                    rollingInterval: RollingInterval.Day, // °´Ìì¹ö¶¯
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}", // ÈÕÖ¾¸ñÊ½
-                    retainedFileCountLimit: 30, // ±£Áô30ÌìµÄÈÕÖ¾ÎÄ¼ş
-                    encoding: System.Text.Encoding.UTF8 // ±àÂë
+                    rollingInterval: RollingInterval.Day, // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}", // ï¿½ï¿½Ö¾ï¿½ï¿½Ê½
+                    retainedFileCountLimit: 30, // ï¿½ï¿½ï¿½ï¿½30ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½Ä¼ï¿½
+                    encoding: System.Text.Encoding.UTF8 // ï¿½ï¿½ï¿½ï¿½
                 )
                 .CreateLogger();
         }

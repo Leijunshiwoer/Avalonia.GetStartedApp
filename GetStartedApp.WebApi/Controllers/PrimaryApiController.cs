@@ -7,7 +7,7 @@ namespace GetStartedApp.WebApi.Controllers
 {
     [ApiController]
     [Tags("1.主要API控制器")]
-    public class PrimaryApiController : ControllerBase
+    public class PrimaryApiController : ApiControllerBase
     {
         private readonly ILogger<PrimaryApiController> _logger;
         private readonly ISysMenuService _sysMenuService;
@@ -27,13 +27,7 @@ namespace GetStartedApp.WebApi.Controllers
         public virtual async Task<IActionResult> ApiSysMenuGetAsync()
         {
             var list = await _sysMenuService.GetMenuTreeAsync();
-            var obj = new ApiResponse()
-            {
-                Status=true,
-                Message="获取菜单列表成功!",
-                Data= list
-            };
-            return new ObjectResult(obj);
+            return Success(list, "获取菜单列表成功!");
         }
 
         #endregion
