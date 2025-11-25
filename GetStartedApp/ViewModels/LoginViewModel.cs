@@ -47,6 +47,12 @@ namespace GetStartedApp.ViewModels
             var container = ContainerLocator.Container;
             _userService = container.Resolve<ISysUserClientService>();
             _messageService = container.Resolve<IMessageManagerService>();
+
+#if DEBUG
+
+            UserName = "developer";
+            Password = "123";
+#endif
         }
 
         [RelayCommand]

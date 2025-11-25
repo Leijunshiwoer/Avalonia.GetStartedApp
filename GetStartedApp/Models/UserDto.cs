@@ -42,5 +42,7 @@ namespace GetStartedApp.Models
             get { return _Role; }
             set { SetProperty(ref _Role, value); }
         }
+
+        public int RoleId { get; set; }
     }
 }

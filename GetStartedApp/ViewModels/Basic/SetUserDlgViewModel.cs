@@ -1,9 +1,7 @@
-﻿using DryIoc;
-using GetStartedApp.Core.Helpers;
+﻿using GetStartedApp.Core.Helpers;
 using GetStartedApp.Models;
+using GetStartedApp.RestSharp.IServices;
 using GetStartedApp.SqlSugar.Globalvariable;
-using GetStartedApp.SqlSugar.IServices;
-using GetStartedApp.SqlSugar.Services;
 using GetStartedApp.SqlSugar.Tables;
 using Prism.Commands;
 using Prism.Dialogs;
@@ -20,11 +18,11 @@ namespace GetStartedApp.ViewModels.Basic
 {
     public class SetUserDlgViewModel : ViewModelBase, IDialogAware
     {
-        private List<SysRole> _roles;
-        private readonly ISysRoleService _sysRoleService;
-        private readonly ISysUserService _sysUserService;
+        private List<RoleDto> _roles;
+        private readonly ISysRoleClientService _sysRoleService;
+        private readonly ISysUserClientService _sysUserService;
 
-        public SetUserDlgViewModel(ISysRoleService sysRoleService, ISysUserService sysUserService)
+        public SetUserDlgViewModel(ISysRoleClientService sysRoleService, ISysUserClientService sysUserService)
         {
             Title = "用户设置";
             _sysRoleService = sysRoleService;
@@ -43,25 +41,44 @@ namespace GetStartedApp.ViewModels.Basic
         }
 
         private bool _isAdd = false;
-        public void OnDialogOpened(IDialogParameters parameters)
+        public async void OnDialogOpened(IDialogParameters parameters)
         {
             var userDto = parameters.GetValue<UserDto>("Model");
             _isAdd = userDto == null;
-            if (_isAdd)
-                _roles = _sysRoleService.GetRoleLessSort(UserInfo.User.Role.Sort);
-            else
-                _roles = _sysRoleService.GetRoleLessSortByUserId(userDto.Id, UserInfo.User.Role.Sort);
-            Roles = _roles.Select(x => x.Name + "(" + x.Sort + ")").ToObservableConllection();
-
-
-            if (!_isAdd)
+            
+            try
             {
-                //修改
-                userDto.Password = "";//去除密码
-                Role = userDto.Role.Name + "(" + userDto.Role.Sort + ")";
-                UserDto = userDto;
-            }
+                if (_isAdd)
+                {
+                    var response = await _sysRoleService.GetRoleLessSortAsync(UserInfo.User.Role.Sort);
+                    if (response.Status)
+                    {
+                        _roles = response.Data;
+                    }
+                }
+                else
+                {
+                    var response = await _sysRoleService.GetRoleLessSortByUserIdAsync(userDto.Id, UserInfo.User.Role.Sort);
+                    if (response.Status)
+                    {
+                        _roles = response.Data;
+                    }
+                }
+                
+                Roles = _roles.Select(x => x.Name + "(" + x.Sort + ")").ToObservableConllection();
 
+                if (!_isAdd)
+                {
+                    //修改
+                    userDto.Password = "";//去除密码
+                    Role = userDto.Role.Name + "(" + userDto.Role.Sort + ")";
+                    UserDto = userDto;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.ShowAsync($"获取角色数据失败:{ex.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+            }
         }
         private UserDto _UserDto;
         public UserDto UserDto
@@ -96,9 +113,8 @@ namespace GetStartedApp.ViewModels.Basic
         public DelegateCommand SaveCommand =>
             _SaveCommand ?? (_SaveCommand = new DelegateCommand(ExecuteSaveCommand));
 
-        void ExecuteSaveCommand()
+        async void ExecuteSaveCommand()
         {
-
             if (string.IsNullOrEmpty(UserDto.Name) || string.IsNullOrEmpty(UserDto.Password) || RoleIdx < 0 || string.IsNullOrEmpty(UserDto.JobNumber))
             {
                 MessageBox.ShowAsync("请将信息填写完全", "", MessageBoxIcon.Error, MessageBoxButton.OK);
@@ -106,7 +122,7 @@ namespace GetStartedApp.ViewModels.Basic
             }
             try
             {
-                SysUser sysUser = new SysUser()
+                var user = new UserDto
                 {
                     Id = UserDto.Id,
                     Name = UserDto.Name,
@@ -115,23 +131,23 @@ namespace GetStartedApp.ViewModels.Basic
                     Password = MD5Helper.MD5Encryp(UserDto.Password),
                     Remark = UserDto.Remark,
                     RoleId = _roles[RoleIdx].Id,
-
                     CreatedUserName = UserDto.CreatedUserName,
                     CreatedTime = UserDto.CreatedTime,
                     UpdatedUserName = UserDto.UpdatedUserName,
                     UpdatedTime = UserDto.UpdatedTime,
                 };
-                if (_isAdd) sysUser.Create(); else sysUser.Modify();
 
-                if (_sysUserService.InserOrUpdateUser(sysUser) == 0)
+               
+                var response = await _sysUserService.InsertOrUpdateUserAsync(user);
+                if (!response.Status)
                 {
-                    MessageBox.ShowAsync("数据库操作失败", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+                   await MessageBox.ShowAsync($"保存失败:{response.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                     return;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.ShowAsync($"保存失败:{ex.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+                await MessageBox.ShowAsync($"保存失败:{ex.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                 return;
             }
 

@@ -3,7 +3,8 @@ using Avalonia.Controls.Notifications;
 using DryIoc;
 using GetStartedApp.AutoMapper;
 using GetStartedApp.Models;
-using GetStartedApp.SqlSugar.IServices;
+using GetStartedApp.RestSharp;
+using GetStartedApp.RestSharp.IServices;
 using GetStartedApp.Utils.Services;
 using GetStartedApp.Utils.UserControls;
 using Prism.Commands;
@@ -23,13 +24,13 @@ namespace GetStartedApp.ViewModels.Basic
     public class UserViewModel : ViewModelBase
     {
         private readonly IDialogService _dialogService;
-        private readonly ISysUserService _sysUserService;
+        private readonly ISysUserClientService _sysUserService;
         private readonly IAppMapper _mapper;
         private readonly IMessageManagerService _messageManagerService;
 
         public UserViewModel(
             IDialogService dialogService,
-            ISysUserService sysUserService,
+            ISysUserClientService sysUserService,
             IMessageManagerService messageManagerService,
              IAppMapper mapper)
         {
@@ -40,10 +41,10 @@ namespace GetStartedApp.ViewModels.Basic
          
 
         }
-        public override void OnNavigatedTo(NavigationContext navigationContext)
+        public override async void OnNavigatedTo(NavigationContext navigationContext)
         {
             // 初始化数据
-            GetAllUsers();
+            await GetAllUsersAsync();
 
         }
 
@@ -101,17 +102,26 @@ namespace GetStartedApp.ViewModels.Basic
         #endregion
 
         #region 方法
-        private void GetAllUsers()
+        private async Task GetAllUsersAsync()
         {
-            var list = _sysUserService.GetUsers();
-            var listDto = _mapper.Map<List<UserDto>>(list);
-            AllUsers = new ObservableCollection<UserDto>(listDto);
-
+            try
+            {
+                var response = await _sysUserService.GetUsersAsync();
+                if (response.Status)
+                {
+                    var list = _mapper.Map<List<UserDto>>(response.Data);
+                    AllUsers = new ObservableCollection<UserDto>(list);
+                    UpdatePagedUsers();
+                }
+            }
+            catch (Exception ex)
+            {
+                _messageManagerService.Show($"获取用户数据失败: {ex.Message}", NotificationType.Error);
+            }
         }
 
         private void UpdatePagedUsers()
         {
-
             Users = new ObservableCollection<UserDto>(
                 AllUsers.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage)
             );
@@ -145,7 +155,7 @@ namespace GetStartedApp.ViewModels.Basic
                 if (r.Result == ButtonResult.OK)
                 {
                     //刷新
-                    GetAllUsers();
+                    _ = GetAllUsersAsync();
                 }
 
             }, nameof(DialogStyleView));
@@ -160,7 +170,7 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteRefreshCmd()
         {
-            GetAllUsers();
+            _ = GetAllUsersAsync();
             _messageManagerService.Show("刷新", NotificationType.Information);
 
 
@@ -187,7 +197,7 @@ namespace GetStartedApp.ViewModels.Basic
                 if (r.Result == ButtonResult.OK)
                 {
                     //刷新
-                    GetAllUsers();
+                    _ = GetAllUsersAsync();
                 }
 
             }, nameof(DialogStyleView));

@@ -59,50 +59,20 @@ namespace GetStartedApp
             AvaloniaXamlLoader.Load(this);
             base.Initialize();  // Required to initialize Prism.Avalonia - DO NOT REMOVE
             InitializeLogging();
-            // ע��ȫ���쳣�����¼�
+            
             RegisterGlobalExceptionHandlers();
         }
         protected override AvaloniaObject CreateShell()
         {
-            var messageManagerService = ContainerLocator.Container.Resolve<IMessageManagerService>();
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // 创建主窗口但不立即显示
+                // 创建主窗口
                 var mainWindow = Container.Resolve<MainWindow>();
-                messageManagerService.Initialize(mainWindow);
-                
-                // 显示登录窗口
-                var loginWindow = Container.Resolve<Views.LoginView>();
-                
-                // 登录成功后显示主窗口并关闭登录窗口
-                if (loginWindow.DataContext is ViewModels.LoginViewModel loginViewModel)
-                {
-                    loginViewModel.LoginSuccess += () =>
-                    {
-                        mainWindow.Show();
-                        loginWindow.Close();
-                    };
-                }
-                
-                // 监听登录窗口关闭事件，如果未登录就关闭，则退出应用
-                loginWindow.Closing += (sender, e) =>
-                {
-                    // 如果主窗口还没显示，说明用户关闭了登录窗口，退出应用
-                    if (!mainWindow.IsVisible)
-                    {
-                        desktop.Shutdown();
-                    }
-                };
-                
-                loginWindow.Show();
-                
-                // 返回主窗口作为Shell（但初始不显示）
                 return mainWindow;
             }
             else
             {
                 var sell = Container.Resolve<MainView>();
-                messageManagerService.Initialize(sell);
                 return sell;
             }
 
@@ -131,8 +101,9 @@ namespace GetStartedApp
                 //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
                 containerRegistry.Register<ISysMenuClientService,SysMenuClientService>();
                 containerRegistry.Register<GetStartedApp.RestSharp.IServices.ISysUserClientService, GetStartedApp.RestSharp.Services.SysUserClientService>();
+                containerRegistry.RegisterSingleton<GetStartedApp.RestSharp.IServices.ISysRoleClientService, GetStartedApp.RestSharp.Services.SysRoleClientService>();
                 
-                // ע�� Serilog.ILogger ������������ģʽ��
+                //
                 containerRegistry.RegisterSingleton<ILogger>(() => Log.Logger);
                 containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
                 containerRegistry.Register<IDialogWindow, DialogStyleView>(nameof(DialogStyleView));
@@ -144,8 +115,13 @@ namespace GetStartedApp
                 containerRegistry.RegisterDialog<SetVersionPrimaryDlg, SetVersionPrimaryDlgViewModel>();
                 containerRegistry.RegisterDialog<SetVersionSecondDlg, SetVersionSecondDlgViewModel>();
 
+                // ViewModels as Services
+                containerRegistry.RegisterSingleton<LoginViewModel>();
+                containerRegistry.RegisterSingleton<MainViewModel>();
+                containerRegistry.RegisterSingleton<MainWindowViewModel>();
+                
                 // Views - Generic
-                containerRegistry.Register<Views.LoginView>();
+                containerRegistry.RegisterForNavigation<LoginView,LoginViewModel>();
                 containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
                 containerRegistry.RegisterForNavigation<MainView, MainViewModel>();
                 containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
@@ -191,12 +167,12 @@ namespace GetStartedApp
 
         //private void SqlSugarConfigure(IServiceCollection services)
         //{
-        //    #region ����sqlsuagr
+        //    #region 
 
         //    var connectConfigList = new List<ConnectionConfig>();
         //    var connectionString = string.Empty;
-        //    //���ݿ���Ŵ�0��ʼ,Ĭ�����ݿ�Ϊ0
-        //    //��������ģʽ�£���ʹ��Ĭ�ϵ������ַ���
+        //    //
+        //    //
         //    connectionString = "Data Source=localhost;Initial Catalog=avaloniadatabase;User ID=root;Password=Kstopa123?;Allow User Variables=True;max pool size=512 ";
 
         //    //if (Design.IsDesignMode)
@@ -207,7 +183,7 @@ namespace GetStartedApp
         //    //{
         //    //    connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
         //    //}
-        //    //Ĭ�����ݿ�
+        //    //
         //    connectConfigList.Add(new ConnectionConfig
         //    {
         //        ConnectionString = connectionString,
@@ -236,10 +212,10 @@ namespace GetStartedApp
         //            //};
 
 
-        //            ////ִ�г�ʱʱ��
+        //            //
         //            // db.Ado.CommandTimeOut = 30;
 
-        //            // ���ü�ɾ��ȫ�ֹ�����
+        //            // 
         //            db.GlobalFilter();
         //        });
 
@@ -258,94 +234,74 @@ namespace GetStartedApp
         /// </summary>
         private void RegisterGlobalExceptionHandlers()
         {
-            // ����UI�߳�δ������쳣
             Dispatcher.UIThread.UnhandledException += Dispatcher_UnhandledException;
 
-            // ������UI�߳�δ������쳣
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            // ���ʹ����Task�������Դ���Task��δ�۲��쳣
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         }
 
         /// <summary>
-        /// ����UI�߳�δ������쳣
+        /// 
         /// </summary>
         private void Dispatcher_UnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            HandleException(e.Exception, "UI�߳�δ�����쳣");
+            HandleException(e.Exception, "");
 
-            // ����e.Handled = true��ʾ�쳣�Ѵ�����Ӧ�ó�����Լ�������
             e.Handled = true;
         }
 
         /// <summary>
-        /// ������UI�߳�δ������쳣
+        /// 
         /// </summary>
         private void CurrentDomain_UnhandledException(object? sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
             {
-                HandleException(ex, "��UI�߳�δ�����쳣");
+                HandleException(ex, "");
             }
 
-            // ���������쳣��e.IsTerminating����Ϊtrue����ʾӦ�ó��򼴽���ֹ
+            
         }
 
         /// <summary>
-        /// ����Taskδ�۲쵽���쳣
+        /// 
         /// </summary>
         private void TaskScheduler_UnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
         {
-            HandleException(e.Exception, "Taskδ�۲쵽���쳣");
+            HandleException(e.Exception, "Taskδ�２쵽���쳣");
 
-            // ����쳣Ϊ�ѹ۲�
+          
             e.SetObserved();
         }
 
         /// <summary>
-        /// ͳһ���쳣�����߼�
+        /// 
         /// </summary>
         private void HandleException(Exception ex, string exceptionType)
         {
-            // ʹ��Serilog��¼�쳣
             Log.Error(ex, $"{exceptionType}��{ex.Message}");
-
-            // ��ѡ�����û���ʾ�Ѻ���Ϣ
-            //Dispatcher.UIThread.Post(async () =>
-            //{
-            //    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            //    {
-            //        await MessageBox.ShowAsync("Ӧ�ó�����������鿴��־��ȡ��ϸ��Ϣ��", "����", MessageBoxIcon.Error, MessageBoxButton.OK);
-            //    }
-            //});
         }
 
         private static void InitializeLogging()
         {
-            // ��־�ļ���·������ǰ����Ŀ¼�µ�"log"�ļ���
             var logDirectory = Path.Combine(AppContext.BaseDirectory, "log");
-            // ȷ���ļ��д���
             if (!Directory.Exists(logDirectory))
             {
                 Directory.CreateDirectory(logDirectory);
             }
-
-            // ����������־�ļ�����ʽ��log\20240722.txt��
             var logFilePath = Path.Combine(logDirectory, "log.txt");
-
-            // ����Serilog
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug() // ��С��־����
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // ����Microsoft��ĵͼ�����־
-                .Enrich.FromLogContext() // �������� enrichment
-                .WriteTo.Console() // ͬʱ���������̨����ѡ��
+                .MinimumLevel.Debug() 
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) 
+                .Enrich.FromLogContext() 
+                .WriteTo.Console() 
                 .WriteTo.File(
                     path: logFilePath,
-                    rollingInterval: RollingInterval.Day, // �������
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}", // ��־��ʽ
-                    retainedFileCountLimit: 30, // ����30�����־�ļ�
-                    encoding: System.Text.Encoding.UTF8 // ����
+                    rollingInterval: RollingInterval.Day, 
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    retainedFileCountLimit: 30, 
+                    encoding: System.Text.Encoding.UTF8 
                 )
                 .CreateLogger();
         }

@@ -1,82 +1,78 @@
-<Window x:Class="GetStartedApp.Views.LoginView"
-        xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:GetStartedApp.ViewModels"
-        xmlns:prism="http://prismlibrary.com/"
-        Title="登录 - 佰奥产线管理系统"
-        Width="450"
-        Height="350"
-        WindowStartupLocation="CenterScreen"
-        CanResize="False"
-        prism:ViewModelLocator.AutoWireViewModel="True"
-        x:CompileBindings="True"
-        x:DataType="vm:LoginViewModel"
-        Background="#F5F5F5">
-    <Window.Styles>
-        <Style Selector="Button">
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
-        <Style Selector="TextBox">
-            <Setter Property="Padding" Value="8"/>
-            <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
-        <Style Selector="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-    </Window.Styles>
-    
-    <Grid RowDefinitions="Auto,*,Auto" Margin="30">
-        <!-- 标题 -->
-        <TextBlock Grid.Row="0"
-                   Text="佰奥产线管理系统"
-                   FontSize="24"
-                   FontWeight="Bold"
-                   HorizontalAlignment="Center"
-                   Margin="0,0,0,30"
-                   Foreground="#333"/>
-        
-        <!-- 登录表单 -->
-        <StackPanel Grid.Row="1" Spacing="15">
-            <!-- 用户名 -->
-            <Grid ColumnDefinitions="80,*">
-                <TextBlock Grid.Column="0" Text="用户名:" />
-                <TextBox Grid.Column="1"
-                         Text="{Binding UserName, Mode=TwoWay}"
-                         Watermark="请输入用户名"
-                         IsEnabled="{Binding !IsLoading}"/>
-            </Grid>
-            
-            <!-- 密码 -->
-            <Grid ColumnDefinitions="80,*">
-                <TextBlock Grid.Column="0" Text="密码:" />
-                <TextBox Grid.Column="1"
-                         Text="{Binding Password, Mode=TwoWay}"
-                         PasswordChar="*"
-                         Watermark="请输入密码"
-                         IsEnabled="{Binding !IsLoading}"/>
-            </Grid>
-            
-            <!-- 错误信息 -->
-            <TextBlock Text="{Binding ErrorMessage}"
-                       Foreground="Red"
-                       TextWrapping="Wrap"
-                       Margin="0,5"
-                       MinHeight="20"/>
-        </StackPanel>
-        
-        <!-- 登录按钮 -->
-        <Button Grid.Row="2"
-                Content="登录"
-                Command="{Binding LoginCommand}"
-                IsEnabled="{Binding !IsLoading}"
-                HorizontalAlignment="Stretch"
-                Background="#0078D4"
-                Foreground="White"
-                FontWeight="Bold"/>
-    </Grid>
-</Window>
+<UserControl x:Class="GetStartedApp.Views.LoginView"
+			 xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:vm="using:GetStartedApp.ViewModels"
+			 xmlns:prism="http://prismlibrary.com/"
+			 Width="450"
+			 Height="350"
+			 prism:ViewModelLocator.AutoWireViewModel="True"
+			 x:CompileBindings="True"
+			 x:DataType="vm:LoginViewModel"
+			 Background="#F5F5F5">
+	<UserControl.Styles>
+		<Style Selector="Button">
+			<Setter Property="Padding" Value="12,8"/>
+			<Setter Property="Margin" Value="0,5"/>
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="Padding" Value="8"/>
+			<Setter Property="Margin" Value="0,5"/>
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+		<Style Selector="TextBlock">
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+		</Style>
+	</UserControl.Styles>
 
+	<Grid RowDefinitions="Auto,*,Auto" Margin="30">
+		<!-- 标题 -->
+		<TextBlock Grid.Row="0"
+				   Text="佰奥产线管理系统"
+				   FontSize="24"
+				   FontWeight="Bold"
+				   HorizontalAlignment="Center"
+				   Margin="0,0,0,30"
+				   Foreground="#333"/>
+
+		<!-- 登录表单 -->
+		<StackPanel Grid.Row="1" Spacing="15">
+			<!-- 用户名 -->
+			<Grid ColumnDefinitions="80,*">
+				<TextBlock Grid.Column="0" Text="用户名:" />
+				<TextBox Grid.Column="1"
+						 Text="{Binding UserName, Mode=TwoWay}"
+						 Watermark="请输入用户名"
+						 IsEnabled="{Binding !IsLoading}"/>
+			</Grid>
+
+			<!-- 密码 -->
+			<Grid ColumnDefinitions="80,*">
+				<TextBlock Grid.Column="0" Text="密码:" />
+				<TextBox Grid.Column="1"
+						 Text="{Binding Password, Mode=TwoWay}"
+						 PasswordChar="*"
+						 Watermark="请输入密码"
+						 IsEnabled="{Binding !IsLoading}"/>
+			</Grid>
+
+			<!-- 错误信息 -->
+			<TextBlock Text="{Binding ErrorMessage}"
+					   Foreground="Red"
+					   TextWrapping="Wrap"
+					   Margin="0,5"
+					   MinHeight="20"/>
+		</StackPanel>
+
+		<!-- 登录按钮 -->
+		<Button Grid.Row="2"
+				Content="登录"
+				Command="{Binding LoginCommand}"
+				IsEnabled="{Binding !IsLoading}"
+				HorizontalAlignment="Stretch"
+				Background="#0078D4"
+				Foreground="White"
+				FontWeight="Bold"/>
+	</Grid>
+</UserControl>
