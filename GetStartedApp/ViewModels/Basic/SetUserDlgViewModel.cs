@@ -1,7 +1,7 @@
 ﻿using GetStartedApp.Core.Helpers;
+using GetStartedApp.Globalvariable;
 using GetStartedApp.Models;
 using GetStartedApp.RestSharp.IServices;
-using GetStartedApp.SqlSugar.Globalvariable;
 using GetStartedApp.SqlSugar.Tables;
 using Prism.Commands;
 using Prism.Dialogs;

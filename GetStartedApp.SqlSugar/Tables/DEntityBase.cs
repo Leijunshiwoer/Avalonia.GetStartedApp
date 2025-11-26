@@ -47,18 +47,18 @@ namespace GetStartedApp.SqlSugar.Tables
 
         public virtual void Create()
         {
-            var userName = UserInfo.UserName;
+           // var userName = UserInfo.UserName;
             CreatedTime = DateTime.Now;
             
-            CreatedUserName = userName;
+          //  CreatedUserName = userName;
         }
 
         public virtual void Modify()
         {
-            var userName = UserInfo.UserName;
+           // var userName = UserInfo.UserName;
             UpdatedTime = DateTime.Now;
             
-            UpdatedUserName = userName;
+            //UpdatedUserName = userName;
         }
 
         /// <summary>
