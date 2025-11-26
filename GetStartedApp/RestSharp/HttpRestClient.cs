@@ -64,14 +64,15 @@ namespace GetStartedApp.RestSharp
             try
             {
                 var request = new RestRequest(baseRequest.Route, baseRequest.Method);
-                //request.AddHeader("Content-Type", baseRequest.ContentType);
+                request.AddHeader("Content-Type", baseRequest.ContentType);
 
                 // 最简单的修改：只在非 GET/HEAD 方法时添加请求体
                 if (baseRequest.Parameter != null &&
                     baseRequest.Method != Method.Get &&
                     baseRequest.Method != Method.Head)
                 {
-                    request.AddParameter("param", JsonConvert.SerializeObject(baseRequest.Parameter), ParameterType.RequestBody);
+                    //不要name
+                    request.AddParameter(null, JsonConvert.SerializeObject(baseRequest.Parameter), ParameterType.RequestBody);
                 }
 
                 var response = await client.ExecuteAsync(request);

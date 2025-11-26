@@ -453,3 +453,5 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 /GetStartedApp/App.config
+/GetStartedApp.Browser/App.config
+/GetStartedApp.Desktop/App.config

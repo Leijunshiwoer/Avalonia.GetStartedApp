@@ -6,7 +6,13 @@
    
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="App.config" />
+  </ItemGroup>
+  <ItemGroup>
     <AvaloniaResource Include="Assets\Fonts\MiSans-Normal.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
   </ItemGroup>
 
   <ItemGroup>

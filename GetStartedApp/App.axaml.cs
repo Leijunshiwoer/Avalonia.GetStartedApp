@@ -59,7 +59,7 @@ namespace GetStartedApp
             AvaloniaXamlLoader.Load(this);
             base.Initialize();  // Required to initialize Prism.Avalonia - DO NOT REMOVE
             InitializeLogging();
-            
+
             RegisterGlobalExceptionHandlers();
         }
         protected override AvaloniaObject CreateShell()
@@ -89,20 +89,14 @@ namespace GetStartedApp
                 containerRegistry.RegisterSingleton<MqttClientHelper>();
 
                 containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
-                if (Debugger.IsAttached)
-                {
-                    containerRegistry.GetContainer().RegisterInstance(@"http://localhost:9527/", serviceKey: "webUrl");
-                }
-                else
-                {
-                   // containerRegistry.GetContainer().RegisterInstance(@"http://192.168.0.230:10010/", serviceKey: "webUrl");
-                }
+                var webUrl = ConfigurationManager.AppSettings["WebUrl"];
+                containerRegistry.GetContainer().RegisterInstance(webUrl, serviceKey: "webUrl");
                 // Services
                 //// containerRegistry.RegisterSingleton<ISampleService, ISampleService>();
-                containerRegistry.Register<ISysMenuClientService,SysMenuClientService>();
+                containerRegistry.Register<ISysMenuClientService, SysMenuClientService>();
                 containerRegistry.Register<GetStartedApp.RestSharp.IServices.ISysUserClientService, GetStartedApp.RestSharp.Services.SysUserClientService>();
                 containerRegistry.RegisterSingleton<GetStartedApp.RestSharp.IServices.ISysRoleClientService, GetStartedApp.RestSharp.Services.SysRoleClientService>();
-                
+
                 //
                 containerRegistry.RegisterSingleton<ILogger>(() => Log.Logger);
                 containerRegistry.RegisterSingleton<IAppMapper, AppMapper>();
@@ -119,9 +113,9 @@ namespace GetStartedApp
                 containerRegistry.RegisterSingleton<LoginViewModel>();
                 containerRegistry.RegisterSingleton<MainViewModel>();
                 containerRegistry.RegisterSingleton<MainWindowViewModel>();
-                
+
                 // Views - Generic
-                containerRegistry.RegisterForNavigation<LoginView,LoginViewModel>();
+                containerRegistry.RegisterForNavigation<LoginView, LoginViewModel>();
                 containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
                 containerRegistry.RegisterForNavigation<MainView, MainViewModel>();
                 containerRegistry.RegisterForNavigation<SideMenuView, SideMenuViewModel>();
@@ -139,7 +133,7 @@ namespace GetStartedApp
             {
                 Console.WriteLine(ex.Message);
             }
-        
+
         }
 
 
@@ -148,7 +142,7 @@ namespace GetStartedApp
             var serviceCollection = new ServiceCollection();
 
             // SqlSugar
-           // SqlSugarConfigure(serviceCollection);
+            // SqlSugarConfigure(serviceCollection);
 
             return new DryIocContainerExtension(new Container(CreateContainerRules())
                .WithDependencyInjectionAdapter(serviceCollection)
@@ -230,7 +224,7 @@ namespace GetStartedApp
 
 
         /// <summary>
-        /// ע��ȫ���쳣��������
+        ///
         /// </summary>
         private void RegisterGlobalExceptionHandlers()
         {
@@ -261,7 +255,7 @@ namespace GetStartedApp
                 HandleException(ex, "");
             }
 
-            
+
         }
 
         /// <summary>
@@ -269,9 +263,9 @@ namespace GetStartedApp
         /// </summary>
         private void TaskScheduler_UnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
         {
-            HandleException(e.Exception, "Taskδ�２쵽���쳣");
+            HandleException(e.Exception, "");
 
-          
+
             e.SetObserved();
         }
 
@@ -280,30 +274,75 @@ namespace GetStartedApp
         /// </summary>
         private void HandleException(Exception ex, string exceptionType)
         {
-            Log.Error(ex, $"{exceptionType}��{ex.Message}");
+            Log.Error(ex, $"{exceptionType}{ex.Message}");
         }
 
         private static void InitializeLogging()
         {
-            var logDirectory = Path.Combine(AppContext.BaseDirectory, "log");
-            if (!Directory.Exists(logDirectory))
+            // 首选写到可执行目录下的 log 子目录
+            string logDirectory = Path.Combine(AppContext.BaseDirectory ?? AppDomain.CurrentDomain.BaseDirectory, "log");
+
+            // 如果没有写权限或目录创建失败，回退到用户本地应用数据目录
+            try
             {
-                Directory.CreateDirectory(logDirectory);
+                if (!Directory.Exists(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
             }
-            var logFilePath = Path.Combine(logDirectory, "log.txt");
+            catch
+            {
+                // 回退目录（通常有写权限）
+                logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GetStartedApp", "log");
+                try
+                {
+                    if (!Directory.Exists(logDirectory))
+                        Directory.CreateDirectory(logDirectory);
+                }
+                catch
+                {
+                    // 最后兜底到临时目录
+                    logDirectory = Path.Combine(Path.GetTempPath(), "GetStartedApp", "log");
+                    Directory.CreateDirectory(logDirectory);
+                }
+            }
+
+            // 使用 rolling pattern，Serilog 会自动按日期产生文件名，例如 log-20251126.txt
+            var logFilePattern = Path.Combine(logDirectory, "log-.txt");
+
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug() 
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) 
-                .Enrich.FromLogContext() 
-                .WriteTo.Console() 
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
                 .WriteTo.File(
-                    path: logFilePath,
-                    rollingInterval: RollingInterval.Day, 
+                    path: logFilePattern,
+                    rollingInterval: RollingInterval.Day,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-                    retainedFileCountLimit: 30, 
-                    encoding: System.Text.Encoding.UTF8 
-                )
+                    retainedFileCountLimit: 30,
+                    encoding: System.Text.Encoding.UTF8)
                 .CreateLogger();
+
+            // 记录初始化结果，便于诊断目录是否正确
+            Log.Information("Serilog initialized. Log directory: {LogDirectory}", logDirectory);
+
+            // 确保进程退出时 flush 日志
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Log.CloseAndFlush();
+            // Avalonia 的退出也处理一下（如果有 Desktop Lifetime）
+            Task.Run(() =>
+            {
+                try
+                {
+                    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Exit += (_, _) => Log.CloseAndFlush();
+                    }
+                }
+                catch
+                {
+                    // 忽略
+                }
+            });
         }
 
     }

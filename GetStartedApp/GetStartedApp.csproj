@@ -41,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="App.config" />
     <None Remove="Assets\avalonia-logo.ico" />
     <None Remove="Views\PLC\OP10_Siemens.xlsx" />
     <None Remove="Views\PLC\PLCConnConfig.ini" />
@@ -49,9 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="App.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Assets\PLCs\OP20_Siemens.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
