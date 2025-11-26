@@ -33,20 +33,7 @@ namespace GetStartedApp.WebApi.Controllers
             }
         }
 
-        [HttpGet("user/{userId:int}/less-than/{sort:int}")]
-        public IActionResult GetByUser(int userId, int sort)
-        {
-            try
-            {
-                var roles = _sysRoleService.GetRoleLessSortByUserId(userId, sort);
-                return Success(roles, "获取用户角色成功");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "根据用户获取角色失败");
-                return Failure("获取用户角色失败");
-            }
-        }
+     
     }
 }
 

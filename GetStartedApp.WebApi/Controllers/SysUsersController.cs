@@ -81,8 +81,12 @@ namespace GetStartedApp.WebApi.Controllers
 
             try
             {
-                var result = _sysUserService.Login(request.UserName, request.Password);
-                return result ? Success(null, "登录成功") : Failure("用户名或密码错误");
+                var user = _sysUserService.Login(request.UserName, request.Password);
+                if (user == null)
+                {
+                    return Failure("用户名或密码错误");
+                }
+                return  Success(user, "登录成功") ;
             }
             catch (Exception ex)
             {

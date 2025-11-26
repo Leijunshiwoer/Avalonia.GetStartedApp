@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using GetStartedApp.Globalvariable;
 using GetStartedApp.RestSharp.IServices;
 using GetStartedApp.Utils.Services;
 using Prism.Ioc;
@@ -82,6 +83,7 @@ namespace GetStartedApp.ViewModels
                     // 登录成功，关闭登录窗口，显示主窗口
                     ErrorMessage = string.Empty;
                     
+                    UserInfo.User= result.Data;
                     // 触发登录成功事件，让App.axaml.cs处理窗口切换
                     LoginSuccess?.Invoke();
                 }

@@ -1,5 +1,4 @@
-﻿using GetStartedApp.SqlSugar.Globalvariable;
-using GetStartedApp.SqlSugar.IServices;
+﻿using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.SqlSugar.Repositories;
 using GetStartedApp.SqlSugar.Tables;
 using System;
@@ -24,18 +23,7 @@ namespace GetStartedApp.SqlSugar.Services
             return _roleRep.ToList(x => x.Sort < sort);
         }
 
-        public List<SysRole> GetRoleLessSortByUserId(int userId, int sort)
-        {
-            //查看是否本人
-            if (userId == UserInfo.UserId)
-            {
-                return _roleRep.ToList(x => x.Sort <= sort);
-            }
-            else
-            {
-                return _roleRep.ToList(x => x.Sort < sort);
-            }
-        }
+     
 
     }
 }

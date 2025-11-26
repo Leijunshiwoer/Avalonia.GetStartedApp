@@ -7,7 +7,7 @@ namespace GetStartedApp.RestSharp.IServices
 {
     public interface ISysUserClientService
     {
-        Task<ApiResponse> LoginAsync(string userName, string password);
+        Task<ApiResponse<UserDto>> LoginAsync(string userName, string password);
         Task<ApiResponse<List<UserDto>>> GetUsersAsync();
         Task<ApiResponse> InsertOrUpdateUserAsync(UserDto user);
         Task<ApiResponse<UserDto>> GetUserByIdAsync(int id);

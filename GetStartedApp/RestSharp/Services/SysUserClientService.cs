@@ -16,13 +16,13 @@ namespace GetStartedApp.RestSharp.Services
             this.client = client;
         }
 
-        public async Task<ApiResponse> LoginAsync(string userName, string password)
+        public async Task<ApiResponse<UserDto>> LoginAsync(string userName, string password)
         {
             BaseRequest request = new BaseRequest();
             request.Method = Method.Post;
             request.Route = $"api/{serviceName}/login";
             request.Parameter = new { UserName = userName, Password = password };
-            var result = await client.ExcuteAsync(request);
+            var result = await client.ExcuteAsync<UserDto>(request);
             return result;
         }
 

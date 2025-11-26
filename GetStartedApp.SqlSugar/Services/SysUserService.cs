@@ -1,5 +1,4 @@
 ﻿using GetStartedApp.Core.Helpers;
-using GetStartedApp.SqlSugar.Globalvariable;
 using GetStartedApp.SqlSugar.IServices;
 using GetStartedApp.SqlSugar.Repositories;
 using GetStartedApp.SqlSugar.Tables;
@@ -31,20 +30,16 @@ namespace GetStartedApp.SqlSugar.Services
             return _suerRep.Context.Queryable<SysUser>().Where(x => x.Id == id).Includes(x => x.Role).First();
         }
 
-        public bool Login(string userName, string password)
+        public SysUser Login(string userName, string password)
         {
             var pwd = MD5Helper.MD5Encryp(password);
             var user = _suerRep.Context.Queryable<SysUser>().Where(x => x.Name == userName && x.Password == pwd).First();
 
             if (user != null)
             {
-                UserInfo.User = GetUserById(user.Id);
-                UserInfo.UserName = userName;
-                UserInfo.UserId = user.Id;
-                UserInfo.Password = pwd;
-                return true;
+                return user;
             }
-            return false;
+            return null;
         }
 
         public int InserOrUpdateUser(SysUser sysUser)

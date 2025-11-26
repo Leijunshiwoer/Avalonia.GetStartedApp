@@ -1,12 +1,12 @@
-﻿using GetStartedApp.SqlSugar.Tables;
-
+﻿
+using GetStartedApp.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GetStartedApp.SqlSugar.Globalvariable
+namespace GetStartedApp.Globalvariable
 {
     public static class MachineInfo
     {
@@ -26,14 +26,14 @@ namespace GetStartedApp.SqlSugar.Globalvariable
         public static string UserName { get; set; }
 
         public static string Password { get; set; }
-        public static SysUser User { get; set; }
+        public static UserDto User { get; set; }
     }
 
     public static class TaskInfo
     {
         public static short ClearFinishedR { get; set; } = 0;
         public static short ClearFinishedW { get; set; } = 0;
-        public static Product_Task_Config TaskConfig { get; set; }
+        //public static Product_Task_Config TaskConfig { get; set; }
 
         public static short LaserMod { get; set; }
     }
@@ -84,7 +84,7 @@ namespace GetStartedApp.SqlSugar.Globalvariable
 
     public static class QuickWearPartInfo
     {
-        public static List<Machine_QuickWearPart_Config> QuickWearParts { get; set; }//易损易耗件
+       // public static List<Machine_QuickWearPart_Config> QuickWearParts { get; set; }//易损易耗件
     }
 
     public static class ProductCount

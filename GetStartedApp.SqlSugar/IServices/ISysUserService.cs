@@ -10,7 +10,7 @@ namespace GetStartedApp.SqlSugar.IServices
     public interface ISysUserService
     {
         List<SysUser> GetUsers();
-        bool Login(string userName, string password);
+        SysUser Login(string userName, string password);
         int InserOrUpdateUser(SysUser sysUser);
         SysUser GetUserById(int id);
     }
