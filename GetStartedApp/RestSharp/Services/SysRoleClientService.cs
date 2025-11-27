@@ -26,11 +26,11 @@ namespace GetStartedApp.RestSharp.Services
             return result;
         }
 
-        public async Task<ApiResponse<List<RoleDto>>> GetRoleLessSortByUserIdAsync(int userId, int sort)
+        public async Task<ApiResponse<List<RoleDto>>> GetRoleLessSortByRoleIdAsync(int roleId)
         {
             BaseRequest request = new BaseRequest();
             request.Method = Method.Get;
-            request.Route = $"api/{serviceName}/lesssortbyuserid/{userId}/{sort}";
+            request.Route = $"api/{serviceName}/lesssortbyroleid/{roleId}";
             var result = await client.ExcuteAsync<List<RoleDto>>(request);
             return result;
         }

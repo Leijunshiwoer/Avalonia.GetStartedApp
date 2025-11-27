@@ -10,6 +10,6 @@ namespace GetStartedApp.RestSharp.IServices
     public interface ISysRoleClientService
     {
         Task<ApiResponse<List<RoleDto>>> GetRoleLessSortAsync(int sort);
-        Task<ApiResponse<List<RoleDto>>> GetRoleLessSortByUserIdAsync(int userId, int sort);
+        Task<ApiResponse<List<RoleDto>>> GetRoleLessSortByRoleIdAsync(int roleId);
     }
 }

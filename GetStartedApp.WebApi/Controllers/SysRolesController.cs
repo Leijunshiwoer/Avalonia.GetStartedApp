@@ -33,7 +33,23 @@ namespace GetStartedApp.WebApi.Controllers
             }
         }
 
-     
+
+        [HttpGet("lesssortbyroleid/{roleId:int}")]
+        public IActionResult GetByRoleId(int roleId)
+        {
+            try
+            {
+                var roles = _sysRoleService.GetRoleLessSortByRoleId(roleId);
+                return Success(roles, "获取角色成功");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取角色列表失败");
+                return Failure("获取角色列表失败");
+            }
+        }
+
+
     }
 }
 

@@ -10,6 +10,6 @@ namespace GetStartedApp.SqlSugar.IServices
     public interface ISysRoleService
     {
         List<SysRole> GetRoleLessSort(int sort);
-        List<SysRole> GetRoleLessSortByUserId(int userId, int sort);
+        List<SysRole> GetRoleLessSortByRoleId(int roleId);
     }
 }

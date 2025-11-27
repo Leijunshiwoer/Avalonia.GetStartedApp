@@ -46,7 +46,7 @@ namespace GetStartedApp.ViewModels.Basic
         {
             var userDto = parameters.GetValue<UserDto>("Model");
             _isAdd = userDto == null;
-            
+
             try
             {
                 if (_isAdd)
@@ -59,13 +59,13 @@ namespace GetStartedApp.ViewModels.Basic
                 }
                 else
                 {
-                    var response = await _sysRoleService.GetRoleLessSortAsync( UserInfo.User.Role.Sort);
+                    var response = await _sysRoleService.GetRoleLessSortByRoleIdAsync(userDto.RoleId);
                     if (response.Status)
                     {
                         _roles = response.Data;
                     }
                 }
-                
+
                 Roles = _roles.Select(x => x.Name + "(" + x.Sort + ")").ToObservableConllection();
 
                 if (!_isAdd)
@@ -121,14 +121,14 @@ namespace GetStartedApp.ViewModels.Basic
                 MessageBox.ShowAsync("请将信息填写完全", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                 return;
             }
-            
+
             // 更新操作时密码可以为空
             if (_isAdd && string.IsNullOrEmpty(UserDto.Password))
             {
                 MessageBox.ShowAsync("请输入密码", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                 return;
             }
-            
+
             try
             {
                 var user = new UserDto
@@ -140,7 +140,7 @@ namespace GetStartedApp.ViewModels.Basic
                     Password = string.IsNullOrEmpty(UserDto.Password) ? null : MD5Helper.MD5Encryp(UserDto.Password),
                     Remark = UserDto.Remark,
                     RoleId = _roles[RoleIdx].Id,
-                  
+
                 };
                 if (_isAdd) user.Create();
                 else user.Modify();
@@ -154,10 +154,10 @@ namespace GetStartedApp.ViewModels.Basic
                 {
                     response = await _sysUserService.UpdateUserAsync(user.Id, user);
                 }
-                
+
                 if (!response.Status)
                 {
-                   await MessageBox.ShowAsync($"保存失败:{response.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+                    await MessageBox.ShowAsync($"保存失败:{response.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                     return;
                 }
             }
@@ -179,7 +179,7 @@ namespace GetStartedApp.ViewModels.Basic
 
         void ExecuteCancelCommand()
         {
-            
+
             //退出
             ButtonResult result = ButtonResult.Ignore;
             RequestClose.Invoke(new DialogResult(result));
