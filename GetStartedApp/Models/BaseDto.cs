@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using GetStartedApp.Globalvariable;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,8 +44,8 @@ namespace GetStartedApp.Models
             set { SetProperty(ref _UpdatedUserName, value); }
         }
 
-        private string _IsDeleted;
-        public string IsDeleted
+        private string? _IsDeleted;
+        public string? IsDeleted
         {
             get { return _IsDeleted; }
             set { SetProperty(ref _IsDeleted, value); }
@@ -55,6 +56,20 @@ namespace GetStartedApp.Models
         {
             get { return _Remark; }
             set { SetProperty(ref _Remark, value); }
+        }
+
+
+        public virtual void Create()
+        {
+            CreatedUserName=UserInfo.UserName;
+            CreatedTime = DateTime.Now;
+            IsDeleted = "N";
+        }
+        public virtual void Modify()
+        {
+            UpdatedUserName=UserInfo.UserName;
+            UpdatedTime = DateTime.Now;
+            IsDeleted = "N";
         }
     }
 }

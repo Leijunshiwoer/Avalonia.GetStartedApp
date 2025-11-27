@@ -1,4 +1,4 @@
-﻿using SqlSugar;
+using SqlSugar;
 
 
 namespace GetStartedApp.SqlSugar.Tables
@@ -30,13 +30,13 @@ namespace GetStartedApp.SqlSugar.Tables
         /// 创建者名称
         /// </summary>
         [SugarColumn(IsNullable = true, Length = 16)]
-        public virtual string CreatedUserName { get; set; }
+        public virtual string? CreatedUserName { get; set; }
 
         /// <summary>
         /// 修改者名称
         /// </summary>
         [SugarColumn(IsNullable = true, Length = 16)]
-        public virtual string UpdatedUserName { get; set; }
+        public virtual string? UpdatedUserName { get; set; }
 
         /// <summary>
         /// 软删除

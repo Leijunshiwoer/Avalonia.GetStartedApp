@@ -38,7 +38,7 @@ namespace GetStartedApp.ViewModels.Basic
             _sysUserService = sysUserService;
             _mapper = mapper;
             _messageManagerService = messageManagerService;
-         
+
 
         }
         public override async void OnNavigatedTo(NavigationContext navigationContext)
@@ -209,10 +209,36 @@ namespace GetStartedApp.ViewModels.Basic
         public DelegateCommand<object> DeleteCmd =>
             _DeleteCmd ?? (_DeleteCmd = new DelegateCommand<object>(ExecuteDeleteCmd));
 
-        void ExecuteDeleteCmd(object parameter)
+        async void ExecuteDeleteCmd(object parameter)
         {
             var model = parameter as UserDto;
-            
+            if (model == null)
+            {
+                MessageBox.ShowAsync("请选择一条记录，再删除！", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+                return;
+            }
+
+            var result = await MessageBox.ShowAsync($"确定要删除用户 {model.Name} 吗？", "删除确认", MessageBoxIcon.Question, MessageBoxButton.YesNo);
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    var response = await _sysUserService.DeleteUserAsync(model.Id);
+                    if (response.Status)
+                    {
+                        _messageManagerService.Show("删除用户成功", NotificationType.Success);
+                        await GetAllUsersAsync();
+                    }
+                    else
+                    {
+                        _messageManagerService.Show($"删除用户失败: {response.Message}", NotificationType.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _messageManagerService.Show($"删除用户失败: {ex.Message}", NotificationType.Error);
+                }
+            }
         }
 
         #endregion

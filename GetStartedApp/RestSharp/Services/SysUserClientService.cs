@@ -35,12 +35,31 @@ namespace GetStartedApp.RestSharp.Services
             return result;
         }
 
-        public async Task<ApiResponse> InsertOrUpdateUserAsync(UserDto user)
+        public async Task<ApiResponse<UserDto>> CreateUserAsync(UserDto user)
         {
             BaseRequest request = new BaseRequest();
             request.Method = Method.Post;
             request.Route = $"api/{serviceName}";
             request.Parameter = user;
+            var result = await client.ExcuteAsync<UserDto>(request);
+            return result;
+        }
+
+        public async Task<ApiResponse<UserDto>> UpdateUserAsync(int id, UserDto user)
+        {
+            BaseRequest request = new BaseRequest();
+            request.Method = Method.Put;
+            request.Route = $"api/{serviceName}/{id}";
+            request.Parameter = user;
+            var result = await client.ExcuteAsync<UserDto>(request);
+            return result;
+        }
+
+        public async Task<ApiResponse> DeleteUserAsync(int id)
+        {
+            BaseRequest request = new BaseRequest();
+            request.Method = Method.Delete;
+            request.Route = $"api/{serviceName}/{id}";
             var result = await client.ExcuteAsync(request);
             return result;
         }

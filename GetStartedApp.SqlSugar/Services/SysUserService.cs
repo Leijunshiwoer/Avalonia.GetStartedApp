@@ -33,7 +33,7 @@ namespace GetStartedApp.SqlSugar.Services
         public SysUser Login(string userName, string password)
         {
             var pwd = MD5Helper.MD5Encryp(password);
-            var user = _suerRep.Context.Queryable<SysUser>().Includes(x=>x.Role).Where(x => x.Name == userName && x.Password == pwd).First();
+            var user = _suerRep.Context.Queryable<SysUser>().Includes(x => x.Role).Where(x => x.Name == userName && x.Password == pwd).First();
 
             if (user != null)
             {
@@ -44,16 +44,23 @@ namespace GetStartedApp.SqlSugar.Services
 
         public int InserOrUpdateUser(SysUser sysUser)
         {
+
             if (_suerRep.IsExists(x => x.Id == sysUser.Id))
             {
                 //跟新
-                return _suerRep.Update(sysUser);
+                return _suerRep.Context.Updateable(sysUser).IgnoreColumns(ignoreAllNullColumns: true).ExecuteCommand();
             }
             else
             {
                 //新增
                 return _suerRep.Insert(sysUser);
             }
+        }
+
+        public bool DeleteUser(int id)
+        {
+            var result = _suerRep.Context.Deleteable<SysUser>().Where(x => x.Id == id).ExecuteCommand();
+            return result > 0;
         }
     }
 }

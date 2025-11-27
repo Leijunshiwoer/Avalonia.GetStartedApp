@@ -36,8 +36,8 @@ namespace GetStartedApp.Models
             set { SetProperty(ref _Department, value); }
         }
 
-        private RoleDto _Role;
-        public RoleDto Role
+        private RoleDto? _Role;
+        public RoleDto? Role
         {
             get { return _Role; }
             set { SetProperty(ref _Role, value); }

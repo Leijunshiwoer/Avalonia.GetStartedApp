@@ -1,6 +1,7 @@
 ﻿using GetStartedApp.Core.Helpers;
 using GetStartedApp.Globalvariable;
 using GetStartedApp.Models;
+using GetStartedApp.RestSharp;
 using GetStartedApp.RestSharp.IServices;
 using GetStartedApp.SqlSugar.Tables;
 using Prism.Commands;
@@ -115,11 +116,19 @@ namespace GetStartedApp.ViewModels.Basic
 
         async void ExecuteSaveCommand()
         {
-            if (string.IsNullOrEmpty(UserDto.Name) || string.IsNullOrEmpty(UserDto.Password) || RoleIdx < 0 || string.IsNullOrEmpty(UserDto.JobNumber))
+            if (string.IsNullOrEmpty(UserDto.Name) || RoleIdx < 0 || string.IsNullOrEmpty(UserDto.JobNumber))
             {
                 MessageBox.ShowAsync("请将信息填写完全", "", MessageBoxIcon.Error, MessageBoxButton.OK);
                 return;
             }
+            
+            // 更新操作时密码可以为空
+            if (_isAdd && string.IsNullOrEmpty(UserDto.Password))
+            {
+                MessageBox.ShowAsync("请输入密码", "", MessageBoxIcon.Error, MessageBoxButton.OK);
+                return;
+            }
+            
             try
             {
                 var user = new UserDto
@@ -128,17 +137,24 @@ namespace GetStartedApp.ViewModels.Basic
                     Name = UserDto.Name,
                     Department = UserDto.Department,
                     JobNumber = UserDto.JobNumber,
-                    Password = MD5Helper.MD5Encryp(UserDto.Password),
+                    Password = string.IsNullOrEmpty(UserDto.Password) ? null : MD5Helper.MD5Encryp(UserDto.Password),
                     Remark = UserDto.Remark,
                     RoleId = _roles[RoleIdx].Id,
-                    CreatedUserName = UserDto.CreatedUserName,
-                    CreatedTime = UserDto.CreatedTime,
-                    UpdatedUserName = UserDto.UpdatedUserName,
-                    UpdatedTime = UserDto.UpdatedTime,
+                  
                 };
+                if (_isAdd) user.Create();
+                else user.Modify();
 
-               
-                var response = await _sysUserService.InsertOrUpdateUserAsync(user);
+                ApiResponse<UserDto> response;
+                if (_isAdd)
+                {
+                    response = await _sysUserService.CreateUserAsync(user);
+                }
+                else
+                {
+                    response = await _sysUserService.UpdateUserAsync(user.Id, user);
+                }
+                
                 if (!response.Status)
                 {
                    await MessageBox.ShowAsync($"保存失败:{response.Message}", "", MessageBoxIcon.Error, MessageBoxButton.OK);

@@ -1,4 +1,4 @@
-﻿using GetStartedApp.SqlSugar.Tables;
+using GetStartedApp.SqlSugar.Tables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +13,6 @@ namespace GetStartedApp.SqlSugar.IServices
         SysUser Login(string userName, string password);
         int InserOrUpdateUser(SysUser sysUser);
         SysUser GetUserById(int id);
+        bool DeleteUser(int id);
     }
 }

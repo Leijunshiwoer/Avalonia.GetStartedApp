@@ -84,6 +84,7 @@ namespace GetStartedApp.ViewModels
                     ErrorMessage = string.Empty;
                     
                     UserInfo.User= result.Data;
+                    UserInfo.UserName= UserName;
                     // 触发登录成功事件，让App.axaml.cs处理窗口切换
                     LoginSuccess?.Invoke();
                 }
