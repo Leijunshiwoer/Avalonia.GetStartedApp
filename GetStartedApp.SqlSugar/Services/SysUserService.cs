@@ -33,7 +33,7 @@ namespace GetStartedApp.SqlSugar.Services
         public SysUser Login(string userName, string password)
         {
             var pwd = MD5Helper.MD5Encryp(password);
-            var user = _suerRep.Context.Queryable<SysUser>().Where(x => x.Name == userName && x.Password == pwd).First();
+            var user = _suerRep.Context.Queryable<SysUser>().Includes(x=>x.Role).Where(x => x.Name == userName && x.Password == pwd).First();
 
             if (user != null)
             {

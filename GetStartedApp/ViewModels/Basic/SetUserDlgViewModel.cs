@@ -58,7 +58,7 @@ namespace GetStartedApp.ViewModels.Basic
                 }
                 else
                 {
-                    var response = await _sysRoleService.GetRoleLessSortByUserIdAsync(userDto.Id, UserInfo.User.Role.Sort);
+                    var response = await _sysRoleService.GetRoleLessSortAsync( UserInfo.User.Role.Sort);
                     if (response.Status)
                     {
                         _roles = response.Data;

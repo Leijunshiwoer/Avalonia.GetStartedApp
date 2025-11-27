@@ -18,7 +18,7 @@ namespace GetStartedApp.WebApi.Controllers
             _sysRoleService = sysRoleService;
         }
 
-        [HttpGet("less-than/{sort:int}")]
+        [HttpGet("lesssort/{sort:int}")]
         public IActionResult GetBySort(int sort)
         {
             try
